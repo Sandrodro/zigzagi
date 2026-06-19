@@ -6,7 +6,8 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.db import SessionLocal
-from app.models import Job, WordlistEntry
+from app.models import Job, Puzzle, WordlistEntry
+from app.services.seeds_provider import seeds_for_puzzle
 from app.services.solver_jobs import run_fill_job
 from app.solver.index import Wordlist
 from app.solver.templates import Template, load_library
@@ -34,11 +35,20 @@ def claim_next_fill_job(db: Session) -> Job | None:
     return job
 
 
-def tick(db: Session, library: list[Template], seeds_provider: Callable[[Session], list[str]]) -> bool:
+def _seeds_for_job(db: Session, job: Job) -> list[str]:
+    puzzle = db.get(Puzzle, job.puzzle_id) if job.puzzle_id else None
+    return seeds_for_puzzle(db, puzzle) if puzzle else []
+
+
+def tick(
+    db: Session,
+    library: list[Template],
+    seeds_provider: Callable[[Session], list[str]] | None = None,
+) -> bool:
     job = claim_next_fill_job(db)
     if job is None:
         return False
-    seeds = seeds_provider(db)
+    seeds = seeds_provider(db) if seeds_provider else _seeds_for_job(db, job)
     wordlist = load_active_wordlist(db)
     run_fill_job(db, job.id, library, seeds, wordlist)
     db.commit()
@@ -49,7 +59,7 @@ def run_forever(poll_s: float = 2.0) -> None:  # pragma: no cover - operational 
     library = load_library(_LIB_DIR)
     while True:
         with SessionLocal() as db:
-            did = tick(db, library, seeds_provider=lambda _db: [])
+            did = tick(db, library)
         if not did:
             time.sleep(poll_s)
 

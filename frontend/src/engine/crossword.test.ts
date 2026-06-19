@@ -73,3 +73,32 @@ describe("CrosswordEngine", () => {
     expect(e.active).toEqual({ row: 1, col: 0 });
   });
 });
+
+describe("CrosswordEngine check/reveal", () => {
+  it("applyCheck marks correct and incorrect", () => {
+    const e = new CrosswordEngine(PUZZLE);
+    e.setActive(0, 0);
+    e.type("ა"); // (0,0) filled, active -> (0,1)
+    e.applyCheck([
+      { row: 0, col: 0, correct: true },
+      { row: 0, col: 1, correct: false },
+    ]);
+    expect(e.getStatus(0, 0)).toBe("correct");
+    expect(e.getStatus(0, 1)).toBe("incorrect");
+  });
+
+  it("applyReveal writes the value and marks revealed", () => {
+    const e = new CrosswordEngine(PUZZLE);
+    e.applyReveal([{ row: 0, col: 0, value: "ა" }]);
+    expect(e.getValue(0, 0)).toBe("ა");
+    expect(e.getStatus(0, 0)).toBe("revealed");
+  });
+
+  it("typing over a checked cell clears its status", () => {
+    const e = new CrosswordEngine(PUZZLE);
+    e.applyCheck([{ row: 0, col: 0, correct: false }]);
+    e.setActive(0, 0);
+    e.type("ბ");
+    expect(e.getStatus(0, 0)).toBe("filled");
+  });
+});

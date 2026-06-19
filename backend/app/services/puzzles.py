@@ -20,6 +20,19 @@ def get_published_puzzle(db: Session, on_date: dt.date) -> Puzzle | None:
     return db.scalars(stmt).first()
 
 
+def build_answer_map(puzzle: Puzzle) -> dict[tuple[int, int], str]:
+    amap: dict[tuple[int, int], str] = {}
+    for e in puzzle.entries:
+        r, c = e.row, e.col
+        for ch in e.answer:
+            amap[(r, c)] = ch
+            if e.direction == "across":
+                c += 1
+            else:
+                r += 1
+    return amap
+
+
 def to_play_dto(puzzle: Puzzle) -> dict:
     across, down = [], []
     for e in puzzle.entries:

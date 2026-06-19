@@ -1,10 +1,10 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import type { PuzzleData } from "../engine/types";
-import * as api from "../api/play";
-import { PlayView } from "./PlayView";
+import type { PuzzleData } from "../../engine/types";
+import { PlayView } from "../PlayView";
 
 const PUZZLE: PuzzleData = {
   date: "2026-06-18",
@@ -18,22 +18,37 @@ const PUZZLE: PuzzleData = {
   },
 };
 
+const json = (body: unknown) =>
+  Promise.resolve({ ok: true, status: 200, json: () => Promise.resolve(body) } as Response);
+
 beforeEach(() => {
-  vi.restoreAllMocks();
-  vi.spyOn(api, "fetchToday").mockResolvedValue(PUZZLE);
+  vi.stubGlobal(
+    "fetch",
+    vi.fn((url: string) => {
+      if (url.endsWith("/today")) return json(PUZZLE);
+      if (url.endsWith("/check")) return json({ results: [{ row: 0, col: 0, correct: true }] });
+      return json({});
+    }),
+  );
 });
+
+afterEach(() => vi.unstubAllGlobals());
+
+const renderPlayView = () =>
+  render(
+    <QueryClientProvider client={new QueryClient()}>
+      <PlayView />
+    </QueryClientProvider>,
+  );
 
 describe("PlayView", () => {
   it("renders the grid from the API", async () => {
-    render(<PlayView />);
+    renderPlayView();
     await waitFor(() => expect(screen.getByTestId("cell-0-0")).toBeInTheDocument());
   });
 
   it("checking applies server results to the grid", async () => {
-    vi.spyOn(api, "checkCells").mockResolvedValue({
-      results: [{ row: 0, col: 0, correct: true }],
-    });
-    render(<PlayView />);
+    renderPlayView();
     await waitFor(() => screen.getByTestId("cell-0-0"));
 
     await userEvent.click(screen.getByTestId("cell-0-0"));

@@ -1,6 +1,6 @@
 # Sourcing & Pool Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Turn Georgian text (pasted now; scraped later) into a reviewed **word pool**:
 Gemini Flash extracts candidate words, the backend **re-validates** alphabet+length, the admin
@@ -72,7 +72,7 @@ frontend/src/
   - `validate.valid_length(w: str, lo=3, hi=13) -> bool`.
   - `validate.revalidate(words: list[str]) -> tuple[list[str], int]` — `(kept, dropped_count)`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 `backend/tests/sourcing/test_validate.py`:
 ```python
@@ -100,12 +100,12 @@ def test_revalidate_counts_drops():
     assert dropped == 2
 ```
 
-- [ ] **Step 2: Run to verify failure**
+- [x] **Step 2: Run to verify failure**
 
 Run (from `backend/`): `uv run pytest tests/sourcing/test_validate.py -v`
 Expected: FAIL — module missing.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `backend/app/sourcing/validate.py`:
 ```python
@@ -125,7 +125,7 @@ def revalidate(words: list[str], lo: int = 3, hi: int = 13) -> tuple[list[str], 
     return kept, len(words) - len(kept)
 ```
 
-- [ ] **Step 4: Run to verify pass; Step 5: Commit**
+- [x] **Step 4: Run to verify pass; Step 5: Commit**
 
 Run: `uv run pytest tests/sourcing/test_validate.py -v` → PASS.
 ```bash
@@ -149,7 +149,7 @@ git commit -m "feat(sourcing): georgian alphabet + length re-validation"
     `suggest(theme, pool) -> list[Suggestion]`.
   - `fakes.FakeGeminiClient(extract_return=…, suggest_return=…)` for tests.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `backend/tests/ai/test_fakes.py`:
 ```python
@@ -165,7 +165,7 @@ def test_fake_returns_canned_extraction():
     assert out[0].surface == "თბილისი"
 ```
 
-- [ ] **Step 2: Run to verify failure → Step 3: Implement**
+- [x] **Step 2: Run to verify failure → Step 3: Implement**
 
 `backend/app/ai/client.py`:
 ```python
@@ -210,7 +210,7 @@ class FakeGeminiClient:
         return list(self._suggest)
 ```
 
-- [ ] **Step 4: Run to verify pass; Step 5: Commit**
+- [x] **Step 4: Run to verify pass; Step 5: Commit**
 
 ```bash
 git add backend/app/ai backend/tests/ai
@@ -230,7 +230,7 @@ git commit -m "feat(ai): gemini client protocol, dtos, and test fake"
 - Produces: `gemini.GeminiExtractor(api_key, extract_model, suggest_model)` implementing
   `GeminiClient`; one bounded retry on JSON-schema parse failure, then raise `AIError`.
 
-- [ ] **Step 1: Write the failing test (transport injected)**
+- [x] **Step 1: Write the failing test (transport injected)**
 
 `backend/tests/ai/test_gemini.py`:
 ```python
@@ -266,7 +266,7 @@ def test_extract_retries_once_then_raises():
         ex.extract("t", "th", [])
 ```
 
-- [ ] **Step 2: Run to verify failure → Step 3: Implement**
+- [x] **Step 2: Run to verify failure → Step 3: Implement**
 
 `backend/app/ai/gemini.py`:
 ```python
@@ -337,7 +337,7 @@ class GeminiExtractor:
         raise AIError("unreachable")
 ```
 
-- [ ] **Step 4: Run to verify pass; Step 5: Commit**
+- [x] **Step 4: Run to verify pass; Step 5: Commit**
 
 ```bash
 git add backend/app/ai/gemini.py backend/tests/ai/test_gemini.py
@@ -362,7 +362,7 @@ git commit -m "feat(ai): gemini extractor with structured output and bounded ret
   - `pool.list_pool(db, status=None, theme=None) -> list[WordCandidate]`.
   - `pool.bulk_update(db, ops: list[dict]) -> int` — each op `{id, action: accept|reject|edit, surface?}`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 `backend/tests/test_pool.py`:
 ```python
@@ -408,7 +408,7 @@ def test_list_filters_by_status(db_session):
     assert len(list_pool(db_session, status="offered")) == 0
 ```
 
-- [ ] **Step 2: Run to verify failure → Step 3: Add the model**
+- [x] **Step 2: Run to verify failure → Step 3: Add the model**
 
 Append to `backend/app/models.py`:
 ```python
@@ -429,7 +429,7 @@ class WordCandidate(Base):
 ```
 Run: `uv run alembic revision --autogenerate -m "word candidates" && uv run alembic upgrade head`
 
-- [ ] **Step 4: Implement the pool service**
+- [x] **Step 4: Implement the pool service**
 
 `backend/app/services/pool.py`:
 ```python
@@ -491,7 +491,7 @@ def bulk_update(db: Session, ops: list[dict]) -> int:
     return n
 ```
 
-- [ ] **Step 5: Run to verify pass; Step 6: Commit**
+- [x] **Step 5: Run to verify pass; Step 6: Commit**
 
 ```bash
 git add backend/app/models.py backend/app/services/pool.py backend/tests/test_pool.py backend/alembic/versions
@@ -515,7 +515,7 @@ git commit -m "feat(sourcing): word candidate model and pool lifecycle service"
   - `PATCH /api/admin/pool/bulk {ops:[…]}` → `{updated}`.
   - `POST /api/admin/suggest {theme}` → `[{word, reason, in_corpus}]`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `backend/tests/test_admin_sourcing.py`:
 ```python
@@ -550,7 +550,7 @@ def test_suggest_endpoint(client):
     app.dependency_overrides.pop(get_gemini, None)
 ```
 
-- [ ] **Step 2: Run to verify failure → Step 3: Implement**
+- [x] **Step 2: Run to verify failure → Step 3: Implement**
 
 Append to `backend/app/routers/admin.py`:
 ```python
@@ -618,7 +618,7 @@ def suggest(body: SuggestRequest, db: Session = Depends(get_db), ai: GeminiClien
     return [s.model_dump() for s in ai.suggest(body.theme, pool_words)]
 ```
 
-- [ ] **Step 4: Run to verify pass; Step 5: Commit**
+- [x] **Step 4: Run to verify pass; Step 5: Commit**
 
 ```bash
 git add backend/app/routers/admin.py backend/tests/test_admin_sourcing.py
@@ -640,7 +640,7 @@ git commit -m "feat(sourcing): admin extract/pool/bulk/suggest endpoints"
   surfaces whose `theme_tags` include the puzzle's theme. This is the function the Solver plan's
   worker injected as a stub; this task makes it real.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `backend/tests/test_seeds_provider.py`:
 ```python
@@ -661,7 +661,7 @@ def test_returns_accepted_surfaces_for_theme(db_session):
     assert seeds_for_puzzle(db_session, p) == ["თბილისი"]  # only accepted + matching theme
 ```
 
-- [ ] **Step 2: Run to verify failure → Step 3: Implement**
+- [x] **Step 2: Run to verify failure → Step 3: Implement**
 
 `backend/app/services/seeds_provider.py`:
 ```python
@@ -698,7 +698,7 @@ and pass `seeds_provider=lambda db: _seeds_for_job(db, claimed_job)` — or refa
 resolve seeds *after* claiming the job (cleanest: have `tick` claim, then call
 `seeds_for_puzzle` for that job's puzzle). Keep the injected-provider signature for tests.
 
-- [ ] **Step 4: Run to verify pass; Step 5: Commit**
+- [x] **Step 4: Run to verify pass; Step 5: Commit**
 
 ```bash
 git add backend/app/services/seeds_provider.py backend/app/worker.py backend/tests/test_seeds_provider.py
@@ -722,7 +722,7 @@ git commit -m "feat(sourcing): real solver seeds provider by theme"
   - `PoolReview()` — paste box + Extract button → renders candidates in `<DataTable>` with
     select-all/bulk Accept/Reject.
 
-- [ ] **Step 1: Write the failing `<DataTable>` test**
+- [x] **Step 1: Write the failing `<DataTable>` test**
 
 `frontend/src/components/DataTable.test.tsx`:
 ```tsx
@@ -751,7 +751,7 @@ describe("DataTable", () => {
 });
 ```
 
-- [ ] **Step 2: Run to verify failure → Step 3: Implement `<DataTable>`**
+- [x] **Step 2: Run to verify failure → Step 3: Implement `<DataTable>`**
 
 `frontend/src/components/DataTable.tsx`:
 ```tsx
@@ -812,16 +812,16 @@ export function DataTable<T extends { id: string }>({
 }
 ```
 
-- [ ] **Step 4: Write `api/admin.ts`** (thin fetch wrappers mirroring Task 5 endpoints — `extractText` POSTs `/api/admin/extract`, `fetchPool` GETs `/api/admin/pool`, `bulkUpdate` PATCHes `/api/admin/pool/bulk`, `suggest` POSTs `/api/admin/suggest`; same pattern as `api/play.ts` in the skeleton).
+- [x] **Step 4: Write `api/admin.ts`** (thin fetch wrappers mirroring Task 5 endpoints — `extractText` POSTs `/api/admin/extract`, `fetchPool` GETs `/api/admin/pool`, `bulkUpdate` PATCHes `/api/admin/pool/bulk`, `suggest` POSTs `/api/admin/suggest`; same pattern as `api/play.ts` in the skeleton).
 
-- [ ] **Step 5: Write the failing `<PoolReview>` test (api mocked) → Step 6: Implement `<PoolReview>`**
+- [x] **Step 5: Write the failing `<PoolReview>` test (api mocked) → Step 6: Implement `<PoolReview>`**
 
 `PoolReview` fetches nothing on mount; typing text + clicking **Extract** calls
 `extractText`, stores returned candidates in state, renders them via `<DataTable selectable>`;
 **Accept selected** calls `bulkUpdate(ids.map(id => ({id, action: "accept"})))`. Test by
 mocking `../api/admin` with `vi.spyOn` (same approach as the skeleton's `PlayView.test.tsx`).
 
-- [ ] **Step 7: Run the frontend suite + typecheck; Step 8: Commit**
+- [x] **Step 7: Run the frontend suite + typecheck; Step 8: Commit**
 
 ```bash
 git add frontend/src/components/DataTable.tsx frontend/src/components/DataTable.test.tsx frontend/src/components/PoolReview.tsx frontend/src/components/PoolReview.test.tsx frontend/src/api/admin.ts
@@ -848,7 +848,7 @@ git commit -m "feat(sourcing): reusable DataTable and pool review screen"
     → `create_from_extraction`; returns candidate count. Per-source failure isolated (one source
     failing must not block the other, DESIGN.md §10).
 
-- [ ] **Step 1: Write the failing test (adapters faked — no network)**
+- [x] **Step 1: Write the failing test (adapters faked — no network)**
 
 `backend/tests/test_scrape.py`:
 ```python
@@ -889,7 +889,7 @@ def test_disabled_adapter_is_skipped(db_session):
     assert run_scrape([disabled], ai, theme="თ", db=db_session) == 0
 ```
 
-- [ ] **Step 2: Run to verify failure → Step 3: Implement the scrape core**
+- [x] **Step 2: Run to verify failure → Step 3: Implement the scrape core**
 
 `backend/app/sourcing/scrape.py` — define `Article` dataclass and:
 ```python
@@ -939,12 +939,14 @@ The real `RadioTavisuplebaAdapter`/`ArilimagAdapter` (httpx + selectolax, robots
 rate-limit, 31-day filter) are implemented behind the Protocol; **do not enable them until Q4
 ToS sign-off** — ship with `enabled=False` and a config flag.
 
-- [ ] **Step 4: Add `POST /sources/refresh` + worker `scrape` handling**
+- [ ] **Step 4: Add `POST /sources/refresh` + worker `scrape` handling** — DEFERRED (gated on Q4 ToS).
+  No enabled source exists yet, so the endpoint + worker `scrape` dispatch would be a dead path.
+  Wire up alongside the real adapters once RFE/RL ToS is signed off.
 
 `POST /api/admin/sources/refresh` enqueues a `Job(kind="scrape")`; `worker.tick` dispatches on
 `job.kind` (`fill` → `run_fill_job`, `scrape` → `run_scrape`). Mirror the fill-job lifecycle.
 
-- [ ] **Step 5: Run to verify pass; Step 6: Commit**
+- [x] **Step 5: Run to verify pass; Step 6: Commit**
 
 ```bash
 git add backend/app/sourcing/scrape.py backend/app/routers/admin.py backend/app/worker.py backend/tests/test_scrape.py

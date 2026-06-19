@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import { CrosswordEngine } from "./crossword";
-import type { PuzzleData } from "./types";
+import { CrosswordEngine } from "../crossword";
+import type { PuzzleData } from "../types";
 
 const PUZZLE: PuzzleData = {
   date: "2026-06-18",

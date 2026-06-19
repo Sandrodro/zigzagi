@@ -23,7 +23,11 @@ def engine():
 def db_session(engine):
     connection = engine.connect()
     transaction = connection.begin()
-    Session = sessionmaker(bind=connection, expire_on_commit=False)
+    # create_savepoint: a commit() inside a test (e.g. worker.tick) only commits a
+    # savepoint, so the outer transaction still rolls back and isolation holds.
+    Session = sessionmaker(
+        bind=connection, expire_on_commit=False, join_transaction_mode="create_savepoint"
+    )
     session = Session()
     yield session
     session.close()

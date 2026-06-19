@@ -1,10 +1,15 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 import { PlayView } from "./components/PlayView";
 
+const queryClient = new QueryClient();
+
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <PlayView />
+    <QueryClientProvider client={queryClient}>
+      <PlayView />
+    </QueryClientProvider>
   </StrictMode>,
 );

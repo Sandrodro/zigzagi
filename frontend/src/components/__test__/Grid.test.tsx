@@ -2,9 +2,9 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
-import { CrosswordEngine } from "../engine/crossword";
-import type { PuzzleData } from "../engine/types";
-import { Grid } from "./Grid";
+import { CrosswordEngine } from "../../engine/crossword";
+import type { PuzzleData } from "../../engine/types";
+import { Grid } from "../Grid";
 
 const PUZZLE: PuzzleData = {
   date: "2026-06-18",

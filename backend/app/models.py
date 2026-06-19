@@ -1,7 +1,7 @@
 import datetime as dt
 import uuid
 
-from sqlalchemy import ForeignKey, Index, text
+from sqlalchemy import ARRAY, DateTime, ForeignKey, Index, String, func, text
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -48,3 +48,38 @@ class Entry(Base):
     provenance: Mapped[str] = mapped_column(default="general-fill")
 
     puzzle: Mapped["Puzzle"] = relationship(back_populates="entries")
+
+
+class WordlistEntry(Base):
+    __tablename__ = "wordlist_entries"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    word: Mapped[str] = mapped_column(unique=True)
+    length: Mapped[int] = mapped_column()
+    status: Mapped[str] = mapped_column(default="active")  # active | blocked
+
+
+class WordCandidate(Base):
+    __tablename__ = "word_candidates"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    surface: Mapped[str] = mapped_column(unique=True)
+    lemma: Mapped[str] = mapped_column()
+    length: Mapped[int] = mapped_column()
+    source_url: Mapped[str | None] = mapped_column(nullable=True)
+    snippet: Mapped[str | None] = mapped_column(nullable=True)
+    theme_tags: Mapped[list[str]] = mapped_column(ARRAY(String), default=list)
+    status: Mapped[str] = mapped_column(default="offered")  # offered|accepted|edited|rejected
+
+
+class Job(Base):
+    __tablename__ = "jobs"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    kind: Mapped[str] = mapped_column()  # "fill" | "scrape"
+    puzzle_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
+    status: Mapped[str] = mapped_column(default="pending")  # pending|running|done|failed
+    params: Mapped[dict] = mapped_column(JSONB, default=dict)
+    result: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+    error: Mapped[str | None] = mapped_column(nullable=True)
+    created_at: Mapped[dt.datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

@@ -1,22 +1,21 @@
 import { useEffect, useReducer, useState } from "react";
 
-import { checkCells, fetchToday, revealCells } from "../api/play";
+import { useCheckCells, useRevealCells, useToday } from "../api/play";
 import { CrosswordEngine } from "../engine/crossword";
-import type { PuzzleData } from "../engine/types";
 import { Grid } from "./Grid";
 
 export function PlayView() {
+  const { data: puzzle } = useToday();
   const [engine, setEngine] = useState<CrosswordEngine | null>(null);
-  const [puzzle, setPuzzle] = useState<PuzzleData | null>(null);
   // ponytail: mutable engine; counter forces re-render after each mutation
   const [, rerender] = useReducer((n: number) => n + 1, 0);
 
+  const checkMutation = useCheckCells(puzzle?.date ?? "");
+  const revealMutation = useRevealCells(puzzle?.date ?? "");
+
   useEffect(() => {
-    fetchToday().then((p) => {
-      setPuzzle(p);
-      setEngine(new CrosswordEngine(p));
-    });
-  }, []);
+    if (puzzle) setEngine(new CrosswordEngine(puzzle));
+  }, [puzzle]);
 
   useEffect(() => {
     if (!engine) return;
@@ -41,14 +40,14 @@ export function PlayView() {
       .currentWordCells()
       .map((c) => ({ row: c.row, col: c.col, value: engine.getValue(c.row, c.col) }))
       .filter((c) => c.value);
-    const { results } = await checkCells(puzzle.date, cells);
+    const { results } = await checkMutation.mutateAsync(cells);
     engine.applyCheck(results);
     rerender();
   };
 
   const onReveal = async () => {
     const { row, col } = engine.active;
-    const { cells } = await revealCells(puzzle.date, [{ row, col }]);
+    const { cells } = await revealMutation.mutateAsync([{ row, col }]);
     engine.applyReveal(cells);
     rerender();
   };

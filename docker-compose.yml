@@ -1,0 +1,9 @@
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: zigzagi
+      POSTGRES_PASSWORD: zigzagi
+      POSTGRES_DB: zigzagi
+    ports:
+      - "5432:5432"

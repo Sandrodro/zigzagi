@@ -480,7 +480,7 @@ The fixture letter matrix (row-major):
 ```
 Across answers (one per row) and Down answers (one per column) are derived from it; intersections agree automatically. Clue text is placeholder Georgian — this is a fixture, not real content.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `backend/tests/test_seed.py`:
 ```python
@@ -519,12 +519,12 @@ def test_seed_entries_are_consistent_at_intersections(db_session):
     assert len(cell) == 25  # full 5×5 grid covered
 ```
 
-- [ ] **Step 2: Run the test to verify it fails**
+- [x] **Step 2: Run the test to verify it fails**
 
 Run (from `backend/`): `uv run pytest tests/test_seed.py -v`
 Expected: FAIL — `ModuleNotFoundError: No module named 'app.seed'`.
 
-- [ ] **Step 3: Write the seed function**
+- [x] **Step 3: Write the seed function**
 
 `backend/app/seed.py`:
 ```python
@@ -600,12 +600,12 @@ def seed_demo_puzzle(db: Session, live_date: dt.date, status: str = "published")
     return puzzle
 ```
 
-- [ ] **Step 4: Run the test to verify it passes**
+- [x] **Step 4: Run the test to verify it passes**
 
 Run (from `backend/`): `uv run pytest tests/test_seed.py -v`
 Expected: PASS — `2 passed`.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add backend/app/seed.py backend/tests/test_seed.py
@@ -631,7 +631,7 @@ git commit -m "feat: seed hand-authored 5x5 demo puzzle"
   - `services.puzzles:today_tbilisi() -> date`
   - Route `GET /api/play/puzzles/today` → 200 with the DTO, or 404 `{"detail": "no puzzle for today"}`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `backend/tests/test_play_today.py`:
 ```python
@@ -672,12 +672,12 @@ def test_today_404_when_none_published(client, db_session, monkeypatch):
     assert response.status_code == 404
 ```
 
-- [ ] **Step 2: Run the test to verify it fails**
+- [x] **Step 2: Run the test to verify it fails**
 
 Run (from `backend/`): `uv run pytest tests/test_play_today.py -v`
 Expected: FAIL — `ModuleNotFoundError: No module named 'app.services.puzzles'`.
 
-- [ ] **Step 3: Write the service**
+- [x] **Step 3: Write the service**
 
 `backend/app/services/__init__.py`: (empty file)
 
@@ -728,7 +728,7 @@ def to_play_dto(puzzle: Puzzle) -> dict:
     }
 ```
 
-- [ ] **Step 4: Write the router and wire it**
+- [x] **Step 4: Write the router and wire it**
 
 `backend/app/routers/__init__.py`: (empty file)
 
@@ -768,12 +768,12 @@ def health():
 
 (`schemas.py` is created in Task 5; no need yet.)
 
-- [ ] **Step 5: Run the test to verify it passes**
+- [x] **Step 5: Run the test to verify it passes**
 
 Run (from `backend/`): `uv run pytest tests/test_play_today.py -v`
 Expected: PASS — `2 passed`.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add backend/app/services backend/app/routers backend/app/main.py backend/tests/test_play_today.py
@@ -798,7 +798,7 @@ git commit -m "feat: GET play today endpoint with answers withheld"
   - `POST /api/play/puzzles/{date}/reveal` — request `{"cells": [{"row", "col"}]}` → `{"cells": [{"row", "col", "value"}]}`.
   - 404 if no published puzzle for `{date}`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 `backend/tests/test_play_check.py`:
 ```python
@@ -850,12 +850,12 @@ def test_reveal_returns_correct_letters(client, db_session):
     assert {"row": 1, "col": 0, "value": "ვ"} in cells
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run (from `backend/`): `uv run pytest tests/test_play_check.py tests/test_play_reveal.py -v`
 Expected: FAIL — 404/405 (routes don't exist).
 
-- [ ] **Step 3: Add the schemas**
+- [x] **Step 3: Add the schemas**
 
 `backend/app/schemas.py`:
 ```python
@@ -881,7 +881,7 @@ class RevealRequest(BaseModel):
     cells: list[CellRef]
 ```
 
-- [ ] **Step 4: Add the answer-map helper**
+- [x] **Step 4: Add the answer-map helper**
 
 Append to `backend/app/services/puzzles.py`:
 ```python
@@ -898,7 +898,7 @@ def build_answer_map(puzzle: Puzzle) -> dict[tuple[int, int], str]:
     return amap
 ```
 
-- [ ] **Step 5: Add the routes**
+- [x] **Step 5: Add the routes**
 
 Append to `backend/app/routers/play.py` (and extend its imports):
 ```python
@@ -941,12 +941,12 @@ def reveal(date: str, payload: RevealRequest, db: Session = Depends(get_db)):
     return {"cells": cells}
 ```
 
-- [ ] **Step 6: Run the tests to verify they pass**
+- [x] **Step 6: Run the tests to verify they pass**
 
 Run (from `backend/`): `uv run pytest tests/test_play_check.py tests/test_play_reveal.py -v`
 Expected: PASS — `3 passed`.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add backend/app/schemas.py backend/app/services/puzzles.py backend/app/routers/play.py backend/tests/test_play_check.py backend/tests/test_play_reveal.py
@@ -967,7 +967,7 @@ git commit -m "feat: server-side check and reveal endpoints"
   - `services.publish:schedule_puzzle(db, puzzle_id: UUID, live_date: date) -> Puzzle` — sets `status="scheduled"`, `live_date`.
   - `services.publish:promote_due_puzzles(db, on_date: date) -> int` — flips every `scheduled` puzzle with `live_date <= on_date` to `published`; returns the count. (The future worker calls this; the skeleton does not run a scheduler.)
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 `backend/tests/test_publish.py`:
 ```python
@@ -1008,12 +1008,12 @@ def test_promote_publishes_only_due_scheduled(db_session):
     assert future.status == "scheduled"
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run (from `backend/`): `uv run pytest tests/test_publish.py -v`
 Expected: FAIL — `ModuleNotFoundError: No module named 'app.services.publish'`.
 
-- [ ] **Step 3: Write the publish service**
+- [x] **Step 3: Write the publish service**
 
 `backend/app/services/publish.py`:
 ```python
@@ -1047,17 +1047,17 @@ def promote_due_puzzles(db: Session, on_date: dt.date) -> int:
     return len(due)
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run (from `backend/`): `uv run pytest tests/test_publish.py -v`
 Expected: PASS — `2 passed`.
 
-- [ ] **Step 5: Run the full backend suite**
+- [x] **Step 5: Run the full backend suite**
 
 Run (from `backend/`): `uv run pytest -v`
 Expected: PASS — all tests across all files green.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add backend/app/services/publish.py backend/tests/test_publish.py
@@ -1091,7 +1091,7 @@ git commit -m "feat: publish service with schedule and promote-due"
     - `applyReveal(cells: {row, col, value: string}[]): void`
 - Consumed by `Grid.tsx` (Task 9) and `PlayView.tsx` (Task 10).
 
-- [ ] **Step 1: Scaffold the frontend project**
+- [x] **Step 1: Scaffold the frontend project**
 
 `frontend/package.json`:
 ```json
@@ -1191,7 +1191,7 @@ createRoot(document.getElementById("root")!).render(
 Run (from `frontend/`): `npm install`
 Expected: dependencies install without error.
 
-- [ ] **Step 2: Write the failing engine tests**
+- [x] **Step 2: Write the failing engine tests**
 
 `frontend/src/engine/crossword.test.ts`:
 ```ts
@@ -1272,12 +1272,12 @@ describe("CrosswordEngine", () => {
 });
 ```
 
-- [ ] **Step 3: Run the tests to verify they fail**
+- [x] **Step 3: Run the tests to verify they fail**
 
 Run (from `frontend/`): `npm test -- crossword`
 Expected: FAIL — cannot resolve `./crossword`.
 
-- [ ] **Step 4: Write the types and engine**
+- [x] **Step 4: Write the types and engine**
 
 `frontend/src/engine/types.ts`:
 ```ts
@@ -1475,16 +1475,16 @@ export class CrosswordEngine {
 
 Note: the `step` helper above is unused dead code — delete it. The `type`/`backspace` methods compute the next cell inline. (Kept the deletion explicit so the engine stays DRY.)
 
-- [ ] **Step 5: Remove the dead `step` helper**
+- [x] **Step 5: Remove the dead `step` helper**
 
 Delete the `private step(...)` method from `crossword.ts` (the inline next/prev computations replace it).
 
-- [ ] **Step 6: Run the tests to verify they pass**
+- [x] **Step 6: Run the tests to verify they pass**
 
 Run (from `frontend/`): `npm test -- crossword`
 Expected: PASS — all `CrosswordEngine` tests green.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add frontend/
@@ -1501,7 +1501,7 @@ git commit -m "feat: frontend scaffold and pure crossword engine"
 **Interfaces:**
 - Consumes: `CrosswordEngine.applyCheck`, `applyReveal`, `getStatus`, `getValue` (already implemented in Task 7). This task locks their behavior with dedicated tests — no production code changes expected.
 
-- [ ] **Step 1: Add the failing/locking tests**
+- [x] **Step 1: Add the failing/locking tests**
 
 Append to `frontend/src/engine/crossword.test.ts`:
 ```ts
@@ -1535,12 +1535,12 @@ describe("CrosswordEngine check/reveal", () => {
 });
 ```
 
-- [ ] **Step 2: Run the tests**
+- [x] **Step 2: Run the tests**
 
 Run (from `frontend/`): `npm test -- crossword`
 Expected: PASS — the three new cases pass against the existing implementation. If any fail, fix `crossword.ts` minimally to satisfy them.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add frontend/src/engine/crossword.test.ts

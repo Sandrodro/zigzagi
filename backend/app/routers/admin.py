@@ -1,3 +1,4 @@
+import datetime as dt
 import os
 import uuid
 
@@ -11,6 +12,13 @@ from app.db import get_db
 from app.models import Job, Puzzle
 from app.services.pool import bulk_update, create_from_extraction, list_pool
 from app.services.solver_jobs import enqueue_fill
+from app.services.wordlist import (
+    add_word,
+    bulk_import,
+    list_words,
+    stats,
+    update_entry,
+)
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
 
@@ -91,3 +99,103 @@ def pool_bulk(body: BulkRequest, db: Session = Depends(get_db)):
 def suggest(body: SuggestRequest, db: Session = Depends(get_db), ai: GeminiClient = Depends(get_gemini)):
     pool_words = [r.surface for r in list_pool(db, status="accepted")]
     return [s.model_dump() for s in ai.suggest(body.theme, pool_words)]
+
+
+class WordlistAddRequest(BaseModel):
+    word: str
+
+
+class WordlistUpdateRequest(BaseModel):
+    word: str | None = None
+    status: str | None = None
+
+
+class WordlistBulkRequest(BaseModel):
+    text: str
+
+
+def _wordlist_row(r) -> dict:
+    return {"id": str(r.id), "word": r.word, "length": r.length, "status": r.status}
+
+
+@router.get("/wordlist")
+def wordlist_list(
+    status: str | None = None,
+    length: int | None = None,
+    search: str | None = None,
+    db: Session = Depends(get_db),
+):
+    return [_wordlist_row(r) for r in list_words(db, status, length, search)]
+
+
+@router.get("/wordlist/stats")
+def wordlist_stats(db: Session = Depends(get_db)):
+    return stats(db)
+
+
+@router.post("/wordlist", status_code=201)
+def wordlist_add(body: WordlistAddRequest, db: Session = Depends(get_db)):
+    try:
+        row = add_word(db, body.word)
+    except ValueError as e:
+        raise HTTPException(422, str(e))
+    db.commit()
+    return _wordlist_row(row)
+
+
+@router.patch("/wordlist/{entry_id}")
+def wordlist_update(entry_id: uuid.UUID, body: WordlistUpdateRequest, db: Session = Depends(get_db)):
+    try:
+        row = update_entry(db, entry_id, word=body.word, status=body.status)
+    except ValueError as e:
+        if str(e) == "not found":
+            raise HTTPException(404, "wordlist entry not found")
+        raise HTTPException(422, str(e))
+    db.commit()
+    return _wordlist_row(row)
+
+
+@router.post("/wordlist/bulk")
+def wordlist_bulk(body: WordlistBulkRequest, db: Session = Depends(get_db)):
+    result = bulk_import(db, body.text.split())
+    db.commit()
+    return result
+
+
+class CreatePuzzleRequest(BaseModel):
+    theme: str
+    live_date: dt.date
+
+
+@router.post("/puzzles", status_code=201)
+def create_puzzle(body: CreatePuzzleRequest, db: Session = Depends(get_db)):
+    puzzle = Puzzle(
+        id=uuid.uuid4(), live_date=body.live_date, theme=body.theme,
+        grid_template={}, status="draft", seed=None, version=1,
+    )
+    db.add(puzzle)
+    db.commit()
+    return {
+        "id": str(puzzle.id), "theme": puzzle.theme,
+        "live_date": puzzle.live_date.isoformat(), "status": puzzle.status,
+    }
+
+
+@router.get("/puzzles/{puzzle_id}")
+def get_puzzle(puzzle_id: uuid.UUID, db: Session = Depends(get_db)):
+    puzzle = db.get(Puzzle, puzzle_id)
+    if puzzle is None:
+        raise HTTPException(404, "puzzle not found")
+    return {
+        "id": str(puzzle.id), "theme": puzzle.theme,
+        "live_date": puzzle.live_date.isoformat(), "status": puzzle.status,
+        "grid_template": puzzle.grid_template,
+        "entries": [
+            {
+                "id": str(e.id), "number": e.number, "direction": e.direction,
+                "answer": e.answer, "row": e.row, "col": e.col,
+                "clue": e.clue, "clue_status": e.clue_status, "provenance": e.provenance,
+            }
+            for e in puzzle.entries
+        ],
+    }

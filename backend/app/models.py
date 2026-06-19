@@ -1,7 +1,7 @@
 import datetime as dt
 import uuid
 
-from sqlalchemy import DateTime, ForeignKey, Index, func, text
+from sqlalchemy import ARRAY, DateTime, ForeignKey, Index, String, func, text
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -57,6 +57,19 @@ class WordlistEntry(Base):
     word: Mapped[str] = mapped_column(unique=True)
     length: Mapped[int] = mapped_column()
     status: Mapped[str] = mapped_column(default="active")  # active | blocked
+
+
+class WordCandidate(Base):
+    __tablename__ = "word_candidates"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    surface: Mapped[str] = mapped_column(unique=True)
+    lemma: Mapped[str] = mapped_column()
+    length: Mapped[int] = mapped_column()
+    source_url: Mapped[str | None] = mapped_column(nullable=True)
+    snippet: Mapped[str | None] = mapped_column(nullable=True)
+    theme_tags: Mapped[list[str]] = mapped_column(ARRAY(String), default=list)
+    status: Mapped[str] = mapped_column(default="offered")  # offered|accepted|edited|rejected
 
 
 class Job(Base):

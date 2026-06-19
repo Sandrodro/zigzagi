@@ -1,1 +1,50 @@
-from app.db import Base  # noqa: F401
+import datetime as dt
+import uuid
+
+from sqlalchemy import ForeignKey, Index, text
+from sqlalchemy.dialects.postgresql import JSONB, UUID
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+from app.db import Base
+
+
+class Puzzle(Base):
+    __tablename__ = "puzzles"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    live_date: Mapped[dt.date] = mapped_column()
+    theme: Mapped[str] = mapped_column()
+    grid_template: Mapped[dict] = mapped_column(JSONB)
+    status: Mapped[str] = mapped_column(default="draft")
+    seed: Mapped[int | None] = mapped_column(nullable=True)
+    version: Mapped[int] = mapped_column(default=1)
+
+    entries: Mapped[list["Entry"]] = relationship(
+        back_populates="puzzle", cascade="all, delete-orphan"
+    )
+
+    __table_args__ = (
+        Index(
+            "uq_puzzle_live_date_active",
+            "live_date",
+            unique=True,
+            postgresql_where=text("status IN ('scheduled', 'published')"),
+        ),
+    )
+
+
+class Entry(Base):
+    __tablename__ = "entries"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    puzzle_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("puzzles.id"))
+    number: Mapped[int] = mapped_column()
+    direction: Mapped[str] = mapped_column()  # "across" | "down"
+    answer: Mapped[str] = mapped_column()
+    row: Mapped[int] = mapped_column()
+    col: Mapped[int] = mapped_column()
+    clue: Mapped[str | None] = mapped_column(nullable=True)
+    clue_status: Mapped[str] = mapped_column(default="pending")
+    provenance: Mapped[str] = mapped_column(default="general-fill")
+
+    puzzle: Mapped["Puzzle"] = relationship(back_populates="entries")

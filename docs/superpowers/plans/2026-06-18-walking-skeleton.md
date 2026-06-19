@@ -298,7 +298,7 @@ git commit -m "feat: backend skeleton with postgres and health check"
   - `Entry(id: UUID, puzzle_id: UUID, number: int, direction: str, answer: str, row: int, col: int, clue: str|None, clue_status: str, provenance: str, puzzle: Puzzle)`
   - Partial unique index `uq_puzzle_live_date_active` on `live_date` where `status IN ('scheduled','published')`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 `backend/tests/test_models.py`:
 ```python
@@ -358,12 +358,12 @@ def test_draft_does_not_collide_with_active(db_session):
     db_session.flush()  # drafts are exempt from the partial index
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run (from `backend/`): `uv run pytest tests/test_models.py -v`
 Expected: FAIL — `ImportError: cannot import name 'Entry'`.
 
-- [ ] **Step 3: Write the models**
+- [x] **Step 3: Write the models**
 
 `backend/app/models.py` (replace entire file):
 ```python
@@ -423,12 +423,12 @@ Because `conftest.py`'s session-scoped `engine` fixture runs `create_all` once, 
 Run: `docker compose exec db psql -U zigzagi -d zigzagi_test -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"`
 Expected: `CREATE SCHEMA`.
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run (from `backend/`): `uv run pytest tests/test_models.py -v`
 Expected: PASS — `4 passed`.
 
-- [ ] **Step 5: Generate the Alembic baseline migration**
+- [x] **Step 5: Generate the Alembic baseline migration**
 
 Initialize Alembic and point it at `Base.metadata` (dev/prod migrations; tests keep using `create_all`).
 
@@ -451,7 +451,7 @@ Expected: a new file under `alembic/versions/`, and `upgrade head` runs without 
 Run: `docker compose exec db psql -U zigzagi -d zigzagi -c "\d puzzles"`
 Expected: lists `uq_puzzle_live_date_active` as a partial unique index.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add backend/app/models.py backend/tests/test_models.py backend/alembic* 

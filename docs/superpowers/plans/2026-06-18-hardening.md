@@ -52,7 +52,7 @@ Postgres from DESIGN.md §1; feature flags + reversible migrations for rollback.
    - Deliverable: a recorded baseline + a CI budget check on the built bundle size/TTI.
 
 6. **Mobile-input E2E.**
-   - Full solve loop on iOS Safari + Android Chrome: Georgian on-screen keyboard, check/reveal,
+   - Full solve loop on iOS Safari + Android Chrome: native keyboard input, check/reveal,
      congrats, reduced-motion auto-disable. Deliverable: documented device matrix, zero blocking bugs.
 
 7. **Deploy + rollback.**

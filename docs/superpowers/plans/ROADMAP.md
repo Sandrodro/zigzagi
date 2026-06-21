@@ -21,6 +21,8 @@ Phase B ─ 2. Solver ──────┤  (needs wordlist by Task 7)   ││
 Phase C ─ 3. Sourcing & Pool ───┐  (paste path now;       ││
                           │      └─ scrapers gated on Q4 ──┘│
                           │                                 │
+Phase C ─ 9. Admin Curation & Builder UI ─┐ (after 3; needs 2)
+                          │                │                │
 Phase C ─ 4. Clues ───────┤  (parallel with Sourcing)      │
                           │                                 │
 Phase D ─ 5. Publishing ──┘                                │
@@ -32,7 +34,7 @@ Phase F ─ 7. Auth + Progress Merge + Streak
 Phase G ─ 8. Hardening (last)
 ```
 
-**Strict linear order if you build one at a time:** 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8.
+**Strict linear order if you build one at a time:** 1 → 2 → 3 → 9 → 4 → 5 → 6 → 7 → 8.
 
 **Critical path (DESIGN.md §7):** 1 → 2 → 6 (skeleton → solver → play). Sourcing (3) and Clues
 (4) overlap the critical path; Publishing (5) is small.
@@ -80,6 +82,23 @@ admin/worker feature reuses.
 - **Exit milestone:** paste text → reviewed pool → seeds feed the solver; a filled puzzle gets
   Gemini clues you can accept/edit/reject.
 
+### Phase C — Admin Curation & Builder UI (Plan 9) — *after Sourcing; needs Solver*
+The admin-facing consolidation from `../../ADMIN_PRD.md` / `../../ADMIN_TDD.md`: a **global
+fill-wordlist curation** screen (add / block / bulk-import `WordlistEntry` + a length histogram),
+a **puzzle builder** screen (create draft → configure theme/seeds → run fill → poll → see the
+filled grid + provenance), and a **tab shell** mounted on `/admin` that also hosts the existing
+pool-review screen. Pure additive work on built pieces — thin `wordlist` service + CRUD/stats
+endpoints, two `/puzzles` endpoints, three React screens; **no new dependency, no auth** (the
+Auth phase gates it later).
+- **Depends on:** Plan 3 (pool screen + `<DataTable>`) and Plan 2 (fill/poll endpoints). The
+  wordlist-curation half can land right after Plan 3; the builder half needs Plan 2.
+- **Leaves a shell for later plans:** Clues' `ClueReview` and Publishing's `RunwayDashboard` add
+  tabs to this `AdminApp`.
+- **Defers (by design):** single-word UI editing, clue/schedule UI (their own plans), and the
+  `require_admin` gate (Auth phase).
+- **Exit milestone:** at `/admin` you can curate the fill wordlist and create+fill a draft puzzle
+  end-to-end, seeing provenance and any structured fill-failure reason.
+
 ### Phase D — Publishing & Scheduling (Plan 5)
 Schedule-to-date (409 on conflict), runway dashboard, daily Tbilisi promote tick.
 - **Depends on:** Plan 1 (publish service, partial index) and Plan 4 (the `can_publish` guard its
@@ -89,7 +108,7 @@ Schedule-to-date (409 on conflict), runway dashboard, daily Tbilisi promote tick
   works, with a runway warning.
 
 ### Phase E — Play View, full (Plan 6) — *parallelizable from Phase A*
-Georgian keyboard, clue bar/list, timer, scoped check/reveal, congrats, localStorage, WebGL
+Native keyboard input, clue bar/list, timer, scoped check/reveal, congrats, localStorage, WebGL
 background. **Only depends on Plan 1** (Grid/engine/PlayView + check/reveal endpoints), so a
 front-end-focused builder can run this alongside Phases B–D.
 - **Contract to honor:** its local-persistence shape (Task 5) **must equal** the Auth plan's
@@ -131,6 +150,7 @@ they're called out so they don't surprise you.
 - **After A:** solve a seeded fixture puzzle end-to-end (render + server check/reveal).
 - **After B:** generate a real filled 13×13 grid via an async job.
 - **After C:** feed real sourced seeds into fills and attach accepted AI clues.
+- **After 9:** at `/admin`, curate the global fill wordlist and create+fill a draft puzzle end-to-end.
 - **After D:** schedule + auto-publish a daily puzzle with runway tracking.
 - **After E:** a player solves today's puzzle on mobile, anonymously, with the full UI.
 - **After F:** signed-in players keep cross-device progress + streaks; admin is gated.

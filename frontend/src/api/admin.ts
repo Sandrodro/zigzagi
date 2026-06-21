@@ -65,3 +65,136 @@ export async function suggest(theme: string): Promise<Suggestion[]> {
   if (!res.ok) throw new Error(`suggest failed: ${res.status}`);
   return res.json();
 }
+
+export interface WordlistWord {
+  id: string;
+  word: string;
+  length: number;
+  status: string;
+}
+
+export interface WordlistStats {
+  active: number;
+  blocked: number;
+  by_length: Record<string, number>;
+}
+
+export interface ImportResult {
+  added: number;
+  rejected: { word: string; reason: string }[];
+}
+
+export async function fetchWordlist(params?: { status?: string; search?: string }): Promise<WordlistWord[]> {
+  const qs = new URLSearchParams();
+  if (params?.status) qs.set("status", params.status);
+  if (params?.search) qs.set("search", params.search);
+  const suffix = qs.toString() ? `?${qs}` : "";
+  const res = await fetch(`${BASE}/wordlist${suffix}`);
+  if (!res.ok) throw new Error(`wordlist failed: ${res.status}`);
+  return res.json();
+}
+
+export async function addWord(word: string): Promise<WordlistWord> {
+  const res = await fetch(`${BASE}/wordlist`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ word }),
+  });
+  if (!res.ok) throw new Error(`addWord failed: ${res.status}`);
+  return res.json();
+}
+
+export async function updateWord(
+  id: string,
+  patch: { word?: string; status?: string },
+): Promise<WordlistWord> {
+  const res = await fetch(`${BASE}/wordlist/${id}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(patch),
+  });
+  if (!res.ok) throw new Error(`updateWord failed: ${res.status}`);
+  return res.json();
+}
+
+export async function bulkImport(text: string): Promise<ImportResult> {
+  const res = await fetch(`${BASE}/wordlist/bulk`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ text }),
+  });
+  if (!res.ok) throw new Error(`bulkImport failed: ${res.status}`);
+  return res.json();
+}
+
+export async function fetchWordlistStats(): Promise<WordlistStats> {
+  const res = await fetch(`${BASE}/wordlist/stats`);
+  if (!res.ok) throw new Error(`stats failed: ${res.status}`);
+  return res.json();
+}
+
+export interface PuzzleSummary {
+  id: string;
+  theme: string;
+  live_date: string;
+  status: string;
+}
+
+export interface PuzzleEntry {
+  id: string;
+  number: number;
+  direction: string;
+  answer: string;
+  row: number;
+  col: number;
+  clue: string | null;
+  clue_status: string;
+  provenance: string;
+}
+
+export interface PuzzleDetail extends PuzzleSummary {
+  grid_template: unknown;
+  entries: PuzzleEntry[];
+}
+
+export interface JobStatus {
+  status: string;
+  result: unknown;
+  error: string | null;
+}
+
+export async function createPuzzle(theme: string, liveDate: string): Promise<PuzzleSummary> {
+  const res = await fetch(`${BASE}/puzzles`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ theme, live_date: liveDate }),
+  });
+  if (!res.ok) throw new Error(`createPuzzle failed: ${res.status}`);
+  return res.json();
+}
+
+export async function fetchPuzzle(id: string): Promise<PuzzleDetail> {
+  const res = await fetch(`${BASE}/puzzles/${id}`);
+  if (!res.ok) throw new Error(`fetchPuzzle failed: ${res.status}`);
+  return res.json();
+}
+
+export async function requestFill(
+  puzzleId: string,
+  seedValue: number,
+  minSeeds: number,
+): Promise<{ job_id: string }> {
+  const res = await fetch(`${BASE}/puzzles/${puzzleId}/fill`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ seed_value: seedValue, min_seeds: minSeeds }),
+  });
+  if (!res.ok) throw new Error(`requestFill failed: ${res.status}`);
+  return res.json();
+}
+
+export async function pollJob(jobId: string): Promise<JobStatus> {
+  const res = await fetch(`${BASE}/jobs/${jobId}`);
+  if (!res.ok) throw new Error(`pollJob failed: ${res.status}`);
+  return res.json();
+}

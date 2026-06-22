@@ -9,12 +9,12 @@ import { PlayView } from "../PlayView";
 const PUZZLE: PuzzleData = {
   date: "2026-06-18",
   theme: "დემო",
-  size: { rows: 5, cols: 5 },
+  size: { rows: 1, cols: 3 },
   blocks: [],
   cells: [{ row: 0, col: 0, number: 1 }],
   clues: {
-    across: [{ number: 1, cell: [0, 0], length: 5, text: "1A" }],
-    down: [{ number: 1, cell: [0, 0], length: 5, text: "1D" }],
+    across: [{ number: 1, cell: [0, 0], length: 3, text: "1A" }],
+    down: [],
   },
 };
 
@@ -22,12 +22,13 @@ const json = (body: unknown) =>
   Promise.resolve({ ok: true, status: 200, json: () => Promise.resolve(body) } as Response);
 
 beforeEach(() => {
+  localStorage.clear();
   vi.stubGlobal(
     "fetch",
     vi.fn((url: string) => {
       if (url.endsWith("/today")) return json(PUZZLE);
       if (url.endsWith("/check")) return json({ results: [{ row: 0, col: 0, correct: true }] });
-      return json({});
+      return json({ cells: [] });
     }),
   );
 });
@@ -50,13 +51,38 @@ describe("PlayView", () => {
   it("checking applies server results to the grid", async () => {
     renderPlayView();
     await waitFor(() => screen.getByTestId("cell-0-0"));
-
     await userEvent.click(screen.getByTestId("cell-0-0"));
     await userEvent.keyboard("ა");
-    await userEvent.click(screen.getByRole("button", { name: /check/i }));
-
+    await userEvent.click(screen.getByRole("button", { name: "Check square" }));
     await waitFor(() =>
       expect(screen.getByTestId("cell-0-0")).toHaveAttribute("data-status", "correct"),
     );
+  });
+
+  it("typing fills the grid and persists to localStorage", async () => {
+    renderPlayView();
+    await waitFor(() => screen.getByTestId("cell-0-0"));
+    await userEvent.click(screen.getByTestId("cell-0-0"));
+    await userEvent.keyboard("ა");
+    await waitFor(() => {
+      const saved = JSON.parse(localStorage.getItem("zigzagi:progress:2026-06-18") ?? "{}");
+      expect(saved.fills).toMatchObject({ "0,0": "ა" });
+    });
+  });
+
+  it("restores fills from localStorage on mount", async () => {
+    localStorage.setItem(
+      "zigzagi:progress:2026-06-18",
+      JSON.stringify({ fills: { "0,1": "ბ" }, timerSeconds: 0, completedAt: null }),
+    );
+    renderPlayView();
+    await waitFor(() => expect(screen.getByTestId("cell-0-1")).toHaveTextContent("ბ"));
+  });
+
+  it("clicking a clue in the list activates it", async () => {
+    renderPlayView();
+    await waitFor(() => screen.getByTestId("cell-0-0"));
+    await userEvent.click(screen.getByRole("button", { name: /1A/ }));
+    expect(screen.getByTestId("cell-0-0")).toHaveAttribute("data-active", "true");
   });
 });

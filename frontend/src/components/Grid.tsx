@@ -9,6 +9,7 @@ export function Grid({ engine, onCellClick }: GridProps) {
   const { rows, cols } = engine.size;
   const numbered = engine.numberedCells();
   const active = engine.active;
+  const wordKeys = new Set(engine.currentWordCells().map((c) => `${c.row},${c.col}`));
 
   return (
     <div
@@ -37,6 +38,7 @@ export function Grid({ engine, onCellClick }: GridProps) {
               key={`${row}-${col}`}
               data-testid={`cell-${row}-${col}`}
               data-active={isActive ? "true" : "false"}
+              data-inword={wordKeys.has(`${row},${col}`) ? "true" : "false"}
               data-status={engine.getStatus(row, col)}
               onClick={() => onCellClick(row, col)}
               style={{ width: "2rem", height: "2rem", position: "relative" }}

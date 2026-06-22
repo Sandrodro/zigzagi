@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 
 import { useReducedMotion } from "../hooks/useReducedMotion";
 
-const GRADIENT = "linear-gradient(135deg, #eef2f7 0%, #dde6f0 50%, #e8eef5 100%)";
+const GRADIENT = "linear-gradient(135deg, #f4f4ef 0%, #edf2f0 55%, #f1e7d5 100%)";
 
 const layerStyle: React.CSSProperties = {
   position: "fixed",

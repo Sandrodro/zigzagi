@@ -2,6 +2,8 @@ import { useState } from "react";
 
 import { bulkUpdate, extractText, type Candidate } from "../api/admin";
 import { DataTable } from "../components/DataTable";
+import { Button } from "../components/ui/Button";
+import { SectionTitle } from "../components/ui/Typography";
 
 const COLUMNS = [
   { key: "surface", header: "სიტყვა" },
@@ -31,29 +33,28 @@ export function PoolReview() {
   };
 
   return (
-    <div>
-      <input
-        aria-label="theme"
-        placeholder="თემა"
-        value={theme}
-        onChange={(e) => setTheme(e.target.value)}
-      />
-      <textarea
-        aria-label="source text"
-        placeholder="ჩასვი ტექსტი"
-        value={text}
-        onChange={(e) => setText(e.target.value)}
-      />
-      <button onClick={onExtract}>ამოღება</button>
+    <section>
+      <SectionTitle>წყაროდან ამოღება</SectionTitle>
+      <div className="field">
+        <label className="field__label" htmlFor="pool-theme">თემა</label>
+        <input id="pool-theme" className="input" aria-label="theme" placeholder="თემა" value={theme} onChange={(e) => setTheme(e.target.value)} />
+      </div>
+      <div className="field">
+        <label className="field__label" htmlFor="pool-text">ტექსტი</label>
+        <textarea id="pool-text" className="textarea" aria-label="source text" placeholder="ჩასვი ტექსტი" value={text} onChange={(e) => setText(e.target.value)} />
+      </div>
+      <Button variant="primary" onClick={onExtract}>ამოღება</Button>
 
       {candidates.length > 0 && (
         <>
-          <p>ამოვარდა: {dropped}</p>
-          <button onClick={() => apply("accept")}>მონიშნულის მიღება</button>
-          <button onClick={() => apply("reject")}>მონიშნულის უარყოფა</button>
+          <p className="muted">ამოვარდა: {dropped}</p>
+          <div className="toolbar">
+            <Button variant="primary" size="sm" onClick={() => apply("accept")}>მონიშნულის მიღება</Button>
+            <Button variant="danger" size="sm" onClick={() => apply("reject")}>მონიშნულის უარყოფა</Button>
+          </div>
           <DataTable columns={[...COLUMNS]} rows={candidates} selectable onSelectionChange={setSelected} />
         </>
       )}
-    </div>
+    </section>
   );
 }

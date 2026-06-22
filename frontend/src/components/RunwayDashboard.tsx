@@ -13,8 +13,13 @@ export function RunwayDashboard() {
 
   return (
     <div>
-      <p>{runway.runway_days} დღე</p>
-      {runway.warning && <p role="alert">გაფრთხილება: დაფარვა 7 დღეზე ნაკლებია</p>}
+      <p className="eyebrow">დაფარვა</p>
+      <p className="timer" style={{ fontSize: "1.4rem" }}>{runway.runway_days} დღე</p>
+      {runway.warning && (
+        <p role="alert" className="banner banner--warn">
+          გაფრთხილება: დაფარვა 7 დღეზე ნაკლებია
+        </p>
+      )}
     </div>
   );
 }

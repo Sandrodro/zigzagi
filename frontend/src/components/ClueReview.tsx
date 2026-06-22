@@ -1,6 +1,7 @@
 import { useState } from "react";
 
 import { reviewClue, type PuzzleEntry } from "../api/admin";
+import { Button } from "./ui/Button";
 
 // ponytail: own table, not <DataTable> — its cells are String()-only and can't host per-row buttons/inputs.
 export function ClueReview({ puzzleId, entries }: { puzzleId: string; entries: PuzzleEntry[] }) {
@@ -28,7 +29,7 @@ export function ClueReview({ puzzleId, entries }: { puzzleId: string; entries: P
   };
 
   return (
-    <table>
+    <table className="data-table">
       <thead>
         <tr>
           <th>პასუხი</th>
@@ -44,6 +45,7 @@ export function ClueReview({ puzzleId, entries }: { puzzleId: string; entries: P
             <td>
               {e.id in editing ? (
                 <input
+                  className="input"
                   aria-label={`edit ${e.id}`}
                   value={editing[e.id]}
                   onChange={(ev) => setEditing((m) => ({ ...m, [e.id]: ev.target.value }))}
@@ -52,16 +54,16 @@ export function ClueReview({ puzzleId, entries }: { puzzleId: string; entries: P
                 e.clue
               )}
             </td>
-            <td>{e.clue_status}</td>
+            <td className="muted">{e.clue_status}</td>
             <td>
               {e.id in editing ? (
-                <button onClick={() => saveEdit(e.id)}>შენახვა</button>
+                <Button variant="primary" size="sm" onClick={() => saveEdit(e.id)}>შენახვა</Button>
               ) : (
-                <>
-                  <button onClick={() => accept(e.id)}>მიღება</button>
-                  <button onClick={() => setEditing((m) => ({ ...m, [e.id]: e.clue ?? "" }))}>რედაქტირება</button>
-                  <button onClick={() => reject(e.id)}>უარყოფა</button>
-                </>
+                <div className="toolbar" style={{ margin: 0 }}>
+                  <Button variant="primary" size="sm" onClick={() => accept(e.id)}>მიღება</Button>
+                  <Button size="sm" onClick={() => setEditing((m) => ({ ...m, [e.id]: e.clue ?? "" }))}>რედაქტირება</Button>
+                  <Button variant="danger" size="sm" onClick={() => reject(e.id)}>უარყოფა</Button>
+                </div>
               )}
             </td>
           </tr>

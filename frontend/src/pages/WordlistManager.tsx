@@ -10,6 +10,8 @@ import {
   type WordlistWord,
 } from "../api/admin";
 import { DataTable } from "../components/DataTable";
+import { Button } from "../components/ui/Button";
+import { SectionTitle } from "../components/ui/Typography";
 
 const COLUMNS = [
   { key: "word", header: "სიტყვა" },
@@ -56,15 +58,15 @@ export function WordlistManager() {
   };
 
   return (
-    <div>
-      <h2>ლექსიკონი</h2>
+    <section>
+      <SectionTitle>ლექსიკონი</SectionTitle>
       {stats && (
-        <p>
-          აქტიური: {stats.active} | დაბლოკილი: {stats.blocked}
+        <p className="stat">
+          აქტიური: {stats.active} · დაბლოკილი: {stats.blocked}
         </p>
       )}
       {stats && (
-        <ul aria-label="length histogram">
+        <ul className="histogram" aria-label="length histogram">
           {Object.entries(stats.by_length).map(([len, count]) => (
             <li key={len}>
               {len}: {count}
@@ -73,26 +75,24 @@ export function WordlistManager() {
         </ul>
       )}
 
-      <input
-        aria-label="new word"
-        placeholder="სიტყვა"
-        value={newWord}
-        onChange={(e) => setNewWord(e.target.value)}
-      />
-      <button onClick={onAdd}>დამატება</button>
+      <div className="toolbar">
+        <input className="input" style={{ maxWidth: "16rem" }} aria-label="new word" placeholder="სიტყვა" value={newWord} onChange={(e) => setNewWord(e.target.value)} />
+        <Button variant="primary" size="sm" onClick={onAdd}>დამატება</Button>
+      </div>
 
-      <textarea
-        aria-label="bulk import"
-        placeholder="ჩასვი სიტყვები"
-        value={bulkText}
-        onChange={(e) => setBulkText(e.target.value)}
-      />
-      <button onClick={onImport}>იმპორტი</button>
-      {imported !== null && <p>დაემატა: {imported}</p>}
+      <div className="field">
+        <label className="field__label" htmlFor="wl-bulk">სიის იმპორტი</label>
+        <textarea id="wl-bulk" className="textarea" aria-label="bulk import" placeholder="ჩასვი სიტყვები" value={bulkText} onChange={(e) => setBulkText(e.target.value)} />
+      </div>
+      <Button size="sm" onClick={onImport}>იმპორტი</Button>
+      {imported !== null && <p className="muted">დაემატა: {imported}</p>}
 
-      <button onClick={() => setStatusFor("blocked")}>დაბლოკვა</button>
-      <button onClick={() => setStatusFor("active")}>განბლოკვა</button>
+      <div className="toolbar">
+        <span className="toolbar__label">მონიშნული</span>
+        <Button variant="danger" size="sm" onClick={() => setStatusFor("blocked")}>დაბლოკვა</Button>
+        <Button size="sm" onClick={() => setStatusFor("active")}>განბლოკვა</Button>
+      </div>
       <DataTable columns={[...COLUMNS]} rows={words} selectable onSelectionChange={setSelected} />
-    </div>
+    </section>
   );
 }

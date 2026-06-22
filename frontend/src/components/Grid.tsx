@@ -5,6 +5,8 @@ interface GridProps {
   onCellClick: (row: number, col: number) => void;
 }
 
+const U = 36; // cell size in SVG units; the grid scales to its container via viewBox
+
 export function Grid({ engine, onCellClick }: GridProps) {
   const { rows, cols } = engine.size;
   const numbered = engine.numberedCells();
@@ -12,47 +14,51 @@ export function Grid({ engine, onCellClick }: GridProps) {
   const wordKeys = new Set(engine.currentWordCells().map((c) => `${c.row},${c.col}`));
 
   return (
-    <div
-      role="grid"
-      style={{
-        display: "grid",
-        gridTemplateColumns: `repeat(${cols}, 2rem)`,
-        gap: "1px",
-      }}
-    >
-      {Array.from({ length: rows }).flatMap((_, row) =>
-        Array.from({ length: cols }).map((_, col) => {
-          if (engine.isBlock(row, col)) {
+    <div className="grid-wrap">
+      <svg
+        role="grid"
+        className="grid-svg"
+        viewBox={`0 0 ${cols * U} ${rows * U}`}
+        style={{ maxWidth: cols * U }}
+        aria-label="კროსვორდი"
+      >
+        {Array.from({ length: rows }).flatMap((_, row) =>
+          Array.from({ length: cols }).map((_, col) => {
+            const x = col * U;
+            const y = row * U;
+            if (engine.isBlock(row, col)) {
+              return <rect key={`${row}-${col}`} data-block="true" className="cell-block" x={x} y={y} width={U} height={U} />;
+            }
+            const isActive = active.row === row && active.col === col;
+            const num = numbered.find((c) => c.row === row && c.col === col)?.number;
+            const value = engine.getValue(row, col);
             return (
-              <div
+              <g
                 key={`${row}-${col}`}
-                data-block="true"
-                style={{ width: "2rem", height: "2rem", background: "#222" }}
-              />
+                className="cell"
+                role="gridcell"
+                data-testid={`cell-${row}-${col}`}
+                data-active={isActive ? "true" : "false"}
+                data-inword={wordKeys.has(`${row},${col}`) ? "true" : "false"}
+                data-status={engine.getStatus(row, col)}
+                onClick={() => onCellClick(row, col)}
+              >
+                <rect className="cell-rect" x={x} y={y} width={U} height={U} />
+                {num !== undefined && (
+                  <text className="cell-num" x={x + 3} y={y + 10}>
+                    {num}
+                  </text>
+                )}
+                {value && (
+                  <text className="cell-val" x={x + U / 2} y={y + U * 0.72} textAnchor="middle">
+                    {value}
+                  </text>
+                )}
+              </g>
             );
-          }
-          const isActive = active.row === row && active.col === col;
-          const num = numbered.find((c) => c.row === row && c.col === col)?.number;
-          return (
-            <button
-              key={`${row}-${col}`}
-              data-testid={`cell-${row}-${col}`}
-              data-active={isActive ? "true" : "false"}
-              data-inword={wordKeys.has(`${row},${col}`) ? "true" : "false"}
-              data-status={engine.getStatus(row, col)}
-              onClick={() => onCellClick(row, col)}
-              style={{ width: "2rem", height: "2rem", position: "relative" }}
-            >
-              {num !== undefined && (
-                <span style={{ position: "absolute", top: 0, left: 1, fontSize: "0.5rem" }}>
-                  {num}
-                </span>
-              )}
-              {engine.getValue(row, col)}
-            </button>
-          );
-        }),
-      )}
+          }),
+        )}
+      </svg>
     </div>
   );
 }

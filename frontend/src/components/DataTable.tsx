@@ -27,7 +27,7 @@ export function DataTable<T extends { id: string }>({
   };
 
   return (
-    <table>
+    <table className="data-table">
       <thead>
         <tr>
           {selectable && <th />}

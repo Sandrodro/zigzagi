@@ -10,6 +10,8 @@ import { ClueList } from "../components/ClueList";
 import { CongratsModal } from "../components/CongratsModal";
 import { Grid } from "../components/Grid";
 import { Timer } from "../components/Timer";
+import { Button } from "../components/ui/Button";
+import { PageHeader } from "../components/ui/PageHeader";
 
 export function PlayView({ date }: { date?: string } = {}) {
   const { data: puzzle } = usePuzzle(date);
@@ -66,7 +68,7 @@ export function PlayView({ date }: { date?: string } = {}) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [engine?.isComplete(), completedAt]);
 
-  if (!engine || !puzzle) return <p>იტვირთება…</p>;
+  if (!engine || !puzzle) return <p className="page muted">იტვირთება…</p>;
 
   const persist = () => {
     saveProgress(puzzle.date, { fills: engine.getFills(), timerSeconds: timer.seconds, completedAt: null });
@@ -117,23 +119,10 @@ export function PlayView({ date }: { date?: string } = {}) {
   const cur = engine.currentClue();
 
   return (
-    <div>
+    <div className="page page--narrow">
       <Background enabled={bgEnabled} />
-      <label style={{ float: "right", fontSize: "0.8rem" }}>
-        <input
-          type="checkbox"
-          checked={bgEnabled}
-          onChange={(e) => {
-            setBgEnabled(e.target.checked);
-            localStorage.setItem("zigzagi:bg", e.target.checked ? "on" : "off");
-          }}
-        />
-        ფონი
-      </label>
-      <header style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-        <h1>{puzzle.theme}</h1>
-        <Timer seconds={timer.seconds} />
-      </header>
+
+      <PageHeader title={puzzle.theme} eyebrow="დღის კროსვორდი" right={<Timer seconds={timer.seconds} />} />
 
       <ClueBar
         clue={cur}
@@ -167,13 +156,17 @@ export function PlayView({ date }: { date?: string } = {}) {
         style={{ position: "absolute", left: -9999, width: 1, height: 1, opacity: 0 }}
       />
 
-      <div style={{ display: "flex", gap: "0.5rem", margin: "0.5rem 0" }}>
-        <button onClick={() => onCheck("square")}>Check square</button>
-        <button onClick={() => onCheck("word")}>Check word</button>
-        <button onClick={() => onCheck("puzzle")}>Check puzzle</button>
-        <button onClick={() => onReveal("square")}>Reveal square</button>
-        <button onClick={() => onReveal("word")}>Reveal word</button>
-        <button onClick={() => onReveal("puzzle")}>Reveal puzzle</button>
+      <div className="toolbar">
+        <span className="toolbar__label">შემოწმება</span>
+        <Button variant="primary" size="sm" onClick={() => onCheck("square")}>Check square</Button>
+        <Button variant="primary" size="sm" onClick={() => onCheck("word")}>Check word</Button>
+        <Button variant="primary" size="sm" onClick={() => onCheck("puzzle")}>Check puzzle</Button>
+      </div>
+      <div className="toolbar">
+        <span className="toolbar__label">გახსნა</span>
+        <Button size="sm" onClick={() => onReveal("square")}>Reveal square</Button>
+        <Button size="sm" onClick={() => onReveal("word")}>Reveal word</Button>
+        <Button size="sm" onClick={() => onReveal("puzzle")}>Reveal puzzle</Button>
       </div>
 
       <ClueList
@@ -189,6 +182,18 @@ export function PlayView({ date }: { date?: string } = {}) {
           rerender();
         }}
       />
+
+      <label className="muted" style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem", fontSize: "0.8rem", marginTop: "1.5rem" }}>
+        <input
+          type="checkbox"
+          checked={bgEnabled}
+          onChange={(e) => {
+            setBgEnabled(e.target.checked);
+            localStorage.setItem("zigzagi:bg", e.target.checked ? "on" : "off");
+          }}
+        />
+        ფონის ანიმაცია
+      </label>
 
       {completedAt && <CongratsModal seconds={timer.seconds} onClose={() => setCompletedAt(null)} />}
     </div>

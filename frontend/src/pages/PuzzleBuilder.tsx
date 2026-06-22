@@ -8,6 +8,8 @@ import {
   type PuzzleEntry,
 } from "../api/admin";
 import { DataTable } from "../components/DataTable";
+import { Button } from "../components/ui/Button";
+import { SectionTitle } from "../components/ui/Typography";
 
 const COLUMNS = [
   { key: "number", header: "№" },
@@ -57,41 +59,39 @@ export function PuzzleBuilder() {
   };
 
   return (
-    <div>
-      <h2>ფაზლის აწყობა</h2>
-      <input aria-label="theme" placeholder="თემა" value={theme} onChange={(e) => setTheme(e.target.value)} />
-      <input aria-label="live date" type="date" value={liveDate} onChange={(e) => setLiveDate(e.target.value)} />
-      <button onClick={onCreate}>შექმნა</button>
+    <section>
+      <SectionTitle>ფაზლის აწყობა</SectionTitle>
+      <div className="field">
+        <label className="field__label" htmlFor="pb-theme">თემა</label>
+        <input id="pb-theme" className="input" aria-label="theme" placeholder="თემა" value={theme} onChange={(e) => setTheme(e.target.value)} />
+      </div>
+      <div className="field">
+        <label className="field__label" htmlFor="pb-date">გამოქვეყნების თარიღი</label>
+        <input id="pb-date" className="input" aria-label="live date" type="date" value={liveDate} onChange={(e) => setLiveDate(e.target.value)} />
+      </div>
+      <Button variant="primary" onClick={onCreate}>შექმნა</Button>
 
       {puzzleId && (
         <>
-          <p>ID: {puzzleId}</p>
-          <label>
-            seeds min
-            <input
-              aria-label="min seeds"
-              type="number"
-              value={minSeeds}
-              onChange={(e) => setMinSeeds(Number(e.target.value))}
-            />
-          </label>
-          <label>
-            seed
-            <input
-              aria-label="seed value"
-              type="number"
-              value={seedValue}
-              onChange={(e) => setSeedValue(Number(e.target.value))}
-            />
-          </label>
-          <button onClick={onFill}>შევსება</button>
+          <p className="stat">ID: {puzzleId}</p>
+          <div className="toolbar">
+            <label className="field__label" style={{ alignSelf: "center" }}>
+              seeds min
+              <input aria-label="min seeds" className="input" style={{ width: "5rem", marginLeft: "0.4rem" }} type="number" value={minSeeds} onChange={(e) => setMinSeeds(Number(e.target.value))} />
+            </label>
+            <label className="field__label" style={{ alignSelf: "center" }}>
+              seed
+              <input aria-label="seed value" className="input" style={{ width: "5rem", marginLeft: "0.4rem" }} type="number" value={seedValue} onChange={(e) => setSeedValue(Number(e.target.value))} />
+            </label>
+            <Button variant="primary" size="sm" onClick={onFill}>შევსება</Button>
+          </div>
         </>
       )}
 
-      {jobId && <button onClick={onCheck}>სტატუსის შემოწმება</button>}
-      {jobStatus && <p>სტატუსი: {jobStatus}</p>}
-      {error && <p role="alert">{error}</p>}
+      {jobId && <Button size="sm" onClick={onCheck}>სტატუსის შემოწმება</Button>}
+      {jobStatus && <p className="stat">სტატუსი: {jobStatus}</p>}
+      {error && <p className="banner banner--warn" role="alert">{error}</p>}
       {entries.length > 0 && <DataTable columns={[...COLUMNS]} rows={entries} />}
-    </div>
+    </section>
   );
 }

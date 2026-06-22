@@ -59,7 +59,7 @@ cd backend && uv run alembic upgrade head
 
 ## Frontend
 
-**Stack:** React 18, TypeScript, Vite, TanStack Query (react-query) for server state, TanStack Router (code-based route tree in `src/main.tsx`) for routing, Vitest + Testing Library (no Tailwind yet).
+**Stack:** React 18, TypeScript, Vite, TanStack Query (react-query) for server state, TanStack Router (code-based route tree in `src/router.tsx`) for routing, Vitest + Testing Library (no Tailwind yet).
 
 ```sh
 cd frontend && npm test          # vitest run
@@ -70,8 +70,8 @@ cd frontend && npm run build     # tsc + vite build
 - `src/engine/crossword.ts` — pure, framework-agnostic solving engine (active cell, navigation, check/reveal state); unit-tested in isolation
 - `src/engine/types.ts` — shared types
 - `src/components/Grid.tsx`, `PlayView.tsx` — React components consuming the engine
-- `src/api/play.ts` — TanStack Query hooks for Play endpoints (`usePuzzle(date?)`, `usePuzzleList`, `useCheckCells`, `useRevealCells`); raw `fetch` wrappers are module-private. `QueryClientProvider` + the router are set up in `src/main.tsx`; component tests must wrap renders in `QueryClientProvider`, and components using `<Link>` also need a (memory) router.
-- Routes (`src/main.tsx`): `/` Play (today), `/play?date=` Play (a published puzzle by date), `/list` published-puzzle list, `/admin` admin shell.
+- `src/api/play.ts` — TanStack Query hooks for Play endpoints (`usePuzzle(date?)`, `usePuzzleList`, `useCheckCells`, `useRevealCells`); raw `fetch` wrappers are module-private. `QueryClientProvider` and `RouterProvider` are set up in `src/main.tsx` (the route tree lives in `src/router.tsx`); component tests must wrap renders in `QueryClientProvider`, and components using `<Link>` also need a (memory) router.
+- Routes (`src/router.tsx`): `/` Play (today), `/play?date=` Play (a published puzzle by date), `/list` published-puzzle list, `/admin` admin shell.
 - **Tests** live in a `__test__/` folder next to the code under test (e.g. `src/components/__test__/`). Component tests mock `fetch` (via `vi.stubGlobal`) rather than the api module.
 - The project is **TypeScript-only** (`.ts`/`.tsx`); `tsc` runs with `noEmit` (Vite transpiles), so no `.js` artifacts in `src/`.
 

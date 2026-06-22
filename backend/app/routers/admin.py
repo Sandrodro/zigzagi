@@ -4,6 +4,7 @@ import uuid
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.ai.client import GeminiClient
@@ -12,6 +13,8 @@ from app.db import get_db
 from app.models import Job, Puzzle
 from app.services.clues import generate_clues, review_clue
 from app.services.pool import bulk_update, create_from_extraction, list_pool
+from app.services.publish import runway_days, schedule_puzzle
+from app.services.puzzles import today_tbilisi
 from app.services.solver_jobs import enqueue_fill
 from app.services.wordlist import (
     add_word,
@@ -203,6 +206,32 @@ def review(puzzle_id: uuid.UUID, entry_id: uuid.UUID, body: ClueReviewRequest, d
     entry = review_clue(db, entry_id, body.action, body.clue, ai=ai)
     db.commit()
     return {"clue_status": entry.clue_status}
+
+
+class ScheduleRequest(BaseModel):
+    live_date: dt.date
+
+
+@router.post("/puzzles/{puzzle_id}/schedule")
+def schedule(puzzle_id: uuid.UUID, body: ScheduleRequest, db: Session = Depends(get_db)):
+    if db.get(Puzzle, puzzle_id) is None:
+        raise HTTPException(404, "puzzle not found")
+    try:
+        puzzle = schedule_puzzle(db, puzzle_id, body.live_date)  # raises ValueError if not publishable
+        db.commit()
+    except ValueError as e:
+        db.rollback()
+        raise HTTPException(422, str(e))
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(409, "another puzzle is already scheduled for that date")
+    return {"status": puzzle.status, "live_date": puzzle.live_date.isoformat()}
+
+
+@router.get("/dashboard/runway")
+def runway(db: Session = Depends(get_db)):
+    days = runway_days(db, today_tbilisi())
+    return {"runway_days": days, "warning": days < 7}
 
 
 @router.get("/puzzles/{puzzle_id}")

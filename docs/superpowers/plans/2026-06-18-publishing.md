@@ -46,7 +46,7 @@ frontend/src/components/RunwayDashboard.tsx + test
   starting at `today` for which a `scheduled` or `published` puzzle exists. (Gap on any day stops
   the count.)
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 `backend/tests/test_runway.py`:
 ```python
@@ -84,7 +84,7 @@ def test_runway_zero_when_today_uncovered(db_session):
     assert runway_days(db_session, base) == 0
 ```
 
-- [ ] **Step 2: Run to verify failure → Step 3: Implement**
+- [x] **Step 2: Run to verify failure → Step 3: Implement**
 
 Append to `backend/app/services/publish.py`:
 ```python
@@ -110,7 +110,7 @@ def runway_days(db: Session, today: dt.date) -> int:
 (Remove the bogus `import ... as _dt_unused` line — `dt` and `select`/`Puzzle` are already
 imported at the top of `publish.py`; it's shown only to flag the dependency.)
 
-- [ ] **Step 4: Run to verify pass; Step 5: Commit**
+- [x] **Step 4: Run to verify pass; Step 5: Commit**
 
 ```bash
 git add backend/app/services/publish.py backend/tests/test_runway.py
@@ -131,7 +131,7 @@ git commit -m "feat(publishing): consecutive-day runway calculation"
     another puzzle already holds that date; **422** if `can_publish` fails (clues not done).
   - `GET /api/admin/dashboard/runway` → `{runway_days, warning}` (`warning = runway_days < 7`).
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 `backend/tests/test_admin_publish.py`:
 ```python
@@ -182,7 +182,7 @@ def test_runway_endpoint(client, db_session):
     assert "runway_days" in body and "warning" in body
 ```
 
-- [ ] **Step 2: Run to verify failure → Step 3: Implement**
+- [x] **Step 2: Run to verify failure → Step 3: Implement**
 
 Append to `backend/app/routers/admin.py`:
 ```python
@@ -220,7 +220,7 @@ def runway(db: Session = Depends(get_db)):
     return {"runway_days": days, "warning": days < 7}
 ```
 
-- [ ] **Step 4: Run to verify pass; Step 5: Commit**
+- [x] **Step 4: Run to verify pass; Step 5: Commit**
 
 ```bash
 git add backend/app/routers/admin.py backend/tests/test_admin_publish.py
@@ -241,7 +241,7 @@ git commit -m "feat(publishing): schedule (409 on conflict) and runway dashboard
     safe to call repeatedly (idempotent — already-published puzzles are untouched).
   - `worker.run_forever` also fires `promote_tick` once per Tbilisi day (track last-run date).
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `backend/tests/test_worker_promote.py`:
 ```python
@@ -262,7 +262,7 @@ def test_promote_tick_publishes_due(db_session):
     assert promote_tick(db_session, today) == 0
 ```
 
-- [ ] **Step 2: Run to verify failure → Step 3: Implement**
+- [x] **Step 2: Run to verify failure → Step 3: Implement**
 
 Append to `backend/app/worker.py`:
 ```python
@@ -292,7 +292,7 @@ when the Tbilisi date rolls over:
             time.sleep(poll_s)
 ```
 
-- [ ] **Step 4: Run to verify pass; Step 5: Commit**
+- [x] **Step 4: Run to verify pass; Step 5: Commit**
 
 ```bash
 git add backend/app/worker.py backend/tests/test_worker_promote.py
@@ -311,14 +311,14 @@ git commit -m "feat(publishing): daily promote tick in the worker"
 - Produces: `RunwayDashboard()` — fetches `/api/admin/dashboard/runway` on mount; shows
   `{runway_days} days` and a visible warning banner when `warning` is true.
 
-- [ ] **Step 1: Write the failing test** (api mocked): with `fetchRunway` returning
+- [x] **Step 1: Write the failing test** (api mocked): with `fetchRunway` returning
 `{runway_days: 3, warning: true}`, render shows "3" and a `role="alert"` banner; with
 `{runway_days: 10, warning: false}`, no alert.
 
-- [ ] **Step 2: Run to verify failure → Step 3: Implement** `RunwayDashboard` + `fetchRunway`
+- [x] **Step 2: Run to verify failure → Step 3: Implement** `RunwayDashboard` + `fetchRunway`
 (GET wrapper, same pattern as `api/play.ts`).
 
-- [ ] **Step 4: Run the frontend suite + typecheck; Step 5: Commit**
+- [x] **Step 4: Run the frontend suite + typecheck; Step 5: Commit**
 
 ```bash
 git add frontend/src/components/RunwayDashboard.tsx frontend/src/components/RunwayDashboard.test.tsx frontend/src/api/admin.ts

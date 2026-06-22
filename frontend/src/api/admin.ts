@@ -199,6 +199,17 @@ export async function pollJob(jobId: string): Promise<JobStatus> {
   return res.json();
 }
 
+export interface Runway {
+  runway_days: number;
+  warning: boolean;
+}
+
+export async function fetchRunway(): Promise<Runway> {
+  const res = await fetch(`${BASE}/dashboard/runway`);
+  if (!res.ok) throw new Error(`runway failed: ${res.status}`);
+  return res.json();
+}
+
 export async function generateClues(puzzleId: string): Promise<{ generated: number }> {
   const res = await fetch(`${BASE}/puzzles/${puzzleId}/clues`, { method: "POST" });
   if (!res.ok) throw new Error(`generateClues failed: ${res.status}`);

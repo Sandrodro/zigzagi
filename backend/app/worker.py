@@ -1,3 +1,4 @@
+import datetime as dt
 import time
 from collections.abc import Callable
 from pathlib import Path
@@ -7,6 +8,8 @@ from sqlalchemy.orm import Session
 
 from app.db import SessionLocal
 from app.models import Job, Puzzle, WordlistEntry
+from app.services.publish import promote_due_puzzles
+from app.services.puzzles import today_tbilisi
 from app.services.seeds_provider import seeds_for_puzzle
 from app.services.solver_jobs import run_fill_job
 from app.solver.index import Wordlist
@@ -55,10 +58,21 @@ def tick(
     return True
 
 
+def promote_tick(db: Session, today: dt.date) -> int:
+    n = promote_due_puzzles(db, today)
+    db.commit()
+    return n
+
+
 def run_forever(poll_s: float = 2.0) -> None:  # pragma: no cover - operational entrypoint
     library = load_library(_LIB_DIR)
+    last_promote = None
     while True:
+        today = today_tbilisi()
         with SessionLocal() as db:
+            if today != last_promote:
+                promote_tick(db, today)
+                last_promote = today
             did = tick(db, library)
         if not did:
             time.sleep(poll_s)

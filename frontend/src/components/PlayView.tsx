@@ -4,6 +4,7 @@ import { useCheckCells, useRevealCells, useToday } from "../api/play";
 import { CrosswordEngine } from "../engine/crossword";
 import { loadProgress, saveProgress } from "../progress/local";
 import { useTimer } from "../hooks/useTimer";
+import { Background } from "./Background";
 import { ClueBar } from "./ClueBar";
 import { ClueList } from "./ClueList";
 import { CongratsModal } from "./CongratsModal";
@@ -18,6 +19,7 @@ export function PlayView() {
   const timer = useTimer();
   const inputRef = useRef<HTMLInputElement>(null);
   const [completedAt, setCompletedAt] = useState<string | null>(null);
+  const [bgEnabled, setBgEnabled] = useState(() => localStorage.getItem("zigzagi:bg") !== "off");
 
   const checkMutation = useCheckCells(puzzle?.date ?? "");
   const revealMutation = useRevealCells(puzzle?.date ?? "");
@@ -116,6 +118,18 @@ export function PlayView() {
 
   return (
     <div>
+      <Background enabled={bgEnabled} />
+      <label style={{ float: "right", fontSize: "0.8rem" }}>
+        <input
+          type="checkbox"
+          checked={bgEnabled}
+          onChange={(e) => {
+            setBgEnabled(e.target.checked);
+            localStorage.setItem("zigzagi:bg", e.target.checked ? "on" : "off");
+          }}
+        />
+        ფონი
+      </label>
       <header style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
         <h1>{puzzle.theme}</h1>
         <Timer seconds={timer.seconds} />

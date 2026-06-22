@@ -1,7 +1,7 @@
 import datetime as dt
 import uuid
 
-from sqlalchemy import ARRAY, DateTime, ForeignKey, Index, String, func, text
+from sqlalchemy import ARRAY, DateTime, ForeignKey, String, func
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -22,15 +22,8 @@ class Puzzle(Base):
     entries: Mapped[list["Entry"]] = relationship(
         back_populates="puzzle", cascade="all, delete-orphan"
     )
-
-    __table_args__ = (
-        Index(
-            "uq_puzzle_live_date_active",
-            "live_date",
-            unique=True,
-            postgresql_where=text("status IN ('scheduled', 'published')"),
-        ),
-    )
+    # ponytail: one-puzzle-per-date uniqueness dropped during dev; re-add the partial
+    # unique index on (live_date) where status in (scheduled,published) before launch.
 
 
 class Entry(Base):

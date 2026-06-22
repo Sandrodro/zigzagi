@@ -6,21 +6,25 @@ import { PageHeader } from "../components/ui/PageHeader";
 export function PuzzleList() {
   const { data: puzzles } = usePuzzleList();
 
-  if (!puzzles) return <p className="page muted">იტვირთება…</p>;
+  if (!puzzles) return <p className="mx-auto max-w-[760px] px-5 pt-8 text-ink-soft">იტვირთება…</p>;
 
   return (
-    <div className="page">
+    <div className="mx-auto max-w-[760px] px-5 pt-8 pb-16">
       <PageHeader title="არქივი" eyebrow="გამოქვეყნებული კროსვორდები" />
 
       {puzzles.length === 0 ? (
-        <p className="muted">გამოქვეყნებული კროსვორდი ჯერ არ არის.</p>
+        <p className="text-ink-soft">გამოქვეყნებული კროსვორდი ჯერ არ არის.</p>
       ) : (
-        <ul className="archive">
+        <ul className="mt-6 list-none p-0">
           {puzzles.map((p) => (
-            <li key={p.date} className="archive__row">
-              <Link to="/play" search={{ date: p.date }} className="archive__link">
-                <span className="archive__theme">{p.theme}</span>
-                <span className="archive__date">{p.date}</span>
+            <li key={p.id} className="border-b border-rule">
+              <Link
+                to="/play"
+                search={{ id: p.id }}
+                className="flex items-baseline justify-between gap-4 px-1 py-2.5 text-ink hover:bg-teal-faint hover:no-underline"
+              >
+                <span className="font-serif text-[1.05rem]">{p.theme}</span>
+                <span className="font-mono text-[0.8rem] text-ink-soft">{p.date}</span>
               </Link>
             </li>
           ))}

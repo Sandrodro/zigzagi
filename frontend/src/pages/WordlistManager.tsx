@@ -11,6 +11,7 @@ import {
 } from "../api/admin";
 import { DataTable } from "../components/DataTable";
 import { Button } from "../components/ui/Button";
+import { Input, Textarea } from "../components/ui/Input";
 import { SectionTitle } from "../components/ui/Typography";
 
 const COLUMNS = [
@@ -61,34 +62,34 @@ export function WordlistManager() {
     <section>
       <SectionTitle>ლექსიკონი</SectionTitle>
       {stats && (
-        <p className="stat">
+        <p className="font-mono text-[0.85rem] text-ink-soft">
           აქტიური: {stats.active} · დაბლოკილი: {stats.blocked}
         </p>
       )}
       {stats && (
-        <ul className="histogram" aria-label="length histogram">
+        <ul className="my-2 flex list-none flex-wrap gap-2 p-0" aria-label="length histogram">
           {Object.entries(stats.by_length).map(([len, count]) => (
-            <li key={len}>
+            <li key={len} className="rounded border border-rule px-1.5 py-0.5 font-mono text-[0.78rem] text-ink-soft">
               {len}: {count}
             </li>
           ))}
         </ul>
       )}
 
-      <div className="toolbar">
-        <input className="input" style={{ maxWidth: "16rem" }} aria-label="new word" placeholder="სიტყვა" value={newWord} onChange={(e) => setNewWord(e.target.value)} />
+      <div className="my-4 flex flex-wrap gap-2">
+        <Input className="max-w-64" aria-label="new word" placeholder="სიტყვა" value={newWord} onChange={(e) => setNewWord(e.target.value)} />
         <Button variant="primary" size="sm" onClick={onAdd}>დამატება</Button>
       </div>
 
-      <div className="field">
-        <label className="field__label" htmlFor="wl-bulk">სიის იმპორტი</label>
-        <textarea id="wl-bulk" className="textarea" aria-label="bulk import" placeholder="ჩასვი სიტყვები" value={bulkText} onChange={(e) => setBulkText(e.target.value)} />
+      <div className="my-2.5 flex flex-col gap-1.5">
+        <label className="text-[0.72rem] font-semibold uppercase tracking-[0.08em] text-ink-soft" htmlFor="wl-bulk">სიის იმპორტი</label>
+        <Textarea id="wl-bulk" aria-label="bulk import" placeholder="ჩასვი სიტყვები" value={bulkText} onChange={(e) => setBulkText(e.target.value)} />
       </div>
       <Button size="sm" onClick={onImport}>იმპორტი</Button>
-      {imported !== null && <p className="muted">დაემატა: {imported}</p>}
+      {imported !== null && <p className="text-ink-soft">დაემატა: {imported}</p>}
 
-      <div className="toolbar">
-        <span className="toolbar__label">მონიშნული</span>
+      <div className="my-4 flex flex-wrap items-center gap-2">
+        <span className="mr-1 text-[0.72rem] font-semibold uppercase tracking-[0.1em] text-ink-soft">მონიშნული</span>
         <Button variant="danger" size="sm" onClick={() => setStatusFor("blocked")}>დაბლოკვა</Button>
         <Button size="sm" onClick={() => setStatusFor("active")}>განბლოკვა</Button>
       </div>

@@ -17,6 +17,7 @@ export interface ClueRef {
 }
 
 export interface PuzzleData {
+  id: string;
   date: string;
   theme: string;
   size: { rows: number; cols: number };

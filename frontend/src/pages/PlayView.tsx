@@ -13,8 +13,8 @@ import { Timer } from "../components/Timer";
 import { Button } from "../components/ui/Button";
 import { PageHeader } from "../components/ui/PageHeader";
 
-export function PlayView({ date }: { date?: string } = {}) {
-  const { data: puzzle } = usePuzzle(date);
+export function PlayView({ id, date }: { id?: string; date?: string } = {}) {
+  const { data: puzzle } = usePuzzle({ id, date });
   const [engine, setEngine] = useState<CrosswordEngine | null>(null);
   // ponytail: mutable engine; counter forces a re-render after each mutation.
   const [, rerender] = useReducer((n: number) => n + 1, 0);
@@ -23,14 +23,14 @@ export function PlayView({ date }: { date?: string } = {}) {
   const [completedAt, setCompletedAt] = useState<string | null>(null);
   const [bgEnabled, setBgEnabled] = useState(() => localStorage.getItem("zigzagi:bg") !== "off");
 
-  const checkMutation = useCheckCells(puzzle?.date ?? "");
-  const revealMutation = useRevealCells(puzzle?.date ?? "");
+  const checkMutation = useCheckCells(puzzle?.id ?? "");
+  const revealMutation = useRevealCells(puzzle?.id ?? "");
 
   // Build the engine when the puzzle arrives, hydrating from localStorage.
   useEffect(() => {
     if (!puzzle) return;
     const e = new CrosswordEngine(puzzle);
-    const saved = loadProgress(puzzle.date);
+    const saved = loadProgress(puzzle.id);
     if (saved) {
       e.loadFills(saved.fills);
       timer.set(saved.timerSeconds);
@@ -43,7 +43,7 @@ export function PlayView({ date }: { date?: string } = {}) {
   // Persist on every timer tick (captures both fills and elapsed seconds).
   useEffect(() => {
     if (!engine || !puzzle) return;
-    saveProgress(puzzle.date, { fills: engine.getFills(), timerSeconds: timer.seconds, completedAt: null });
+    saveProgress(puzzle.id, { fills: engine.getFills(), timerSeconds: timer.seconds, completedAt: null });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [timer.seconds]);
 
@@ -61,17 +61,17 @@ export function PlayView({ date }: { date?: string } = {}) {
         timer.pause();
         const stamp = new Date().toISOString();
         setCompletedAt(stamp);
-        saveProgress(puzzle.date, { fills: engine.getFills(), timerSeconds: timer.seconds, completedAt: stamp });
+        saveProgress(puzzle.id, { fills: engine.getFills(), timerSeconds: timer.seconds, completedAt: stamp });
       }
       rerender();
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [engine?.isComplete(), completedAt]);
 
-  if (!engine || !puzzle) return <p className="page muted">იტვირთება…</p>;
+  if (!engine || !puzzle) return <p className="mx-auto max-w-[560px] px-5 pt-8 text-ink-soft">იტვირთება…</p>;
 
   const persist = () => {
-    saveProgress(puzzle.date, { fills: engine.getFills(), timerSeconds: timer.seconds, completedAt: null });
+    saveProgress(puzzle.id, { fills: engine.getFills(), timerSeconds: timer.seconds, completedAt: null });
     rerender();
   };
 
@@ -119,7 +119,7 @@ export function PlayView({ date }: { date?: string } = {}) {
   const cur = engine.currentClue();
 
   return (
-    <div className="page page--narrow">
+    <div className="mx-auto max-w-[560px] px-5 pt-8 pb-16">
       <Background enabled={bgEnabled} />
 
       <PageHeader title={puzzle.theme} eyebrow="დღის კროსვორდი" right={<Timer seconds={timer.seconds} />} />
@@ -156,14 +156,14 @@ export function PlayView({ date }: { date?: string } = {}) {
         style={{ position: "absolute", left: -9999, width: 1, height: 1, opacity: 0 }}
       />
 
-      <div className="toolbar">
-        <span className="toolbar__label">შემოწმება</span>
+      <div className="my-4 flex flex-wrap items-center gap-2">
+        <span className="mr-1 text-[0.72rem] font-semibold uppercase tracking-[0.1em] text-ink-soft">შემოწმება</span>
         <Button variant="primary" size="sm" onClick={() => onCheck("square")}>Check square</Button>
         <Button variant="primary" size="sm" onClick={() => onCheck("word")}>Check word</Button>
         <Button variant="primary" size="sm" onClick={() => onCheck("puzzle")}>Check puzzle</Button>
       </div>
-      <div className="toolbar">
-        <span className="toolbar__label">გახსნა</span>
+      <div className="my-4 flex flex-wrap items-center gap-2">
+        <span className="mr-1 text-[0.72rem] font-semibold uppercase tracking-[0.1em] text-ink-soft">გახსნა</span>
         <Button size="sm" onClick={() => onReveal("square")}>Reveal square</Button>
         <Button size="sm" onClick={() => onReveal("word")}>Reveal word</Button>
         <Button size="sm" onClick={() => onReveal("puzzle")}>Reveal puzzle</Button>
@@ -183,7 +183,7 @@ export function PlayView({ date }: { date?: string } = {}) {
         }}
       />
 
-      <label className="muted" style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem", fontSize: "0.8rem", marginTop: "1.5rem" }}>
+      <label className="mt-6 inline-flex items-center gap-1.5 text-[0.8rem] text-ink-soft">
         <input
           type="checkbox"
           checked={bgEnabled}

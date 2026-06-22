@@ -9,7 +9,10 @@ import {
 } from "../api/admin";
 import { DataTable } from "../components/DataTable";
 import { Button } from "../components/ui/Button";
+import { Input } from "../components/ui/Input";
 import { SectionTitle } from "../components/ui/Typography";
+
+const LABEL = "text-[0.72rem] font-semibold uppercase tracking-[0.08em] text-ink-soft";
 
 const COLUMNS = [
   { key: "number", header: "№" },
@@ -61,27 +64,27 @@ export function PuzzleBuilder() {
   return (
     <section>
       <SectionTitle>ფაზლის აწყობა</SectionTitle>
-      <div className="field">
-        <label className="field__label" htmlFor="pb-theme">თემა</label>
-        <input id="pb-theme" className="input" aria-label="theme" placeholder="თემა" value={theme} onChange={(e) => setTheme(e.target.value)} />
+      <div className="my-2.5 flex flex-col gap-1.5">
+        <label className={LABEL} htmlFor="pb-theme">თემა</label>
+        <Input id="pb-theme" aria-label="theme" placeholder="თემა" value={theme} onChange={(e) => setTheme(e.target.value)} />
       </div>
-      <div className="field">
-        <label className="field__label" htmlFor="pb-date">გამოქვეყნების თარიღი</label>
-        <input id="pb-date" className="input" aria-label="live date" type="date" value={liveDate} onChange={(e) => setLiveDate(e.target.value)} />
+      <div className="my-2.5 flex flex-col gap-1.5">
+        <label className={LABEL} htmlFor="pb-date">გამოქვეყნების თარიღი</label>
+        <Input id="pb-date" aria-label="live date" type="date" value={liveDate} onChange={(e) => setLiveDate(e.target.value)} />
       </div>
       <Button variant="primary" onClick={onCreate}>შექმნა</Button>
 
       {puzzleId && (
         <>
-          <p className="stat">ID: {puzzleId}</p>
-          <div className="toolbar">
-            <label className="field__label" style={{ alignSelf: "center" }}>
+          <p className="font-mono text-[0.85rem] text-ink-soft">ID: {puzzleId}</p>
+          <div className="my-4 flex flex-wrap items-center gap-2">
+            <label className={`${LABEL} flex items-center gap-1.5`}>
               seeds min
-              <input aria-label="min seeds" className="input" style={{ width: "5rem", marginLeft: "0.4rem" }} type="number" value={minSeeds} onChange={(e) => setMinSeeds(Number(e.target.value))} />
+              <Input aria-label="min seeds" className="w-20" type="number" value={minSeeds} onChange={(e) => setMinSeeds(Number(e.target.value))} />
             </label>
-            <label className="field__label" style={{ alignSelf: "center" }}>
+            <label className={`${LABEL} flex items-center gap-1.5`}>
               seed
-              <input aria-label="seed value" className="input" style={{ width: "5rem", marginLeft: "0.4rem" }} type="number" value={seedValue} onChange={(e) => setSeedValue(Number(e.target.value))} />
+              <Input aria-label="seed value" className="w-20" type="number" value={seedValue} onChange={(e) => setSeedValue(Number(e.target.value))} />
             </label>
             <Button variant="primary" size="sm" onClick={onFill}>შევსება</Button>
           </div>
@@ -89,8 +92,8 @@ export function PuzzleBuilder() {
       )}
 
       {jobId && <Button size="sm" onClick={onCheck}>სტატუსის შემოწმება</Button>}
-      {jobStatus && <p className="stat">სტატუსი: {jobStatus}</p>}
-      {error && <p className="banner banner--warn" role="alert">{error}</p>}
+      {jobStatus && <p className="font-mono text-[0.85rem] text-ink-soft">სტატუსი: {jobStatus}</p>}
+      {error && <p className="rounded border border-rule border-l-[3px] border-l-cinnabar bg-[#f8efef] px-3 py-1.5" role="alert">{error}</p>}
       {entries.length > 0 && <DataTable columns={[...COLUMNS]} rows={entries} />}
     </section>
   );

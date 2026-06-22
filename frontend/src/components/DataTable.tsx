@@ -26,21 +26,24 @@ export function DataTable<T extends { id: string }>({
     onSelectionChange?.(next);
   };
 
+  const th = "border-b border-rule-strong px-2 py-1.5 text-left text-[0.7rem] font-semibold uppercase tracking-[0.08em] text-ink-soft";
+  const td = "border-b border-rule px-2 py-1.5";
+
   return (
-    <table className="data-table">
+    <table className="mt-4 w-full border-collapse text-[0.88rem]">
       <thead>
         <tr>
-          {selectable && <th />}
+          {selectable && <th className={th} />}
           {columns.map((c) => (
-            <th key={c.key}>{c.header}</th>
+            <th key={c.key} className={th}>{c.header}</th>
           ))}
         </tr>
       </thead>
       <tbody>
         {rows.map((row) => (
-          <tr key={row.id}>
+          <tr key={row.id} className="hover:bg-teal-faint">
             {selectable && (
-              <td>
+              <td className={td}>
                 <input
                   type="checkbox"
                   data-testid={`select-${row.id}`}
@@ -50,7 +53,7 @@ export function DataTable<T extends { id: string }>({
               </td>
             )}
             {columns.map((c) => (
-              <td key={c.key}>{String(row[c.key])}</td>
+              <td key={c.key} className={td}>{String(row[c.key])}</td>
             ))}
           </tr>
         ))}

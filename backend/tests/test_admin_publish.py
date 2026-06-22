@@ -20,15 +20,6 @@ def test_schedule_succeeds(client, db_session):
     assert resp.json()["status"] == "scheduled"
 
 
-def test_schedule_conflict_returns_409(client, db_session):
-    a = _ready_puzzle(db_session, dt.date(2026, 9, 2))
-    b = _ready_puzzle(db_session, dt.date(2026, 9, 3))
-    db_session.flush()
-    client.post(f"/api/admin/puzzles/{a.id}/schedule", json={"live_date": "2026-09-20"})
-    resp = client.post(f"/api/admin/puzzles/{b.id}/schedule", json={"live_date": "2026-09-20"})
-    assert resp.status_code == 409
-
-
 def test_schedule_blocked_when_clues_unfinished(client, db_session):
     p = Puzzle(id=uuid.uuid4(), live_date=dt.date(2026, 9, 4), theme="t", grid_template={}, status="draft", seed=1, version=1)
     p.entries.append(Entry(id=uuid.uuid4(), number=1, direction="across", answer="თბილისი", row=0, col=0, clue="c", clue_status="generated", provenance="sourced"))

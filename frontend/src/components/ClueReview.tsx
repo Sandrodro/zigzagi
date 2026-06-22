@@ -2,6 +2,10 @@ import { useState } from "react";
 
 import { reviewClue, type PuzzleEntry } from "../api/admin";
 import { Button } from "./ui/Button";
+import { Input } from "./ui/Input";
+
+const TH = "border-b border-rule-strong px-2 py-1.5 text-left text-[0.7rem] font-semibold uppercase tracking-[0.08em] text-ink-soft";
+const TD = "border-b border-rule px-2 py-1.5";
 
 // ponytail: own table, not <DataTable> — its cells are String()-only and can't host per-row buttons/inputs.
 export function ClueReview({ puzzleId, entries }: { puzzleId: string; entries: PuzzleEntry[] }) {
@@ -29,23 +33,22 @@ export function ClueReview({ puzzleId, entries }: { puzzleId: string; entries: P
   };
 
   return (
-    <table className="data-table">
+    <table className="mt-4 w-full border-collapse text-[0.88rem]">
       <thead>
         <tr>
-          <th>პასუხი</th>
-          <th>მინიშნება</th>
-          <th>სტატუსი</th>
-          <th />
+          <th className={TH}>პასუხი</th>
+          <th className={TH}>მინიშნება</th>
+          <th className={TH}>სტატუსი</th>
+          <th className={TH} />
         </tr>
       </thead>
       <tbody>
         {rows.map((e) => (
-          <tr key={e.id}>
-            <td>{e.answer}</td>
-            <td>
+          <tr key={e.id} className="hover:bg-teal-faint">
+            <td className={TD}>{e.answer}</td>
+            <td className={TD}>
               {e.id in editing ? (
-                <input
-                  className="input"
+                <Input
                   aria-label={`edit ${e.id}`}
                   value={editing[e.id]}
                   onChange={(ev) => setEditing((m) => ({ ...m, [e.id]: ev.target.value }))}
@@ -54,12 +57,12 @@ export function ClueReview({ puzzleId, entries }: { puzzleId: string; entries: P
                 e.clue
               )}
             </td>
-            <td className="muted">{e.clue_status}</td>
-            <td>
+            <td className={`${TD} text-ink-soft`}>{e.clue_status}</td>
+            <td className={TD}>
               {e.id in editing ? (
                 <Button variant="primary" size="sm" onClick={() => saveEdit(e.id)}>შენახვა</Button>
               ) : (
-                <div className="toolbar" style={{ margin: 0 }}>
+                <div className="flex flex-wrap gap-2">
                   <Button variant="primary" size="sm" onClick={() => accept(e.id)}>მიღება</Button>
                   <Button size="sm" onClick={() => setEditing((m) => ({ ...m, [e.id]: e.clue ?? "" }))}>რედაქტირება</Button>
                   <Button variant="danger" size="sm" onClick={() => reject(e.id)}>უარყოფა</Button>

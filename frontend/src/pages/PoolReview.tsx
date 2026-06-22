@@ -3,7 +3,10 @@ import { useState } from "react";
 import { bulkUpdate, extractText, type Candidate } from "../api/admin";
 import { DataTable } from "../components/DataTable";
 import { Button } from "../components/ui/Button";
+import { Input, Textarea } from "../components/ui/Input";
 import { SectionTitle } from "../components/ui/Typography";
+
+const LABEL = "text-[0.72rem] font-semibold uppercase tracking-[0.08em] text-ink-soft";
 
 const COLUMNS = [
   { key: "surface", header: "სიტყვა" },
@@ -35,20 +38,20 @@ export function PoolReview() {
   return (
     <section>
       <SectionTitle>წყაროდან ამოღება</SectionTitle>
-      <div className="field">
-        <label className="field__label" htmlFor="pool-theme">თემა</label>
-        <input id="pool-theme" className="input" aria-label="theme" placeholder="თემა" value={theme} onChange={(e) => setTheme(e.target.value)} />
+      <div className="my-2.5 flex flex-col gap-1.5">
+        <label className={LABEL} htmlFor="pool-theme">თემა</label>
+        <Input id="pool-theme" aria-label="theme" placeholder="თემა" value={theme} onChange={(e) => setTheme(e.target.value)} />
       </div>
-      <div className="field">
-        <label className="field__label" htmlFor="pool-text">ტექსტი</label>
-        <textarea id="pool-text" className="textarea" aria-label="source text" placeholder="ჩასვი ტექსტი" value={text} onChange={(e) => setText(e.target.value)} />
+      <div className="my-2.5 flex flex-col gap-1.5">
+        <label className={LABEL} htmlFor="pool-text">ტექსტი</label>
+        <Textarea id="pool-text" aria-label="source text" placeholder="ჩასვი ტექსტი" value={text} onChange={(e) => setText(e.target.value)} />
       </div>
       <Button variant="primary" onClick={onExtract}>ამოღება</Button>
 
       {candidates.length > 0 && (
         <>
-          <p className="muted">ამოვარდა: {dropped}</p>
-          <div className="toolbar">
+          <p className="text-ink-soft">ამოვარდა: {dropped}</p>
+          <div className="my-4 flex flex-wrap gap-2">
             <Button variant="primary" size="sm" onClick={() => apply("accept")}>მონიშნულის მიღება</Button>
             <Button variant="danger" size="sm" onClick={() => apply("reject")}>მონიშნულის უარყოფა</Button>
           </div>

@@ -16,12 +16,13 @@ const indexRoute = createRoute({ getParentRoute: () => rootRoute, path: "/", com
 const playRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/play",
-  validateSearch: (s: Record<string, unknown>): { date?: string } => ({
+  validateSearch: (s: Record<string, unknown>): { id?: string; date?: string } => ({
+    id: typeof s.id === "string" ? s.id : undefined,
     date: typeof s.date === "string" ? s.date : undefined,
   }),
   component: function PlayRoute() {
-    const { date } = playRoute.useSearch();
-    return <PlayView date={date} />;
+    const { id, date } = playRoute.useSearch();
+    return <PlayView id={id} date={date} />;
   },
 });
 

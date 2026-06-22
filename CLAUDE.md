@@ -57,6 +57,17 @@ cd backend && uv run alembic upgrade head
 
 **DB creds (local):** `zigzagi/zigzagi` on `localhost:5432`, db `zigzagi`. Test db is `zigzagi_test`.
 
+### Generating a puzzle
+
+There is **no CLI generate verb**. Puzzles are created via the Admin HTTP API + the worker; the only entry points are `python -m app.worker` (real fill loop, polls pending `Job`s every 2s) and `python -m app.seed` (hard-coded 5×5 demo puzzle, not a real fill).
+
+Flow: `POST /api/admin/puzzles` (draft) → load seed words (`POST /api/admin/extract` or pool accept) → `POST /api/admin/puzzles/{id}/fill {seed_value, min_seeds}` enqueues a fill `Job` → worker runs `fill()` and persists → `POST .../clues` → review → `POST .../schedule {live_date}` → worker publishes on the live date.
+
+- **Templates are a curated library, not generated.** `app/solver/templates/*.json` (currently only `13x13-001`, `13x13-002`). Each is `{id, rows, cols, blocks:[[r,c]...]}`. `templates.py`: `load_library()`, `validate_template()` (symmetry, connectivity, **40–50 slots**), `pick_template(library, seed_value)` = `library[seed_value % len(library)]`.
+- **Solver entry:** `app/solver/run.py::fill(template, seeds, wordlist, seed_value, min_seeds=15, deadline_s=10.0)` → constraints (`model.py`) → seed-slot pick (`seeds.py`) → length-indexed wordlist (`index.py`) → backtracking CSP MRV (`fill.py`, `order.py`). Persisted by `services/solver_jobs.py::persist_fill`.
+- **Wordlist** lives in the `wordlist_entries` table (not a checked-in file); populated via `POST /api/admin/wordlist/bulk`. Validation (`services/wordlist.py`): Georgian-only, length 3–13.
+- **Other sizes (e.g. 20×20):** the solver/CSP is size-agnostic, but you'd need to (1) add a template JSON of that size, (2) relax the hardcoded `40–50` slot range in `templates.py` and the `len > 13` word-length cap in `services/wordlist.py`. No size config exists today.
+
 ## Frontend
 
 **Stack:** React 18, TypeScript, Vite, TanStack Query (react-query) for server state, TanStack Router (code-based route tree in `src/router.tsx`) for routing, Vitest + Testing Library (no Tailwind yet).

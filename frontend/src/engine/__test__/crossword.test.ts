@@ -4,6 +4,7 @@ import { CrosswordEngine } from "../crossword";
 import type { PuzzleData } from "../types";
 
 const PUZZLE: PuzzleData = {
+  id: "p1",
   date: "2026-06-18",
   theme: "დემო",
   size: { rows: 5, cols: 5 },
@@ -104,6 +105,7 @@ describe("CrosswordEngine check/reveal", () => {
 });
 
 const CLUE_PUZZLE: PuzzleData = {
+  id: "p2",
   date: "2026-06-18",
   theme: "დემო",
   size: { rows: 3, cols: 3 },

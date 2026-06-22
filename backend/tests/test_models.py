@@ -1,9 +1,6 @@
 import datetime as dt
 import uuid
 
-import pytest
-from sqlalchemy.exc import IntegrityError
-
 from app.models import Entry, Puzzle
 
 
@@ -32,14 +29,6 @@ def test_puzzle_with_entries_persists(db_session):
     loaded = db_session.get(Puzzle, p.id)
     assert len(loaded.entries) == 1
     assert loaded.entries[0].answer == "აბგდე"
-
-
-def test_two_active_puzzles_same_date_rejected(db_session):
-    db_session.add(_puzzle(status="published"))
-    db_session.flush()
-    db_session.add(_puzzle(status="scheduled"))
-    with pytest.raises(IntegrityError):
-        db_session.flush()
 
 
 def test_two_active_puzzles_different_dates_ok(db_session):

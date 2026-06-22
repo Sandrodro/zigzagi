@@ -1,4 +1,5 @@
 import datetime as dt
+import uuid
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
@@ -21,25 +22,30 @@ def get_today(db: Session = Depends(get_db)):
 @router.get("/puzzles")
 def list_puzzles(db: Session = Depends(get_db)):
     return [
-        {"date": p.live_date.isoformat(), "theme": p.theme, "status": p.status}
+        {"id": str(p.id), "date": p.live_date.isoformat(), "theme": p.theme, "status": p.status}
         for p in svc.list_published(db)
     ]
 
 
-def _require_puzzle(db: Session, date_str: str):
+def _require_by_id(db: Session, id_str: str):
     try:
-        on_date = dt.date.fromisoformat(date_str)
+        puzzle_id = uuid.UUID(id_str)
     except ValueError:
-        raise HTTPException(status_code=400, detail="invalid date")
-    puzzle = svc.get_published_puzzle(db, on_date)
+        raise HTTPException(status_code=400, detail="invalid id")
+    puzzle = svc.get_published_by_id(db, puzzle_id)
     if puzzle is None:
-        raise HTTPException(status_code=404, detail="no puzzle for date")
+        raise HTTPException(status_code=404, detail="no published puzzle for id")
     return puzzle
 
 
-@router.post("/puzzles/{date}/check")
-def check(date: str, payload: CheckRequest, db: Session = Depends(get_db)):
-    puzzle = _require_puzzle(db, date)
+@router.get("/puzzles/by-id/{puzzle_id}")
+def get_by_id(puzzle_id: str, db: Session = Depends(get_db)):
+    return svc.to_play_dto(_require_by_id(db, puzzle_id))
+
+
+@router.post("/puzzles/by-id/{puzzle_id}/check")
+def check(puzzle_id: str, payload: CheckRequest, db: Session = Depends(get_db)):
+    puzzle = _require_by_id(db, puzzle_id)
     amap = svc.build_answer_map(puzzle)
     results = [
         {"row": c.row, "col": c.col, "correct": amap.get((c.row, c.col)) == c.value}
@@ -48,9 +54,9 @@ def check(date: str, payload: CheckRequest, db: Session = Depends(get_db)):
     return {"results": results}
 
 
-@router.post("/puzzles/{date}/reveal")
-def reveal(date: str, payload: RevealRequest, db: Session = Depends(get_db)):
-    puzzle = _require_puzzle(db, date)
+@router.post("/puzzles/by-id/{puzzle_id}/reveal")
+def reveal(puzzle_id: str, payload: RevealRequest, db: Session = Depends(get_db)):
+    puzzle = _require_by_id(db, puzzle_id)
     amap = svc.build_answer_map(puzzle)
     cells = [
         {"row": c.row, "col": c.col, "value": amap[(c.row, c.col)]}
@@ -62,4 +68,11 @@ def reveal(date: str, payload: RevealRequest, db: Session = Depends(get_db)):
 
 @router.get("/puzzles/{date}")
 def get_by_date(date: str, db: Session = Depends(get_db)):
-    return svc.to_play_dto(_require_puzzle(db, date))
+    try:
+        on_date = dt.date.fromisoformat(date)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="invalid date")
+    puzzle = svc.get_published_puzzle(db, on_date)
+    if puzzle is None:
+        raise HTTPException(status_code=404, detail="no puzzle for date")
+    return svc.to_play_dto(puzzle)

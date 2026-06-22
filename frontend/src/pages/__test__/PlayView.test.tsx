@@ -7,6 +7,7 @@ import type { PuzzleData } from "../../engine/types";
 import { PlayView } from "../PlayView";
 
 const PUZZLE: PuzzleData = {
+  id: "p1",
   date: "2026-06-18",
   theme: "დემო",
   size: { rows: 1, cols: 3 },
@@ -65,14 +66,14 @@ describe("PlayView", () => {
     await userEvent.click(screen.getByTestId("cell-0-0"));
     await userEvent.keyboard("ა");
     await waitFor(() => {
-      const saved = JSON.parse(localStorage.getItem("zigzagi:progress:2026-06-18") ?? "{}");
+      const saved = JSON.parse(localStorage.getItem("zigzagi:progress:p1") ?? "{}");
       expect(saved.fills).toMatchObject({ "0,0": "ა" });
     });
   });
 
   it("restores fills from localStorage on mount", async () => {
     localStorage.setItem(
-      "zigzagi:progress:2026-06-18",
+      "zigzagi:progress:p1",
       JSON.stringify({ fills: { "0,1": "ბ" }, timerSeconds: 0, completedAt: null }),
     );
     renderPlayView();
@@ -161,7 +162,7 @@ describe("PlayView", () => {
     await userEvent.click(screen.getByRole("button", { name: /1A/ }));
     await userEvent.keyboard("ააა"); // fills all three cells
     await waitFor(() => expect(screen.getByRole("dialog")).toBeInTheDocument());
-    const saved = JSON.parse(localStorage.getItem("zigzagi:progress:2026-06-18") ?? "{}");
+    const saved = JSON.parse(localStorage.getItem("zigzagi:progress:p1") ?? "{}");
     expect(saved.completedAt).not.toBeNull();
   });
 });

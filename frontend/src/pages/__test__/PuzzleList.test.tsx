@@ -32,20 +32,20 @@ function renderList() {
 }
 
 describe("PuzzleList", () => {
-  it("lists puzzles with links to play each by date", async () => {
+  it("lists puzzles with links to play each by id", async () => {
     vi.stubGlobal(
       "fetch",
       vi.fn(() =>
         json([
-          { date: "2026-06-20", theme: "თბილისი", status: "published" },
-          { date: "2026-06-18", theme: "მთები", status: "published" },
+          { id: "aaa", date: "2026-06-20", theme: "თბილისი", status: "published" },
+          { id: "bbb", date: "2026-06-18", theme: "მთები", status: "published" },
         ]),
       ),
     );
     renderList();
     const link = await screen.findByRole("link", { name: /თბილისი/ });
-    expect(link).toHaveAttribute("href", "/play?date=2026-06-20");
-    expect(screen.getByRole("link", { name: /მთები/ })).toHaveAttribute("href", "/play?date=2026-06-18");
+    expect(link).toHaveAttribute("href", "/play?id=aaa");
+    expect(screen.getByRole("link", { name: /მთები/ })).toHaveAttribute("href", "/play?id=bbb");
   });
 
   it("shows an empty state when nothing is published", async () => {

@@ -9,10 +9,12 @@ type CellValue = Cell & { value: string };
 type CheckResult = { results: (Cell & { correct: boolean })[] };
 type RevealResult = { cells: CellValue[] };
 
-export type PuzzleSummary = { date: string; theme: string; status: string };
+export type PuzzleSummary = { id: string; date: string; theme: string; status: string };
 
-async function fetchPuzzle(date: string): Promise<PuzzleData> {
-  const res = await fetch(`${BASE}/puzzles/${date}`);
+// "today" or an ISO date hit the date route; anything else is treated as a puzzle id.
+async function fetchPuzzle(key: { id?: string; date?: string }): Promise<PuzzleData> {
+  const path = key.id ? `by-id/${key.id}` : (key.date ?? "today");
+  const res = await fetch(`${BASE}/puzzles/${path}`);
   if (!res.ok) throw new Error(`puzzle failed: ${res.status}`);
   return res.json();
 }
@@ -23,8 +25,8 @@ async function fetchList(): Promise<PuzzleSummary[]> {
   return res.json();
 }
 
-async function postCheck(date: string, cells: CellValue[]): Promise<CheckResult> {
-  const res = await fetch(`${BASE}/puzzles/${date}/check`, {
+async function postCheck(id: string, cells: CellValue[]): Promise<CheckResult> {
+  const res = await fetch(`${BASE}/puzzles/by-id/${id}/check`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ cells }),
@@ -33,8 +35,8 @@ async function postCheck(date: string, cells: CellValue[]): Promise<CheckResult>
   return res.json();
 }
 
-async function postReveal(date: string, cells: Cell[]): Promise<RevealResult> {
-  const res = await fetch(`${BASE}/puzzles/${date}/reveal`, {
+async function postReveal(id: string, cells: Cell[]): Promise<RevealResult> {
+  const res = await fetch(`${BASE}/puzzles/by-id/${id}/reveal`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ cells }),
@@ -43,19 +45,22 @@ async function postReveal(date: string, cells: Cell[]): Promise<RevealResult> {
   return res.json();
 }
 
-// date defaults to the literal "today" path; an ISO date plays a specific published puzzle.
-export function usePuzzle(date = "today") {
-  return useQuery({ queryKey: ["puzzle", date], queryFn: () => fetchPuzzle(date) });
+// Open a puzzle by id (from /list) or, falling back, by date / "today".
+export function usePuzzle(key: { id?: string; date?: string } = {}) {
+  return useQuery({
+    queryKey: ["puzzle", key.id ?? key.date ?? "today"],
+    queryFn: () => fetchPuzzle(key),
+  });
 }
 
 export function usePuzzleList() {
   return useQuery({ queryKey: ["puzzleList"], queryFn: fetchList });
 }
 
-export function useCheckCells(date: string) {
-  return useMutation({ mutationFn: (cells: CellValue[]) => postCheck(date, cells) });
+export function useCheckCells(id: string) {
+  return useMutation({ mutationFn: (cells: CellValue[]) => postCheck(id, cells) });
 }
 
-export function useRevealCells(date: string) {
-  return useMutation({ mutationFn: (cells: Cell[]) => postReveal(date, cells) });
+export function useRevealCells(id: string) {
+  return useMutation({ mutationFn: (cells: Cell[]) => postReveal(id, cells) });
 }

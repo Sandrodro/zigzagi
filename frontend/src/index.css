@@ -1,0 +1,42 @@
+@import "tailwindcss";
+
+/* Academic palette + type, exposed as Tailwind theme tokens (bg-paper, text-ink, font-serif, …) */
+@theme {
+  --color-paper: #f4f4ef;
+  --color-paper-raised: #ffffff;
+  --color-ink: #23272f;
+  --color-ink-soft: #61656f;
+  --color-rule: #d7d5cb;
+  --color-rule-strong: #b9b6aa;
+  --color-teal: #2c6e63;
+  --color-teal-deep: #1f514a;
+  --color-teal-tint: #e2ebe8;
+  --color-teal-faint: #edf2f0;
+  --color-ochre: #b07a2b;
+  --color-ochre-tint: #f1e7d5;
+  --color-cinnabar: #b23a3a;
+
+  --font-serif: Palatino, "Palatino Linotype", "Iowan Old Style", Georgia, serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  --font-mono: ui-monospace, Menlo, "SF Mono", monospace;
+}
+
+@layer base {
+  body {
+    @apply bg-paper text-ink font-sans antialiased;
+    line-height: 1.55;
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-teal);
+    outline-offset: 2px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    transition-duration: 0.01ms !important;
+    animation: none !important;
+  }
+}

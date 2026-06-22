@@ -20,6 +20,11 @@ def get_published_puzzle(db: Session, on_date: dt.date) -> Puzzle | None:
     return db.scalars(stmt).first()
 
 
+def get_published_by_id(db: Session, puzzle_id) -> Puzzle | None:
+    puzzle = db.get(Puzzle, puzzle_id)
+    return puzzle if puzzle and puzzle.status == "published" else None
+
+
 def list_published(db: Session) -> list[Puzzle]:
     stmt = select(Puzzle).where(Puzzle.status == "published").order_by(Puzzle.live_date.desc())
     return list(db.scalars(stmt))
@@ -52,6 +57,7 @@ def to_play_dto(puzzle: Puzzle) -> dict:
     down.sort(key=lambda r: r["number"])
     gt = puzzle.grid_template
     return {
+        "id": str(puzzle.id),
         "date": puzzle.live_date.isoformat(),
         "theme": puzzle.theme,
         "size": {"rows": gt["rows"], "cols": gt["cols"]},

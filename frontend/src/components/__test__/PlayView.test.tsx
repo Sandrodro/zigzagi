@@ -139,4 +139,29 @@ describe("PlayView", () => {
       expect(screen.getByTestId("cell-0-2")).toHaveAttribute("data-status", "revealed");
     });
   });
+
+  it("shows the congrats modal on all-correct completion", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn((url: string) => {
+        if (url.endsWith("/today")) return json(PUZZLE);
+        if (url.endsWith("/check"))
+          return json({
+            results: [
+              { row: 0, col: 0, correct: true },
+              { row: 0, col: 1, correct: true },
+              { row: 0, col: 2, correct: true },
+            ],
+          });
+        return json({ cells: [] });
+      }),
+    );
+    renderPlayView();
+    await waitFor(() => screen.getByTestId("cell-0-0"));
+    await userEvent.click(screen.getByRole("button", { name: /1A/ }));
+    await userEvent.keyboard("ააა"); // fills all three cells
+    await waitFor(() => expect(screen.getByRole("dialog")).toBeInTheDocument());
+    const saved = JSON.parse(localStorage.getItem("zigzagi:progress:2026-06-18") ?? "{}");
+    expect(saved.completedAt).not.toBeNull();
+  });
 });

@@ -6,6 +6,7 @@ import { loadProgress, saveProgress } from "../progress/local";
 import { useTimer } from "../hooks/useTimer";
 import { ClueBar } from "./ClueBar";
 import { ClueList } from "./ClueList";
+import { CongratsModal } from "./CongratsModal";
 import { Grid } from "./Grid";
 import { Timer } from "./Timer";
 
@@ -16,6 +17,7 @@ export function PlayView() {
   const [, rerender] = useReducer((n: number) => n + 1, 0);
   const timer = useTimer();
   const inputRef = useRef<HTMLInputElement>(null);
+  const [completedAt, setCompletedAt] = useState<string | null>(null);
 
   const checkMutation = useCheckCells(puzzle?.date ?? "");
   const revealMutation = useRevealCells(puzzle?.date ?? "");
@@ -40,6 +42,27 @@ export function PlayView() {
     saveProgress(puzzle.date, { fills: engine.getFills(), timerSeconds: timer.seconds, completedAt: null });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [timer.seconds]);
+
+  // When the grid first fills up, run a full check; if all correct, finish.
+  useEffect(() => {
+    if (!engine || !puzzle || completedAt) return;
+    if (!engine.isComplete()) return;
+    (async () => {
+      const cells = engine
+        .cellsForScope("puzzle")
+        .map((c) => ({ row: c.row, col: c.col, value: engine.getValue(c.row, c.col) }));
+      const { results } = await checkMutation.mutateAsync(cells);
+      engine.applyCheck(results);
+      if (results.every((r) => r.correct)) {
+        timer.pause();
+        const stamp = new Date().toISOString();
+        setCompletedAt(stamp);
+        saveProgress(puzzle.date, { fills: engine.getFills(), timerSeconds: timer.seconds, completedAt: stamp });
+      }
+      rerender();
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [engine?.isComplete(), completedAt]);
 
   if (!engine || !puzzle) return <p>იტვირთება…</p>;
 
@@ -152,6 +175,8 @@ export function PlayView() {
           rerender();
         }}
       />
+
+      {completedAt && <CongratsModal seconds={timer.seconds} onClose={() => setCompletedAt(null)} />}
     </div>
   );
 }

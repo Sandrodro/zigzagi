@@ -102,3 +102,94 @@ describe("CrosswordEngine check/reveal", () => {
     expect(e.getStatus(0, 0)).toBe("filled");
   });
 });
+
+const CLUE_PUZZLE: PuzzleData = {
+  date: "2026-06-18",
+  theme: "დემო",
+  size: { rows: 3, cols: 3 },
+  // middle of the right column is a block: (1,2)
+  blocks: [[1, 2]],
+  cells: [
+    { row: 0, col: 0, number: 1 },
+    { row: 0, col: 1, number: 2 },
+    { row: 0, col: 2, number: 3 },
+    { row: 1, col: 0, number: 4 },
+    { row: 2, col: 0, number: 5 },
+  ],
+  clues: {
+    across: [
+      { number: 1, cell: [0, 0], length: 3, text: "1A" },
+      { number: 4, cell: [1, 0], length: 2, text: "4A" },
+      { number: 5, cell: [2, 0], length: 2, text: "5A" },
+    ],
+    down: [
+      { number: 1, cell: [0, 0], length: 3, text: "1D" },
+      { number: 2, cell: [0, 1], length: 3, text: "2D" },
+      { number: 3, cell: [0, 2], length: 1, text: "3D" },
+    ],
+  },
+};
+
+describe("CrosswordEngine clue model", () => {
+  it("currentClue tracks the active cell and direction", () => {
+    const e = new CrosswordEngine(CLUE_PUZZLE);
+    e.setActive(0, 1); // inside 1-Across and 2-Down
+    expect(e.currentClue()?.number).toBe(1); // across by default
+    e.toggleDirection();
+    expect(e.currentClue()?.number).toBe(2); // now down
+  });
+
+  it("clueForCell finds the word's owning clue", () => {
+    const e = new CrosswordEngine(CLUE_PUZZLE);
+    expect(e.clueForCell(2, 1, "across")?.number).toBe(5);
+    expect(e.clueForCell(1, 0, "down")?.number).toBe(1);
+  });
+
+  it("nextClue/prevClue walk the combined across-then-down order", () => {
+    const e = new CrosswordEngine(CLUE_PUZZLE);
+    e.setActive(0, 0); // 1-Across
+    e.nextClue();
+    expect(e.currentClue()?.number).toBe(4);
+    e.prevClue();
+    expect(e.currentClue()?.number).toBe(1);
+  });
+
+  it("nextClue switches direction at the across/down boundary", () => {
+    const e = new CrosswordEngine(CLUE_PUZZLE);
+    e.setActive(2, 0); // 5-Across, the last across clue
+    e.nextClue();
+    expect(e.direction).toBe("down");
+    expect(e.currentClue()?.number).toBe(1); // first down clue
+  });
+
+  it("isComplete is true only when every playable cell is filled", () => {
+    const e = new CrosswordEngine(CLUE_PUZZLE);
+    expect(e.isComplete()).toBe(false);
+    // 8 playable cells (9 minus the (1,2) block)
+    const playable: [number, number][] = [
+      [0, 0], [0, 1], [0, 2], [1, 0], [1, 1], [2, 0], [2, 1], [2, 2],
+    ];
+    for (const [r, c] of playable) {
+      e.setActive(r, c);
+      e.type("ა");
+    }
+    expect(e.isComplete()).toBe(true);
+  });
+
+  it("cellsForScope returns square, word, and whole-puzzle cell sets", () => {
+    const e = new CrosswordEngine(CLUE_PUZZLE);
+    e.setActive(0, 1);
+    expect(e.cellsForScope("square")).toEqual([{ row: 0, col: 1 }]);
+    expect(e.cellsForScope("word")).toEqual([
+      { row: 0, col: 0 }, { row: 0, col: 1 }, { row: 0, col: 2 },
+    ]);
+    expect(e.cellsForScope("puzzle")).toHaveLength(8);
+  });
+
+  it("loadFills overwrites values from a persisted dict", () => {
+    const e = new CrosswordEngine(CLUE_PUZZLE);
+    e.loadFills({ "0,0": "ა", "1,1": "ბ" });
+    expect(e.getValue(0, 0)).toBe("ა");
+    expect(e.getValue(1, 1)).toBe("ბ");
+  });
+});

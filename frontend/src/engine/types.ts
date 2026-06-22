@@ -26,3 +26,5 @@ export interface PuzzleData {
 }
 
 export type CellStatus = "empty" | "filled" | "correct" | "incorrect" | "revealed";
+
+export type Scope = "square" | "word" | "puzzle";

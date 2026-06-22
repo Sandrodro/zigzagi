@@ -9,9 +9,17 @@ type CellValue = Cell & { value: string };
 type CheckResult = { results: (Cell & { correct: boolean })[] };
 type RevealResult = { cells: CellValue[] };
 
-async function fetchToday(): Promise<PuzzleData> {
-  const res = await fetch(`${BASE}/puzzles/today`);
-  if (!res.ok) throw new Error(`today failed: ${res.status}`);
+export type PuzzleSummary = { date: string; theme: string; status: string };
+
+async function fetchPuzzle(date: string): Promise<PuzzleData> {
+  const res = await fetch(`${BASE}/puzzles/${date}`);
+  if (!res.ok) throw new Error(`puzzle failed: ${res.status}`);
+  return res.json();
+}
+
+async function fetchList(): Promise<PuzzleSummary[]> {
+  const res = await fetch(`${BASE}/puzzles`);
+  if (!res.ok) throw new Error(`list failed: ${res.status}`);
   return res.json();
 }
 
@@ -35,8 +43,13 @@ async function postReveal(date: string, cells: Cell[]): Promise<RevealResult> {
   return res.json();
 }
 
-export function useToday() {
-  return useQuery({ queryKey: ["today"], queryFn: fetchToday });
+// date defaults to the literal "today" path; an ISO date plays a specific published puzzle.
+export function usePuzzle(date = "today") {
+  return useQuery({ queryKey: ["puzzle", date], queryFn: () => fetchPuzzle(date) });
+}
+
+export function usePuzzleList() {
+  return useQuery({ queryKey: ["puzzleList"], queryFn: fetchList });
 }
 
 export function useCheckCells(date: string) {

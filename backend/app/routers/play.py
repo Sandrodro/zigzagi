@@ -18,6 +18,14 @@ def get_today(db: Session = Depends(get_db)):
     return svc.to_play_dto(puzzle)
 
 
+@router.get("/puzzles")
+def list_puzzles(db: Session = Depends(get_db)):
+    return [
+        {"date": p.live_date.isoformat(), "theme": p.theme, "status": p.status}
+        for p in svc.list_published(db)
+    ]
+
+
 def _require_puzzle(db: Session, date_str: str):
     try:
         on_date = dt.date.fromisoformat(date_str)
@@ -50,3 +58,8 @@ def reveal(date: str, payload: RevealRequest, db: Session = Depends(get_db)):
         if (c.row, c.col) in amap
     ]
     return {"cells": cells}
+
+
+@router.get("/puzzles/{date}")
+def get_by_date(date: str, db: Session = Depends(get_db)):
+    return svc.to_play_dto(_require_puzzle(db, date))

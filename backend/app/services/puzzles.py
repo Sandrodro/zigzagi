@@ -20,6 +20,11 @@ def get_published_puzzle(db: Session, on_date: dt.date) -> Puzzle | None:
     return db.scalars(stmt).first()
 
 
+def list_published(db: Session) -> list[Puzzle]:
+    stmt = select(Puzzle).where(Puzzle.status == "published").order_by(Puzzle.live_date.desc())
+    return list(db.scalars(stmt))
+
+
 def build_answer_map(puzzle: Puzzle) -> dict[tuple[int, int], str]:
     amap: dict[tuple[int, int], str] = {}
     for e in puzzle.entries:

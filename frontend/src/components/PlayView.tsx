@@ -1,6 +1,6 @@
 import { useEffect, useReducer, useRef, useState } from "react";
 
-import { useCheckCells, useRevealCells, useToday } from "../api/play";
+import { useCheckCells, usePuzzle, useRevealCells } from "../api/play";
 import { CrosswordEngine } from "../engine/crossword";
 import { loadProgress, saveProgress } from "../progress/local";
 import { useTimer } from "../hooks/useTimer";
@@ -11,8 +11,8 @@ import { CongratsModal } from "./CongratsModal";
 import { Grid } from "./Grid";
 import { Timer } from "./Timer";
 
-export function PlayView() {
-  const { data: puzzle } = useToday();
+export function PlayView({ date }: { date?: string } = {}) {
+  const { data: puzzle } = usePuzzle(date);
   const [engine, setEngine] = useState<CrosswordEngine | null>(null);
   // ponytail: mutable engine; counter forces a re-render after each mutation.
   const [, rerender] = useReducer((n: number) => n + 1, 0);

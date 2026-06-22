@@ -1,5 +1,12 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import {
+  createMemoryHistory,
+  createRootRoute,
+  createRoute,
+  createRouter,
+  RouterProvider,
+} from "@tanstack/react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { PuzzleList } from "../PuzzleList";
@@ -9,12 +16,20 @@ const json = (body: unknown) =>
 
 afterEach(() => vi.unstubAllGlobals());
 
-const renderList = () =>
-  render(
+function renderList() {
+  const rootRoute = createRootRoute();
+  const indexRoute = createRoute({ getParentRoute: () => rootRoute, path: "/", component: PuzzleList });
+  const playRoute = createRoute({ getParentRoute: () => rootRoute, path: "/play", component: () => null });
+  const router = createRouter({
+    routeTree: rootRoute.addChildren([indexRoute, playRoute]),
+    history: createMemoryHistory({ initialEntries: ["/"] }),
+  });
+  return render(
     <QueryClientProvider client={new QueryClient()}>
-      <PuzzleList />
+      <RouterProvider router={router} />
     </QueryClientProvider>,
   );
+}
 
 describe("PuzzleList", () => {
   it("lists puzzles with links to play each by date", async () => {

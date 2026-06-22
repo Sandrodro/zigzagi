@@ -1,3 +1,5 @@
+import { Link } from "@tanstack/react-router";
+
 import { usePuzzleList } from "../api/play";
 
 export function PuzzleList() {
@@ -12,10 +14,10 @@ export function PuzzleList() {
       <ul style={{ listStyle: "none", padding: 0 }}>
         {puzzles.map((p) => (
           <li key={p.date} style={{ padding: "0.5rem 0", borderBottom: "1px solid #eee" }}>
-            <a href={`/play?date=${p.date}`} style={{ display: "flex", justifyContent: "space-between" }}>
+            <Link to="/play" search={{ date: p.date }} style={{ display: "flex", justifyContent: "space-between" }}>
               <span>{p.theme}</span>
               <span style={{ color: "#888" }}>{p.date}</span>
-            </a>
+            </Link>
           </li>
         ))}
       </ul>

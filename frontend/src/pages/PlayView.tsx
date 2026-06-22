@@ -7,7 +7,6 @@ import { useTimer } from "../hooks/useTimer";
 import { Background } from "../components/Background";
 import { ClueBar } from "../components/ClueBar";
 import { ClueList } from "../components/ClueList";
-import { CongratsModal } from "../components/CongratsModal";
 import { Grid } from "../components/Grid";
 import { Timer } from "../components/Timer";
 import { Button } from "../components/ui/Button";
@@ -194,8 +193,6 @@ export function PlayView({ id, date }: { id?: string; date?: string } = {}) {
         />
         ფონის ანიმაცია
       </label>
-
-      {completedAt && <CongratsModal seconds={timer.seconds} onClose={() => setCompletedAt(null)} />}
     </div>
   );
 }

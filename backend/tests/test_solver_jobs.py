@@ -24,14 +24,14 @@ def _draft(db):
 def test_persist_fill_writes_entries_and_template(db_session):
     p = _draft(db_session)
     result = FillResult(
-        template_id="13x13-001",
+        template_id="10x10-001",
         grid={(0, 0): "ა", (0, 1): "ბ", (0, 2): "გ"},
         entries=[FilledEntry(1, "across", 0, 0, "აბგ", "sourced")],
     )
     persist_fill(db_session, p.id, result)
     db_session.flush()
     reloaded = db_session.get(Puzzle, p.id)
-    assert reloaded.grid_template["rows"] == 13
+    assert reloaded.grid_template["rows"] == 10
     assert len(reloaded.entries) == 1
     assert reloaded.entries[0].provenance == "sourced"
     assert reloaded.entries[0].clue_status == "pending"

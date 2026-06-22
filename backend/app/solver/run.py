@@ -35,7 +35,7 @@ def fill(
     seeds: list[str],
     wordlist: Wordlist,
     seed_value: int,
-    min_seeds: int = 15,
+    min_seeds: int = 10,
     deadline_s: float = 10.0,
 ) -> FillResult | FillFailure:
     constraints = build_constraints(template)

@@ -2,6 +2,11 @@ import json
 from dataclasses import dataclass
 from pathlib import Path
 
+# Slot-count density band, as a fraction of grid area (lo, hi). Lower = sparser
+# grids (fewer/shorter entries, easier to fill). 10x10 → 16–28 slots.
+SLOT_DENSITY_MIN = 0.16
+SLOT_DENSITY_MAX = 0.28
+
 
 @dataclass(frozen=True)
 class Template:
@@ -77,8 +82,11 @@ def validate_template(t: Template) -> list[str]:
     if any(len(run) < 3 for run in word_runs):
         problems.append("word run shorter than 3")
     slots = [run for run in _runs(t) if len(run) >= 3]
-    if not (40 <= len(slots) <= 50):
-        problems.append(f"slot count {len(slots)} outside 40-50")
+    # Slot count scales with grid area (see SLOT_DENSITY_MIN/MAX); 10x10 → 16-28.
+    area = t.rows * t.cols
+    lo, hi = round(area * SLOT_DENSITY_MIN), round(area * SLOT_DENSITY_MAX)
+    if not (lo <= len(slots) <= hi):
+        problems.append(f"slot count {len(slots)} outside {lo}-{hi}")
     if not _connected(t):
         problems.append("grid not connected")
     return problems

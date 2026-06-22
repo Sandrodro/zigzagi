@@ -161,8 +161,9 @@ describe("PlayView", () => {
     await waitFor(() => screen.getByTestId("cell-0-0"));
     await userEvent.click(screen.getByRole("button", { name: /1A/ }));
     await userEvent.keyboard("ააა"); // fills all three cells
-    await waitFor(() => expect(screen.getByRole("dialog")).toBeInTheDocument());
-    const saved = JSON.parse(localStorage.getItem("zigzagi:progress:p1") ?? "{}");
-    expect(saved.completedAt).not.toBeNull();
+    await waitFor(() => {
+      const saved = JSON.parse(localStorage.getItem("zigzagi:progress:p1") ?? "{}");
+      expect(saved.completedAt).not.toBeNull();
+    });
   });
 });

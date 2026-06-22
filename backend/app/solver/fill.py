@@ -1,4 +1,5 @@
 import time
+from collections import defaultdict
 
 from app.solver.model import WordConstraint
 
@@ -24,41 +25,85 @@ def backtrack_fill(
     candidate_pools: dict[int, list[str]],
     deadline_s: float,
 ) -> dict[tuple[int, int], str] | None:
-    # Pre-build a bound-position index per constraint (the permuted dictionary).
-    indexes = {
-        i: constraint_index(candidate_pools[i], bp[i]) for i in order
-    }
-    assignment: dict[tuple[int, int], str] = {}
-    used: set[str] = set()
-    deadline = time.monotonic() + deadline_s
+    # Forward-checking CSP with dynamic MRV ordering. (order/bp are kept for
+    # signature compatibility but superseded: MRV picks the variable and forward
+    # checking prunes future domains, which scales to large wordlists where the
+    # old static-order backward-only search did not.)
+    n = len(constraints)
 
-    def recurse(pos: int) -> bool:
+    # cell -> [(slot, position-within-slot)], so an assignment can find crossings.
+    cell_slots: dict[tuple[int, int], list[tuple[int, int]]] = defaultdict(list)
+    for i, con in enumerate(constraints):
+        for p, cell in enumerate(con.cells):
+            cell_slots[cell].append((i, p))
+
+    # posmap[i][p][ch] = words in slot i's pool with letter ch at position p.
+    posmap: dict[int, list[dict[str, frozenset[str]]]] = {}
+    for i, con in enumerate(constraints):
+        cols: list[dict[str, set[str]]] = [defaultdict(set) for _ in range(con.length)]
+        for w in candidate_pools[i]:
+            for p, ch in enumerate(w):
+                cols[p][ch].add(w)
+        posmap[i] = [{ch: frozenset(ws) for ch, ws in col.items()} for col in cols]
+
+    domains: dict[int, set[str]] = {i: set(candidate_pools[i]) for i in range(n)}
+    if any(not d for d in domains.values()):
+        return None
+
+    assigned: dict[int, str] = {}
+    deadline = time.monotonic() + deadline_s
+    EMPTY: frozenset[str] = frozenset()
+
+    def recurse() -> bool:
         if time.monotonic() > deadline:
             raise FillTimeout()
-        if pos == len(order):
+        if len(assigned) == n:
             return True
-        i = order[pos]
-        con = constraints[i]
-        key = tuple(assignment[con.cells[p]] for p in bp[i])
-        for word in indexes[i].get(key, ()):
-            if word in used:
-                continue
-            # Free cells (not bound) must be writable without clobbering a conflict.
-            writes = [
-                (con.cells[j], ch)
-                for j, ch in enumerate(word)
-                if j not in bp[i]
-            ]
-            if any(assignment.get(cell, ch) != ch for cell, ch in writes):
-                continue
-            for cell, ch in writes:
-                assignment[cell] = ch
-            used.add(word)
-            if recurse(pos + 1):
+        # MRV: smallest remaining domain, ties broken by slot index (deterministic).
+        i = min(
+            (j for j in range(n) if j not in assigned),
+            key=lambda j: (len(domains[j]), j),
+        )
+        for w in sorted(domains[i]):  # sorted => deterministic value order
+            assigned[i] = w
+            removed: dict[int, set[str]] = {}
+            ok = True
+            # Forward-check every unassigned slot crossing slot i.
+            for p, cell in enumerate(constraints[i].cells):
+                ch = w[p]
+                for j, pj in cell_slots[cell]:
+                    if j == i or j in assigned:
+                        continue
+                    keep = domains[j] & posmap[j][pj].get(ch, EMPTY)
+                    if len(keep) != len(domains[j]):
+                        removed.setdefault(j, set()).update(domains[j] - keep)
+                        domains[j] = keep
+                    if not keep:
+                        ok = False
+                        break
+                if not ok:
+                    break
+            # No duplicate words across slots: drop w from every other live domain.
+            if ok:
+                for j in range(n):
+                    if j != i and j not in assigned and w in domains[j]:
+                        removed.setdefault(j, set()).add(w)
+                        domains[j].discard(w)
+                        if not domains[j]:
+                            ok = False
+                            break
+            if ok and recurse():
                 return True
-            used.discard(word)
-            for cell, _ in writes:
-                del assignment[cell]
+            for j, ws in removed.items():  # restore on backtrack
+                domains[j] |= ws
+            del assigned[i]
         return False
 
-    return assignment if recurse(0) else None
+    if not recurse():
+        return None
+
+    grid: dict[tuple[int, int], str] = {}
+    for i, w in assigned.items():
+        for p, cell in enumerate(constraints[i].cells):
+            grid[cell] = w[p]
+    return grid

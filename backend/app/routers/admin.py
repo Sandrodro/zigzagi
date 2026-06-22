@@ -38,7 +38,7 @@ def get_gemini() -> GeminiClient:  # overridden in tests
 
 class FillRequest(BaseModel):
     seed_value: int = 0
-    min_seeds: int = 15
+    min_seeds: int = 10
 
 
 @router.post("/puzzles/{puzzle_id}/fill", status_code=202)
@@ -46,6 +46,7 @@ def request_fill(puzzle_id: uuid.UUID, body: FillRequest, db: Session = Depends(
     if db.get(Puzzle, puzzle_id) is None:
         raise HTTPException(404, "puzzle not found")
     job = enqueue_fill(db, puzzle_id, body.seed_value, body.min_seeds)
+    db.commit()
     return {"job_id": str(job.id)}
 
 

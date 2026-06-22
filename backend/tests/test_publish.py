@@ -49,7 +49,14 @@ def test_can_publish_true_when_all_accepted(db_session):
     assert ok and reason is None
 
 
-def test_can_publish_false_with_pending(db_session):
+def test_can_publish_allows_unfinished_clues(db_session):
+    # Clue-status guard removed: publish is allowed regardless of clue state.
     p = _draft_with_entries(db_session, dt.date(2026, 8, 3), ["accepted", "generated"])
     ok, reason = can_publish(p)
-    assert not ok and "clue" in reason.lower()
+    assert ok and reason is None
+
+
+def test_can_publish_false_without_entries(db_session):
+    p = _draft_with_entries(db_session, dt.date(2026, 8, 4), [])
+    ok, reason = can_publish(p)
+    assert not ok and "entries" in reason.lower()

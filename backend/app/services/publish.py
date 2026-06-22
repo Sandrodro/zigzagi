@@ -10,9 +10,8 @@ from app.models import Puzzle
 def can_publish(puzzle) -> tuple[bool, str | None]:
     if not puzzle.entries:
         return False, "puzzle has no entries"
-    unfinished = [e for e in puzzle.entries if e.clue_status not in ("accepted", "edited")]
-    if unfinished:
-        return False, f"{len(unfinished)} clues not yet accepted"
+    # ponytail: clue-status accepted guard removed by request; publish allowed with
+    # any clue state. Re-add the `clue_status not in (...)` check if review must gate publish.
     return True, None
 
 

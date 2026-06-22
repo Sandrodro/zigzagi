@@ -17,6 +17,21 @@ class Suggestion(BaseModel):
     in_corpus: bool
 
 
+class ClueRequest(BaseModel):
+    entry_id: str
+    answer: str
+    direction: str
+    number: int
+    theme: str
+    source_snippet: str | None = None
+
+
+class ClueResult(BaseModel):
+    entry_id: str
+    clue: str
+
+
 class GeminiClient(Protocol):
     def extract(self, text: str, theme: str, pool: list[str]) -> list[ExtractedCandidate]: ...
     def suggest(self, theme: str, pool: list[str]) -> list[Suggestion]: ...
+    def clue(self, batch: list[ClueRequest]) -> list[ClueResult]: ...

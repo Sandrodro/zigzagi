@@ -10,6 +10,7 @@ from app.ai.client import GeminiClient
 from app.ai.gemini import GeminiExtractor
 from app.db import get_db
 from app.models import Job, Puzzle
+from app.services.clues import generate_clues, review_clue
 from app.services.pool import bulk_update, create_from_extraction, list_pool
 from app.services.solver_jobs import enqueue_fill
 from app.services.wordlist import (
@@ -28,6 +29,7 @@ def get_gemini() -> GeminiClient:  # overridden in tests
         api_key=os.environ["GEMINI_API_KEY"],
         extract_model=os.environ.get("GEMINI_EXTRACT_MODEL", "gemini-2.5-flash"),
         suggest_model=os.environ.get("GEMINI_SUGGEST_MODEL", "gemini-2.5-flash"),
+        clue_model=os.environ.get("GEMINI_CLUE_MODEL", "gemini-2.5-pro"),
     )
 
 
@@ -179,6 +181,28 @@ def create_puzzle(body: CreatePuzzleRequest, db: Session = Depends(get_db)):
         "id": str(puzzle.id), "theme": puzzle.theme,
         "live_date": puzzle.live_date.isoformat(), "status": puzzle.status,
     }
+
+
+class ClueReviewRequest(BaseModel):
+    action: str
+    clue: str | None = None
+
+
+@router.post("/puzzles/{puzzle_id}/clues")
+def gen_clues(puzzle_id: uuid.UUID, db: Session = Depends(get_db), ai: GeminiClient = Depends(get_gemini)):
+    puzzle = db.get(Puzzle, puzzle_id)
+    if puzzle is None:
+        raise HTTPException(404, "puzzle not found")
+    n = generate_clues(db, puzzle, ai)
+    db.commit()
+    return {"generated": n}
+
+
+@router.patch("/puzzles/{puzzle_id}/clues/{entry_id}")
+def review(puzzle_id: uuid.UUID, entry_id: uuid.UUID, body: ClueReviewRequest, db: Session = Depends(get_db), ai: GeminiClient = Depends(get_gemini)):
+    entry = review_clue(db, entry_id, body.action, body.clue, ai=ai)
+    db.commit()
+    return {"clue_status": entry.clue_status}
 
 
 @router.get("/puzzles/{puzzle_id}")

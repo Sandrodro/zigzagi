@@ -3,7 +3,7 @@ from collections.abc import Callable
 
 from pydantic import ValidationError
 
-from app.ai.client import ExtractedCandidate, Suggestion
+from app.ai.client import ClueResult, ExtractedCandidate, Suggestion
 
 
 class AIError(Exception):
@@ -33,10 +33,18 @@ _EXTRACT_PROMPT = (
 )
 
 
+_CLUE_PROMPT = (
+    "დაწერე ქართული მინიშნებები შემდეგი სიტყვებისთვის NYT-Monday სტილში "
+    "(პირდაპირი, განმარტებითი, მინიმალური სიტყვების თამაში). "
+    "დააბრუნე JSON სია ობიექტებით (entry_id, clue). ჩანაწერები: {batch}"
+)
+
+
 class GeminiExtractor:
-    def __init__(self, api_key, extract_model, suggest_model, transport: Callable | None = None):
+    def __init__(self, api_key, extract_model, suggest_model, clue_model=None, transport: Callable | None = None):
         self.extract_model = extract_model
         self.suggest_model = suggest_model
+        self.clue_model = clue_model
         self._call = transport or _default_transport(api_key)
 
     def _parse(self, text: str, model_cls):
@@ -62,4 +70,15 @@ class GeminiExtractor:
             except (json.JSONDecodeError, ValidationError, TypeError):
                 if attempt == 1:
                     raise AIError("suggestion returned malformed JSON")
+        raise AIError("unreachable")
+
+    def clue(self, batch) -> list[ClueResult]:
+        prompt = _CLUE_PROMPT.format(batch=[r.model_dump() for r in batch])
+        for attempt in range(2):  # one bounded retry
+            resp = self._call(self.clue_model, prompt, ClueResult)
+            try:
+                return self._parse(resp.text, ClueResult)
+            except (json.JSONDecodeError, ValidationError, TypeError):
+                if attempt == 1:
+                    raise AIError("clue generation returned malformed JSON")
         raise AIError("unreachable")

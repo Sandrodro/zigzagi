@@ -72,6 +72,17 @@ class WordCandidate(Base):
     status: Mapped[str] = mapped_column(default="offered")  # offered|accepted|edited|rejected
 
 
+class ClueEvent(Base):
+    __tablename__ = "clue_events"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    entry_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("entries.id"))
+    action: Mapped[str] = mapped_column()  # accept | edit | reject
+    old_clue: Mapped[str | None] = mapped_column(nullable=True)
+    new_clue: Mapped[str | None] = mapped_column(nullable=True)
+    created_at: Mapped[dt.datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
 class Job(Base):
     __tablename__ = "jobs"
 

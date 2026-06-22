@@ -198,3 +198,24 @@ export async function pollJob(jobId: string): Promise<JobStatus> {
   if (!res.ok) throw new Error(`pollJob failed: ${res.status}`);
   return res.json();
 }
+
+export async function generateClues(puzzleId: string): Promise<{ generated: number }> {
+  const res = await fetch(`${BASE}/puzzles/${puzzleId}/clues`, { method: "POST" });
+  if (!res.ok) throw new Error(`generateClues failed: ${res.status}`);
+  return res.json();
+}
+
+export async function reviewClue(
+  puzzleId: string,
+  entryId: string,
+  action: "accept" | "edit" | "reject",
+  clue?: string,
+): Promise<{ clue_status: string }> {
+  const res = await fetch(`${BASE}/puzzles/${puzzleId}/clues/${entryId}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ action, clue }),
+  });
+  if (!res.ok) throw new Error(`reviewClue failed: ${res.status}`);
+  return res.json();
+}

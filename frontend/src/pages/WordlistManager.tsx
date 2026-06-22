@@ -9,7 +9,7 @@ import {
   type WordlistStats,
   type WordlistWord,
 } from "../api/admin";
-import { DataTable } from "./DataTable";
+import { DataTable } from "../components/DataTable";
 
 const COLUMNS = [
   { key: "word", header: "სიტყვა" },

@@ -69,10 +69,10 @@ cd frontend && npm run build     # tsc + vite build
 **Key layout:**
 - `src/engine/crossword.ts` — pure, framework-agnostic solving engine (active cell, navigation, check/reveal state); unit-tested in isolation
 - `src/engine/types.ts` — shared types
-- `src/components/Grid.tsx`, `PlayView.tsx` — React components consuming the engine
+- **`src/pages/`** — full-screen views mounted by a route or the admin shell (`PlayView`, `PuzzleList`, `AdminApp`, and the admin tab screens `PoolReview`/`PuzzleBuilder`/`WordlistManager`). **`src/components/`** — reusable pieces pages compose (`Grid`, `ClueBar`, `ClueList`, `Timer`, `CongratsModal`, `Background`, `DataTable`, …). Pages import components via `../components/X`.
 - `src/api/play.ts` — TanStack Query hooks for Play endpoints (`usePuzzle(date?)`, `usePuzzleList`, `useCheckCells`, `useRevealCells`); raw `fetch` wrappers are module-private. `QueryClientProvider` and `RouterProvider` are set up in `src/main.tsx` (the route tree lives in `src/router.tsx`); component tests must wrap renders in `QueryClientProvider`, and components using `<Link>` also need a (memory) router.
 - Routes (`src/router.tsx`): `/` Play (today), `/play?date=` Play (a published puzzle by date), `/list` published-puzzle list, `/admin` admin shell.
-- **Tests** live in a `__test__/` folder next to the code under test (e.g. `src/components/__test__/`). Component tests mock `fetch` (via `vi.stubGlobal`) rather than the api module.
+- **Tests** live in a `__test__/` folder next to the code under test (e.g. `src/components/__test__/`, `src/pages/__test__/`). Component/page tests mock `fetch` (via `vi.stubGlobal`) rather than the api module.
 - The project is **TypeScript-only** (`.ts`/`.tsx`); `tsc` runs with `noEmit` (Vite transpiles), so no `.js` artifacts in `src/`.
 
 ## Architecture invariants

@@ -5,9 +5,9 @@ import {
   Outlet,
 } from "@tanstack/react-router";
 
-import { AdminApp } from "./components/AdminApp";
-import { PlayView } from "./components/PlayView";
-import { PuzzleList } from "./components/PuzzleList";
+import { AdminApp } from "./pages/AdminApp";
+import { PlayView } from "./pages/PlayView";
+import { PuzzleList } from "./pages/PuzzleList";
 
 const rootRoute = createRootRoute({ component: () => <Outlet /> });
 

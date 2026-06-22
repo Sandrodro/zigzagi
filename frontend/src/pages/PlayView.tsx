@@ -4,12 +4,12 @@ import { useCheckCells, usePuzzle, useRevealCells } from "../api/play";
 import { CrosswordEngine } from "../engine/crossword";
 import { loadProgress, saveProgress } from "../progress/local";
 import { useTimer } from "../hooks/useTimer";
-import { Background } from "./Background";
-import { ClueBar } from "./ClueBar";
-import { ClueList } from "./ClueList";
-import { CongratsModal } from "./CongratsModal";
-import { Grid } from "./Grid";
-import { Timer } from "./Timer";
+import { Background } from "../components/Background";
+import { ClueBar } from "../components/ClueBar";
+import { ClueList } from "../components/ClueList";
+import { CongratsModal } from "../components/CongratsModal";
+import { Grid } from "../components/Grid";
+import { Timer } from "../components/Timer";
 
 export function PlayView({ date }: { date?: string } = {}) {
   const { data: puzzle } = usePuzzle(date);

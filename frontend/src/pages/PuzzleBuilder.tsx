@@ -7,7 +7,7 @@ import {
   requestFill,
   type PuzzleEntry,
 } from "../api/admin";
-import { DataTable } from "./DataTable";
+import { DataTable } from "../components/DataTable";
 
 const COLUMNS = [
   { key: "number", header: "№" },

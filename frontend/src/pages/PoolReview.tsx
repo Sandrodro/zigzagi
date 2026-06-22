@@ -1,7 +1,7 @@
 import { useState } from "react";
 
 import { bulkUpdate, extractText, type Candidate } from "../api/admin";
-import { DataTable } from "./DataTable";
+import { DataTable } from "../components/DataTable";
 
 const COLUMNS = [
   { key: "surface", header: "სიტყვა" },

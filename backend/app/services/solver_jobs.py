@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 
 from app.models import Entry, Job, Puzzle
 from app.solver.index import Wordlist
+from app.solver.model import build_constraints
 from app.solver.numbering import number_cells
 from app.solver.run import FillFailure, FillResult, fill
 from app.solver.templates import Template, load_library, pick_template
@@ -54,6 +55,29 @@ def persist_fill(db: Session, puzzle_id: uuid.UUID, result: FillResult) -> None:
             )
         )
     db.flush()
+
+
+def list_template_dtos() -> list[dict]:
+    out = []
+    for t in load_library(_LIB_DIR):
+        slots = []
+        for con in build_constraints(t):
+            r0, c0 = con.cells[0]
+            slots.append({
+                "number": con.number,
+                "direction": con.direction,
+                "row": r0,
+                "col": c0,
+                "length": con.length,
+            })
+        out.append({
+            "id": t.id,
+            "rows": t.rows,
+            "cols": t.cols,
+            "blocks": sorted([r, c] for (r, c) in t.blocks),
+            "slots": slots,
+        })
+    return out
 
 
 def enqueue_fill(db: Session, puzzle_id: uuid.UUID, seed_value: int, min_seeds: int) -> Job:

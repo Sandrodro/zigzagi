@@ -15,7 +15,7 @@ from app.services.clues import generate_clues, review_clue
 from app.services.pool import bulk_update, create_from_extraction, list_pool
 from app.services.publish import runway_days, schedule_puzzle
 from app.services.puzzles import today_tbilisi
-from app.services.solver_jobs import enqueue_fill
+from app.services.solver_jobs import enqueue_fill, list_template_dtos
 from app.services.wordlist import (
     add_word,
     bulk_import,
@@ -34,6 +34,11 @@ def get_gemini() -> GeminiClient:  # overridden in tests
         suggest_model=os.environ.get("GEMINI_SUGGEST_MODEL", "gemini-2.5-flash"),
         clue_model=os.environ.get("GEMINI_CLUE_MODEL", "gemini-2.5-pro"),
     )
+
+
+@router.get("/templates")
+def templates():
+    return list_template_dtos()
 
 
 class FillRequest(BaseModel):

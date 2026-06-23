@@ -14,7 +14,7 @@ from app.models import Entry, Job, Puzzle
 from app.services.clues import generate_clues, review_clue
 from app.services.pool import bulk_update, create_candidate, create_from_extraction, list_pool
 from app.services.publish import runway_days, schedule_puzzle
-from app.services.puzzles import list_all, today_tbilisi
+from app.services.puzzles import delete_puzzle, list_all, today_tbilisi
 from app.services.solver_jobs import enqueue_fill, list_template_dtos
 from app.services.word_check import check_and_fix_entry, check_puzzle
 from app.services.wordlist import (
@@ -296,6 +296,13 @@ def schedule(puzzle_id: uuid.UUID, body: ScheduleRequest, db: Session = Depends(
 def runway(db: Session = Depends(get_db)):
     days = runway_days(db, today_tbilisi())
     return {"runway_days": days, "warning": days < 7}
+
+
+@router.delete("/puzzles/{puzzle_id}", status_code=204)
+def delete_puzzle_route(puzzle_id: uuid.UUID, db: Session = Depends(get_db)):
+    if not delete_puzzle(db, puzzle_id):
+        raise HTTPException(404, "puzzle not found")
+    db.commit()
 
 
 @router.get("/puzzles/{puzzle_id}")

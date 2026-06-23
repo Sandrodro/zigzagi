@@ -262,6 +262,11 @@ export async function listPuzzles(): Promise<PuzzleSummary[]> {
   return res.json();
 }
 
+export async function deletePuzzle(id: string): Promise<void> {
+  const res = await fetch(`/api/admin/puzzles/${id}`, { method: "DELETE" });
+  if (!res.ok) throw new Error("failed to delete");
+}
+
 export async function fetchTemplates(): Promise<TemplateDto[]> {
   const res = await fetch("/api/admin/templates");
   if (!res.ok) throw new Error("failed to fetch templates");

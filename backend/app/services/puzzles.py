@@ -35,6 +35,15 @@ def list_all(db: Session) -> list[Puzzle]:
     return list(db.scalars(stmt))
 
 
+def delete_puzzle(db: Session, puzzle_id) -> bool:
+    puzzle = db.get(Puzzle, puzzle_id)
+    if puzzle is None:
+        return False
+    db.delete(puzzle)
+    db.flush()
+    return True
+
+
 def build_answer_map(puzzle: Puzzle) -> dict[tuple[int, int], str]:
     amap: dict[tuple[int, int], str] = {}
     for e in puzzle.entries:

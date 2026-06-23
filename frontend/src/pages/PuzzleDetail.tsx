@@ -1,8 +1,11 @@
 import { useParams } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useReducer, useState } from "react";
 import { Button } from "../components/ui/Button";
 import { Input } from "../components/ui/Input";
 import { SectionTitle } from "../components/ui/Typography";
+import { Grid } from "../components/Grid";
+import { CrosswordEngine } from "../engine/crossword";
+import { answerFills, puzzleDetailToPuzzleData } from "../engine/puzzleData";
 import {
   checkEntry, checkPuzzleWords, fetchPuzzle, schedulePuzzle, type PuzzleDetail as Detail,
 } from "../api/admin";
@@ -14,6 +17,18 @@ export function PuzzleDetail() {
   const [pubStatus, setPubStatus] = useState<string | null>(null);
   const [results, setResults] = useState<Record<string, string>>({}); // entryId -> message
   const [busy, setBusy] = useState(false);
+  // ponytail: mutable engine; counter forces a re-render after each mutation.
+  const [, rerender] = useReducer((n: number) => n + 1, 0);
+
+  // Rebuild the read-only finished-crossword engine whenever the detail changes.
+  const engine = useMemo(() => {
+    if (!detail) return null;
+    const data = puzzleDetailToPuzzleData(detail);
+    if (!data) return null;
+    const e = new CrosswordEngine(data);
+    e.loadFills(answerFills(detail.entries));
+    return e;
+  }, [detail]);
 
   async function load() {
     const d = await fetchPuzzle(puzzleId);
@@ -55,6 +70,13 @@ export function PuzzleDetail() {
         <Button onClick={publish} disabled={busy || !liveDate}>გამოქვეყნება</Button>
         <Button variant="ghost" onClick={checkAll} disabled={busy}>სიტყვების შემოწმება</Button>
       </div>
+
+      {engine && (
+        <Grid
+          engine={engine}
+          onCellClick={(r, c) => { engine.setActive(r, c); rerender(); }}
+        />
+      )}
 
       <table className="w-full text-sm">
         <thead><tr className="text-left text-ink-soft">

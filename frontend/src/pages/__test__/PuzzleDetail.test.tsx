@@ -7,7 +7,8 @@ import { router } from "../../router";
 afterEach(() => vi.unstubAllGlobals());
 
 const DETAIL = {
-  id: "p1", theme: "ალფა", live_date: "2026-07-02", status: "draft", grid_template: {},
+  id: "p1", theme: "ალფა", live_date: "2026-07-02", status: "draft",
+  grid_template: { rows: 1, cols: 4, blocks: [], cells: [{ row: 0, col: 0, number: 1 }] },
   entries: [{ id: "e1", number: 1, direction: "across", answer: "დედა", row: 0, col: 0, clue: null, clue_status: "pending", provenance: "manual" }],
 };
 
@@ -35,7 +36,10 @@ describe("DETAIL / PuzzleDetail", () => {
     const history = createMemoryHistory({ initialEntries: ["/admin/puzzles/p1"] });
     router.update({ history });
     render(<RouterProvider router={router} />);
-    await userEvent.click(await screen.findByRole("button", { name: "გამოქვეყნება" }));
+    await screen.findByRole("button", { name: "გამოქვეყნება" });
+    // The finished crossword renders with the answer letters in its cells.
+    expect((await screen.findByRole("grid")).textContent).toContain("დ");
+    await userEvent.click(screen.getByRole("button", { name: "გამოქვეყნება" }));
     await waitFor(() => expect(calls.some((u) => u.includes("/schedule"))).toBe(true));
     expect(await screen.findByText(/scheduled/)).toBeInTheDocument();
   });

@@ -14,7 +14,7 @@ from app.models import Job, Puzzle
 from app.services.clues import generate_clues, review_clue
 from app.services.pool import bulk_update, create_from_extraction, list_pool
 from app.services.publish import runway_days, schedule_puzzle
-from app.services.puzzles import today_tbilisi
+from app.services.puzzles import list_all, today_tbilisi
 from app.services.solver_jobs import enqueue_fill, list_template_dtos
 from app.services.wordlist import (
     add_word,
@@ -179,6 +179,20 @@ def wordlist_bulk(body: WordlistBulkRequest, db: Session = Depends(get_db)):
 class CreatePuzzleRequest(BaseModel):
     theme: str
     live_date: dt.date
+
+
+@router.get("/puzzles")
+def list_puzzles(db: Session = Depends(get_db)):
+    return [
+        {
+            "id": str(p.id),
+            "theme": p.theme,
+            "live_date": p.live_date.isoformat(),
+            "status": p.status,
+            "entry_count": len(p.entries),
+        }
+        for p in list_all(db)
+    ]
 
 
 @router.post("/puzzles", status_code=201)

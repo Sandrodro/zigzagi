@@ -30,6 +30,11 @@ def list_published(db: Session) -> list[Puzzle]:
     return list(db.scalars(stmt))
 
 
+def list_all(db: Session) -> list[Puzzle]:
+    stmt = select(Puzzle).order_by(Puzzle.live_date.desc(), Puzzle.id)
+    return list(db.scalars(stmt))
+
+
 def build_answer_map(puzzle: Puzzle) -> dict[tuple[int, int], str]:
     amap: dict[tuple[int, int], str] = {}
     for e in puzzle.entries:

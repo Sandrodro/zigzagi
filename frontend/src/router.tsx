@@ -8,6 +8,10 @@ import {
 import { AdminApp } from "./pages/AdminApp";
 import { PlayView } from "./pages/PlayView";
 import { PuzzleList } from "./pages/PuzzleList";
+import { PuzzleListAdmin } from "./pages/PuzzleListAdmin";
+import { PuzzleBuilder } from "./pages/PuzzleBuilder";
+import { WordPool } from "./pages/WordPool";
+import { PuzzleDetail } from "./pages/PuzzleDetail";
 
 const rootRoute = createRootRoute({ component: () => <Outlet /> });
 
@@ -28,9 +32,15 @@ const playRoute = createRoute({
 
 const listRoute = createRoute({ getParentRoute: () => rootRoute, path: "/list", component: () => <PuzzleList /> });
 
-const adminRoute = createRoute({ getParentRoute: () => rootRoute, path: "/admin", component: () => <AdminApp /> });
+const adminRoute = createRoute({ getParentRoute: () => rootRoute, path: "/admin", component: AdminApp });
+const adminIndexRoute = createRoute({ getParentRoute: () => adminRoute, path: "/", component: PuzzleListAdmin });
+const adminCreateRoute = createRoute({ getParentRoute: () => adminRoute, path: "create", component: PuzzleBuilder });
+const adminWordpoolRoute = createRoute({ getParentRoute: () => adminRoute, path: "wordpool", component: WordPool });
+const adminDetailRoute = createRoute({ getParentRoute: () => adminRoute, path: "puzzles/$puzzleId", component: PuzzleDetail });
 
-const routeTree = rootRoute.addChildren([indexRoute, playRoute, listRoute, adminRoute]);
+const adminTree = adminRoute.addChildren([adminIndexRoute, adminCreateRoute, adminWordpoolRoute, adminDetailRoute]);
+
+const routeTree = rootRoute.addChildren([indexRoute, playRoute, listRoute, adminTree]);
 
 export const router = createRouter({ routeTree });
 

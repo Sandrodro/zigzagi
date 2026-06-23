@@ -138,6 +138,7 @@ export interface PuzzleSummary {
   theme: string;
   live_date: string;
   status: string;
+  entry_count: number;
 }
 
 export interface PuzzleEntry {
@@ -179,17 +180,25 @@ export async function fetchPuzzle(id: string): Promise<PuzzleDetail> {
   return res.json();
 }
 
-export async function requestFill(
-  puzzleId: string,
-  seedValue: number,
-  minSeeds: number,
-): Promise<{ job_id: string }> {
+export interface FillOpts {
+  seedValue?: number;
+  minSeeds?: number;
+  templateId?: string;
+  prefilled?: Record<string, string>;
+}
+
+export async function requestFill(puzzleId: string, opts: FillOpts = {}): Promise<{ job_id: string }> {
   const res = await fetch(`${BASE}/puzzles/${puzzleId}/fill`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ seed_value: seedValue, min_seeds: minSeeds }),
+    body: JSON.stringify({
+      seed_value: opts.seedValue ?? 0,
+      min_seeds: opts.minSeeds ?? 0,
+      template_id: opts.templateId ?? null,
+      prefilled: opts.prefilled ?? {},
+    }),
   });
-  if (!res.ok) throw new Error(`requestFill failed: ${res.status}`);
+  if (!res.ok) throw new Error("failed to start fill");
   return res.json();
 }
 
@@ -228,5 +237,65 @@ export async function reviewClue(
     body: JSON.stringify({ action, clue }),
   });
   if (!res.ok) throw new Error(`reviewClue failed: ${res.status}`);
+  return res.json();
+}
+
+export interface SlotDto {
+  number: number;
+  direction: "across" | "down";
+  row: number;
+  col: number;
+  length: number;
+}
+
+export interface TemplateDto {
+  id: string;
+  rows: number;
+  cols: number;
+  blocks: [number, number][];
+  slots: SlotDto[];
+}
+
+export async function listPuzzles(): Promise<PuzzleSummary[]> {
+  const res = await fetch("/api/admin/puzzles");
+  if (!res.ok) throw new Error("failed to list puzzles");
+  return res.json();
+}
+
+export async function fetchTemplates(): Promise<TemplateDto[]> {
+  const res = await fetch("/api/admin/templates");
+  if (!res.ok) throw new Error("failed to fetch templates");
+  return res.json();
+}
+
+export async function schedulePuzzle(id: string, liveDate: string): Promise<{ status: string; live_date: string }> {
+  const res = await fetch(`/api/admin/puzzles/${id}/schedule`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ live_date: liveDate }),
+  });
+  if (!res.ok) throw new Error("failed to schedule");
+  return res.json();
+}
+
+export async function checkEntry(puzzleId: string, entryId: string): Promise<{ valid: boolean; replaced_with: string | null }> {
+  const res = await fetch(`/api/admin/puzzles/${puzzleId}/entries/${entryId}/check`, { method: "POST" });
+  if (!res.ok) throw new Error("failed to check entry");
+  return res.json();
+}
+
+export async function checkPuzzleWords(puzzleId: string): Promise<{ checked: number; invalid: number; replaced: { number: number; direction: string; old: string; new: string }[] }> {
+  const res = await fetch(`/api/admin/puzzles/${puzzleId}/check-words`, { method: "POST" });
+  if (!res.ok) throw new Error("failed to check words");
+  return res.json();
+}
+
+export async function addPoolWord(surface: string, theme: string): Promise<PoolWord> {
+  const res = await fetch("/api/admin/pool", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ surface, theme }),
+  });
+  if (!res.ok) throw new Error("failed to add pool word");
   return res.json();
 }

@@ -30,6 +30,17 @@ def add_word(db: Session, word: str) -> WordlistEntry:
     return row
 
 
+def block_word(db: Session, word: str) -> WordlistEntry:
+    row = db.scalar(select(WordlistEntry).where(WordlistEntry.word == word))
+    if row is None:
+        row = WordlistEntry(id=uuid.uuid4(), word=word, length=len(word), status="blocked")
+        db.add(row)
+    else:
+        row.status = "blocked"
+    db.flush()
+    return row
+
+
 def list_words(
     db: Session, status: str | None = None, length: int | None = None, search: str | None = None
 ) -> list[WordlistEntry]:

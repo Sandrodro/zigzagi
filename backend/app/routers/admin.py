@@ -275,7 +275,7 @@ def check_words(puzzle_id: uuid.UUID,
 
 
 class ScheduleRequest(BaseModel):
-    live_date: dt.date
+    live_date: dt.date | None = None  # ponytail: date guard dropped; defaults to today
 
 
 @router.post("/puzzles/{puzzle_id}/schedule")
@@ -283,7 +283,7 @@ def schedule(puzzle_id: uuid.UUID, body: ScheduleRequest, db: Session = Depends(
     if db.get(Puzzle, puzzle_id) is None:
         raise HTTPException(404, "puzzle not found")
     try:
-        puzzle = schedule_puzzle(db, puzzle_id, body.live_date)  # raises ValueError if not publishable
+        puzzle = schedule_puzzle(db, puzzle_id, body.live_date or today_tbilisi())  # raises ValueError if not publishable
         db.commit()
     except ValueError as e:
         db.rollback()

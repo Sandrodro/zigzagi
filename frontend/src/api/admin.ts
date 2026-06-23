@@ -277,11 +277,13 @@ export async function fetchTemplates(): Promise<TemplateDto[]> {
   return res.json();
 }
 
-export async function schedulePuzzle(id: string, liveDate: string): Promise<{ status: string; live_date: string }> {
+export async function schedulePuzzle(id: string, liveDate?: string): Promise<{ status: string; live_date: string }> {
+  // Omit live_date so the backend defaults to today (date guard dropped).
+  const body = liveDate ? { live_date: liveDate } : {};
   const res = await fetch(`/api/admin/puzzles/${id}/schedule`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ live_date: liveDate }),
+    body: JSON.stringify(body),
   });
   if (!res.ok) throw new Error("failed to schedule");
   return res.json();

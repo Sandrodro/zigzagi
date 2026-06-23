@@ -1,7 +1,6 @@
 import { useParams } from "@tanstack/react-router";
 import { useEffect, useMemo, useReducer, useState } from "react";
 import { Button } from "../components/ui/Button";
-import { Input } from "../components/ui/Input";
 import { SectionTitle } from "../components/ui/Typography";
 import { Grid } from "../components/Grid";
 import { CrosswordEngine } from "../engine/crossword";
@@ -13,7 +12,6 @@ import {
 export function PuzzleDetail() {
   const { puzzleId } = useParams({ from: "/admin/puzzles/$puzzleId" });
   const [detail, setDetail] = useState<Detail | null>(null);
-  const [liveDate, setLiveDate] = useState("");
   const [pubStatus, setPubStatus] = useState<string | null>(null);
   const [results, setResults] = useState<Record<string, string>>({}); // entryId -> message
   const [busy, setBusy] = useState(false);
@@ -33,14 +31,13 @@ export function PuzzleDetail() {
   async function load() {
     const d = await fetchPuzzle(puzzleId);
     setDetail(d);
-    setLiveDate(d.live_date);
   }
   useEffect(() => { load(); }, [puzzleId]);
 
   async function publish() {
     setBusy(true);
     try {
-      const r = await schedulePuzzle(puzzleId, liveDate);
+      const r = await schedulePuzzle(puzzleId);  // date guard dropped; backend defaults to today
       setPubStatus(r.status);
       await load();
     } finally { setBusy(false); }
@@ -65,9 +62,7 @@ export function PuzzleDetail() {
       <p className="text-sm text-ink-soft">სტატუსი: {detail.status}{pubStatus ? ` → ${pubStatus}` : ""}</p>
 
       <div className="flex items-end gap-2">
-        <label className="flex flex-col gap-1 text-sm"><span>თარიღი</span>
-          <Input type="date" value={liveDate} onChange={(e) => setLiveDate(e.target.value)} /></label>
-        <Button onClick={publish} disabled={busy || !liveDate}>გამოქვეყნება</Button>
+        <Button onClick={publish} disabled={busy}>გამოქვეყნება</Button>
         <Button variant="ghost" onClick={checkAll} disabled={busy}>სიტყვების შემოწმება</Button>
       </div>
 

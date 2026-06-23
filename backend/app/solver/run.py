@@ -37,13 +37,31 @@ def fill(
     seed_value: int,
     min_seeds: int = 10,
     deadline_s: float = 10.0,
+    prefilled: dict[str, str] | None = None,
 ) -> FillResult | FillFailure:
     constraints = build_constraints(template)
     order = fill_order(constraints)
     bp = bound_positions(constraints, order)
 
+    # Map slot key ("1A"/"3D") -> constraint index, for pre-filled slots.
+    key_to_idx = {
+        f"{c.number}{'A' if c.direction == 'across' else 'D'}": i
+        for i, c in enumerate(constraints)
+    }
+    pre_idx: dict[int, str] = {}
+    for key, word in (prefilled or {}).items():
+        if key not in key_to_idx:
+            return FillFailure(reason=f"unknown slot {key}")
+        i = key_to_idx[key]
+        if len(word) != constraints[i].length:
+            return FillFailure(
+                reason=f"prefilled {key} length {len(word)} != slot length {constraints[i].length}"
+            )
+        pre_idx[i] = word
+
     seed_set = set(seeds)
     seed_slots = set(choose_seed_slots(constraints, template.rows, template.cols, min_seeds))
+    seed_slots -= pre_idx.keys()  # a pinned slot is never a reserved seed slot
 
     # Per-constraint candidate pools: seed slots draw from seeds (matched by length),
     # everything else from the general wordlist.
@@ -53,7 +71,9 @@ def fill(
 
     pools: dict[int, list[str]] = {}
     for i, con in enumerate(constraints):
-        if i in seed_slots:
+        if i in pre_idx:
+            pools[i] = [pre_idx[i]]  # singleton domain => the backtracker fixes it
+        elif i in seed_slots:
             pool = seeds_by_len.get(con.length, [])
             if not pool:  # not enough seeds of this length to honor the reservation
                 return FillFailure(reason=f"no seed word of length {con.length} for slot {con.number}")
@@ -72,8 +92,14 @@ def fill(
         return FillFailure(reason="no satisfying fill for this template + wordlist")
 
     entries = []
-    for con in constraints:
+    for i, con in enumerate(constraints):
         answer = "".join(assignment[cell] for cell in con.cells)
+        if i in pre_idx:
+            prov = "manual"
+        elif answer in seed_set:
+            prov = "sourced"
+        else:
+            prov = "general-fill"
         entries.append(
             FilledEntry(
                 number=con.number,
@@ -81,7 +107,7 @@ def fill(
                 row=con.cells[0][0],
                 col=con.cells[0][1],
                 answer=answer,
-                provenance="sourced" if answer in seed_set else "general-fill",
+                provenance=prov,
             )
         )
     return FillResult(template_id=template.id, grid=assignment, entries=entries)

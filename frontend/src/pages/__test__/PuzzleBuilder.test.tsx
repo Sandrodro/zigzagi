@@ -36,8 +36,7 @@ describe("CREATE / PuzzleBuilder", () => {
     router.update({ history });
     render(<RouterProvider router={router} />);
 
-    const select = await screen.findByLabelText("შაბლონი");
-    await userEvent.selectOptions(select, "11x11-001");
+    await userEvent.click(await screen.findByRole("button", { name: "11x11-001" }));
     const slotInput = await screen.findByLabelText("1 across");
     await userEvent.type(slotInput, "დედა");
     await userEvent.type(screen.getByLabelText("თემა"), "ტესტი");

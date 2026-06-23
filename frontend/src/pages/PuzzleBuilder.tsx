@@ -3,13 +3,29 @@ import { useEffect, useState } from "react";
 import { Button } from "../components/ui/Button";
 import { Input } from "../components/ui/Input";
 import { DataTable } from "../components/DataTable";
+import { TemplateGrid } from "../components/TemplateGrid";
 import {
   createPuzzle, fetchPuzzle, fetchTemplates, pollJob, requestFill,
-  type PuzzleDetail, type TemplateDto,
+  type PuzzleDetail, type SlotDto, type TemplateDto,
 } from "../api/admin";
 
 const slotKey = (s: { number: number; direction: string }) =>
   `${s.number}${s.direction === "across" ? "A" : "D"}`;
+
+function computeFills(slots: SlotDto[], words: Record<string, string>): Record<string, string> {
+  const fills: Record<string, string> = {};
+  for (const s of slots) {
+    const word = (words[slotKey(s)] ?? "").trim();
+    if (!word) continue;
+    const letters = [...word];
+    for (let i = 0; i < Math.min(letters.length, s.length); i++) {
+      const r = s.direction === "down" ? s.row + i : s.row;
+      const c = s.direction === "across" ? s.col + i : s.col;
+      fills[`${r},${c}`] = letters[i];
+    }
+  }
+  return fills;
+}
 
 export function PuzzleBuilder() {
   const [templates, setTemplates] = useState<TemplateDto[]>([]);
@@ -50,13 +66,44 @@ export function PuzzleBuilder() {
 
   return (
     <div className="flex flex-col gap-4">
-      <label className="flex flex-col gap-1 text-sm">
+      <div className="flex flex-col gap-2 text-sm">
         <span>შაბლონი</span>
-        <select aria-label="შაბლონი" value={templateId} onChange={(e) => { setTemplateId(e.target.value); setWords({}); }}>
-          <option value="">—</option>
-          {templates.map((t) => <option key={t.id} value={t.id}>{t.id}</option>)}
-        </select>
-      </label>
+        <div className="flex flex-wrap gap-3">
+          {templates.map((t) => {
+            const selected = t.id === templateId;
+            return (
+              <button
+                key={t.id}
+                type="button"
+                aria-label={t.id}
+                aria-pressed={selected}
+                onClick={() => { setTemplateId(t.id); setWords({}); }}
+                className={
+                  "flex flex-col items-center gap-1 rounded p-1 " +
+                  (selected
+                    ? "ring-2 ring-ochre bg-ochre-tint"
+                    : "ring-1 ring-rule hover:ring-rule-strong")
+                }
+              >
+                <TemplateGrid rows={t.rows} cols={t.cols} blocks={t.blocks} cell={14} />
+                <span className="text-ink-soft text-xs">{t.id}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {template && (
+        <div className="flex justify-center">
+          <TemplateGrid
+            rows={template.rows}
+            cols={template.cols}
+            blocks={template.blocks}
+            cell={28}
+            fills={computeFills(template.slots, words)}
+          />
+        </div>
+      )}
 
       {template && (
         <div className="grid grid-cols-2 gap-2">

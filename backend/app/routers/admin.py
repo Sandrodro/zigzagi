@@ -12,7 +12,7 @@ from app.ai.gemini import GeminiExtractor
 from app.db import get_db
 from app.models import Entry, Job, Puzzle
 from app.services.clues import generate_clues, review_clue
-from app.services.pool import bulk_update, create_from_extraction, list_pool
+from app.services.pool import bulk_update, create_candidate, create_from_extraction, list_pool
 from app.services.publish import runway_days, schedule_puzzle
 from app.services.puzzles import list_all, today_tbilisi
 from app.services.solver_jobs import enqueue_fill, list_template_dtos
@@ -108,6 +108,21 @@ def pool_bulk(body: BulkRequest, db: Session = Depends(get_db)):
     n = bulk_update(db, body.ops)
     db.commit()
     return {"updated": n}
+
+
+class PoolAddRequest(BaseModel):
+    surface: str
+    theme: str
+
+
+@router.post("/pool", status_code=201)
+def pool_add(body: PoolAddRequest, db: Session = Depends(get_db)):
+    try:
+        row = create_candidate(db, body.surface.strip(), body.theme.strip())
+    except ValueError as e:
+        raise HTTPException(422, str(e))
+    db.commit()
+    return {"id": str(row.id), "surface": row.surface, "length": row.length, "status": row.status}
 
 
 @router.post("/suggest")

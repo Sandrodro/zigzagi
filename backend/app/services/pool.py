@@ -28,6 +28,21 @@ def create_from_extraction(
     return rows, dropped
 
 
+def create_candidate(db: Session, surface: str, theme: str) -> WordCandidate:
+    if not (is_georgian_word(surface) and valid_length(surface)):
+        raise ValueError("invalid Georgian word (length 3-13)")
+    existing = db.scalar(select(WordCandidate).where(WordCandidate.surface == surface))
+    if existing is not None:
+        raise ValueError("already in pool")
+    row = WordCandidate(
+        id=uuid.uuid4(), surface=surface, lemma=surface, length=len(surface),
+        snippet=None, theme_tags=[theme], status="accepted",
+    )
+    db.add(row)
+    db.flush()
+    return row
+
+
 def list_pool(db: Session, status: str | None = None, theme: str | None = None) -> list[WordCandidate]:
     stmt = select(WordCandidate)
     if status:

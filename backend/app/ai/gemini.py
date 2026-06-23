@@ -3,7 +3,7 @@ from collections.abc import Callable
 
 from pydantic import ValidationError
 
-from app.ai.client import ClueResult, ExtractedCandidate, Suggestion
+from app.ai.client import ClueResult, ExtractedCandidate, Suggestion, WordCheck
 
 
 class AIError(Exception):
@@ -81,4 +81,21 @@ class GeminiExtractor:
             except (json.JSONDecodeError, ValidationError, TypeError):
                 if attempt == 1:
                     raise AIError("clue generation returned malformed JSON")
+        raise AIError("unreachable")
+
+    def check_word(self, word, pattern, length) -> WordCheck:
+        prompt = (
+            f"შეამოწმე, არის თუ არა '{word}' გამართული ქართული სიტყვა. "
+            f"თუ არ არის, შემოგვთავაზე {length}-ასოიანი გამართული ქართული სიტყვა, "
+            f"რომელიც ზუსტად შეესაბამება შაბლონს '{pattern}' "
+            f"(სადაც '_' ნებისმიერი ასოა, დანარჩენი ასოები უცვლელია). "
+            f'დააბრუნე მხოლოდ JSON ობიექტი: {{"valid": true|false, "replacement": "სიტყვა"|null}}.'
+        )
+        for attempt in range(2):
+            resp = self._call(self.suggest_model, prompt, WordCheck)
+            try:
+                return WordCheck(**json.loads(resp.text))
+            except (json.JSONDecodeError, ValidationError, TypeError):
+                if attempt == 1:
+                    raise AIError("word check returned malformed JSON")
         raise AIError("unreachable")

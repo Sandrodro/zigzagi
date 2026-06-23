@@ -10,12 +10,13 @@ from sqlalchemy.orm import Session
 from app.ai.client import GeminiClient
 from app.ai.gemini import GeminiExtractor
 from app.db import get_db
-from app.models import Job, Puzzle
+from app.models import Entry, Job, Puzzle
 from app.services.clues import generate_clues, review_clue
 from app.services.pool import bulk_update, create_from_extraction, list_pool
 from app.services.publish import runway_days, schedule_puzzle
 from app.services.puzzles import list_all, today_tbilisi
 from app.services.solver_jobs import enqueue_fill, list_template_dtos
+from app.services.word_check import check_and_fix_entry, check_puzzle
 from app.services.wordlist import (
     add_word,
     bulk_import,
@@ -229,6 +230,31 @@ def review(puzzle_id: uuid.UUID, entry_id: uuid.UUID, body: ClueReviewRequest, d
     entry = review_clue(db, entry_id, body.action, body.clue, ai=ai)
     db.commit()
     return {"clue_status": entry.clue_status}
+
+
+@router.post("/puzzles/{puzzle_id}/entries/{entry_id}/check")
+def check_entry(puzzle_id: uuid.UUID, entry_id: uuid.UUID,
+                db: Session = Depends(get_db), ai: GeminiClient = Depends(get_gemini)):
+    puzzle = db.get(Puzzle, puzzle_id)
+    if puzzle is None:
+        raise HTTPException(404, "puzzle not found")
+    entry = db.get(Entry, entry_id)
+    if entry is None or entry.puzzle_id != puzzle_id:
+        raise HTTPException(404, "entry not found")
+    out = check_and_fix_entry(db, puzzle, entry, ai)
+    db.commit()
+    return out
+
+
+@router.post("/puzzles/{puzzle_id}/check-words")
+def check_words(puzzle_id: uuid.UUID,
+                db: Session = Depends(get_db), ai: GeminiClient = Depends(get_gemini)):
+    puzzle = db.get(Puzzle, puzzle_id)
+    if puzzle is None:
+        raise HTTPException(404, "puzzle not found")
+    out = check_puzzle(db, puzzle, ai)
+    db.commit()
+    return out
 
 
 class ScheduleRequest(BaseModel):

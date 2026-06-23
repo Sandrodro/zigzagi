@@ -9,19 +9,11 @@ type CellValue = Cell & { value: string };
 type CheckResult = { results: (Cell & { correct: boolean })[] };
 type RevealResult = { cells: CellValue[] };
 
-export type PuzzleSummary = { id: string; date: string; theme: string; status: string };
-
 // "today" or an ISO date hit the date route; anything else is treated as a puzzle id.
 async function fetchPuzzle(key: { id?: string; date?: string }): Promise<PuzzleData> {
   const path = key.id ? `by-id/${key.id}` : (key.date ?? "today");
   const res = await fetch(`${BASE}/puzzles/${path}`);
   if (!res.ok) throw new Error(`puzzle failed: ${res.status}`);
-  return res.json();
-}
-
-async function fetchList(): Promise<PuzzleSummary[]> {
-  const res = await fetch(`${BASE}/puzzles`);
-  if (!res.ok) throw new Error(`list failed: ${res.status}`);
   return res.json();
 }
 
@@ -51,10 +43,6 @@ export function usePuzzle(key: { id?: string; date?: string } = {}) {
     queryKey: ["puzzle", key.id ?? key.date ?? "today"],
     queryFn: () => fetchPuzzle(key),
   });
-}
-
-export function usePuzzleList() {
-  return useQuery({ queryKey: ["puzzleList"], queryFn: fetchList });
 }
 
 export function useCheckCells(id: string) {

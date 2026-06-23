@@ -7,7 +7,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.db import SessionLocal
-from app.models import Job, Puzzle, WordlistEntry
+from app.models import Job, Puzzle, WordpoolGeneric, WordpoolLemma
 from app.services.publish import promote_due_puzzles
 from app.services.puzzles import today_tbilisi
 from app.services.seeds_provider import seeds_for_puzzle
@@ -18,9 +18,15 @@ from app.solver.templates import Template, load_library
 _LIB_DIR = Path(__file__).resolve().parent / "solver" / "templates"
 
 
-def load_active_wordlist(db: Session) -> Wordlist:
-    words = db.scalars(select(WordlistEntry.word).where(WordlistEntry.status == "active")).all()
+def load_wordpool(db: Session, name: str = "default") -> Wordlist:
+    # "lemmas" -> curated lemma-only pool; anything else -> the full wordpool_generic.
+    table = WordpoolLemma if name == "lemmas" else WordpoolGeneric
+    words = db.scalars(select(table.word).where(table.status == "active")).all()
     return Wordlist(list(words))
+
+
+def load_active_wordlist(db: Session) -> Wordlist:
+    return load_wordpool(db, "default")
 
 
 def claim_next_fill_job(db: Session) -> Job | None:
@@ -52,7 +58,7 @@ def tick(
     if job is None:
         return False
     seeds = seeds_provider(db) if seeds_provider else _seeds_for_job(db, job)
-    wordlist = load_active_wordlist(db)
+    wordlist = load_wordpool(db, job.params.get("wordpool", "default"))
     run_fill_job(db, job.id, library, seeds, wordlist)
     db.commit()
     return True

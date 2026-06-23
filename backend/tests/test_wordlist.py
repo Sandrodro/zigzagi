@@ -2,7 +2,7 @@ import uuid
 
 import pytest
 
-from app.models import WordlistEntry
+from app.models import WordpoolGeneric
 from app.services.wordlist import add_word, bulk_import, list_words, stats, update_entry
 
 

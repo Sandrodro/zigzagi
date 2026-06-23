@@ -47,6 +47,7 @@ class FillRequest(BaseModel):
     min_seeds: int = 10
     template_id: str | None = None
     prefilled: dict[str, str] = {}
+    wordpool: str = "default"  # "default" (wordpool_generic) | "lemmas" (wordpool_lemmas)
 
 
 @router.post("/puzzles/{puzzle_id}/fill", status_code=202)
@@ -54,7 +55,8 @@ def request_fill(puzzle_id: uuid.UUID, body: FillRequest, db: Session = Depends(
     if db.get(Puzzle, puzzle_id) is None:
         raise HTTPException(404, "puzzle not found")
     job = enqueue_fill(db, puzzle_id, body.seed_value, body.min_seeds,
-                       template_id=body.template_id, prefilled=body.prefilled)
+                       template_id=body.template_id, prefilled=body.prefilled,
+                       wordpool=body.wordpool)
     db.commit()
     return {"job_id": str(job.id)}
 

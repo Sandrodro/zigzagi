@@ -25,7 +25,7 @@ import random
 from pathlib import Path
 
 from app.db import SessionLocal
-from app.models import WordlistEntry
+from app.models import WordpoolGeneric
 from app.solver.index import Wordlist
 from app.solver.model import build_constraints
 from app.solver.run import FillResult, fill
@@ -77,9 +77,9 @@ def main():
     args = ap.parse_args()
 
     db = SessionLocal()
-    allwords = [w for (w,) in db.query(WordlistEntry.word).filter(WordlistEntry.status == "active")]
+    allwords = [w for (w,) in db.query(WordpoolGeneric.word).filter(WordpoolGeneric.status == "active")]
     if not allwords:
-        raise SystemExit("wordlist_entries is empty — load a wordlist first")
+        raise SystemExit("wordpool_generic is empty — load a wordlist first")
     words = Wordlist(allwords)
 
     prefix = f"{args.rows}x{args.cols}-"

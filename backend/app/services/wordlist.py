@@ -3,7 +3,7 @@ import uuid
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app.models import WordlistEntry
+from app.models import WordpoolGeneric
 from app.sourcing.validate import is_georgian_word
 
 
@@ -17,23 +17,23 @@ def _reject_reason(word: str) -> str | None:
     return None
 
 
-def add_word(db: Session, word: str) -> WordlistEntry:
+def add_word(db: Session, word: str) -> WordpoolGeneric:
     reason = _reject_reason(word)
     if reason is not None:
         raise ValueError(reason)
-    existing = db.scalar(select(WordlistEntry).where(WordlistEntry.word == word))
+    existing = db.scalar(select(WordpoolGeneric).where(WordpoolGeneric.word == word))
     if existing is not None:
         return existing
-    row = WordlistEntry(id=uuid.uuid4(), word=word, length=len(word), status="active")
+    row = WordpoolGeneric(id=uuid.uuid4(), word=word, length=len(word), status="active")
     db.add(row)
     db.flush()
     return row
 
 
-def block_word(db: Session, word: str) -> WordlistEntry:
-    row = db.scalar(select(WordlistEntry).where(WordlistEntry.word == word))
+def block_word(db: Session, word: str) -> WordpoolGeneric:
+    row = db.scalar(select(WordpoolGeneric).where(WordpoolGeneric.word == word))
     if row is None:
-        row = WordlistEntry(id=uuid.uuid4(), word=word, length=len(word), status="blocked")
+        row = WordpoolGeneric(id=uuid.uuid4(), word=word, length=len(word), status="blocked")
         db.add(row)
     else:
         row.status = "blocked"
@@ -43,21 +43,21 @@ def block_word(db: Session, word: str) -> WordlistEntry:
 
 def list_words(
     db: Session, status: str | None = None, length: int | None = None, search: str | None = None
-) -> list[WordlistEntry]:
-    stmt = select(WordlistEntry)
+) -> list[WordpoolGeneric]:
+    stmt = select(WordpoolGeneric)
     if status:
-        stmt = stmt.where(WordlistEntry.status == status)
+        stmt = stmt.where(WordpoolGeneric.status == status)
     if length:
-        stmt = stmt.where(WordlistEntry.length == length)
+        stmt = stmt.where(WordpoolGeneric.length == length)
     if search:
-        stmt = stmt.where(WordlistEntry.word.contains(search))
-    return list(db.scalars(stmt.order_by(WordlistEntry.word)))
+        stmt = stmt.where(WordpoolGeneric.word.contains(search))
+    return list(db.scalars(stmt.order_by(WordpoolGeneric.word)))
 
 
 def update_entry(
     db: Session, entry_id: uuid.UUID, word: str | None = None, status: str | None = None
-) -> WordlistEntry:
-    row = db.get(WordlistEntry, entry_id)
+) -> WordpoolGeneric:
+    row = db.get(WordpoolGeneric, entry_id)
     if row is None:
         raise ValueError("not found")
     if status is not None:
@@ -75,7 +75,7 @@ def update_entry(
 
 
 def bulk_import(db: Session, words: list[str]) -> dict:
-    existing = set(db.scalars(select(WordlistEntry.word)))
+    existing = set(db.scalars(select(WordpoolGeneric.word)))
     added, rejected, seen = 0, [], set()
     for w in words:
         reason = _reject_reason(w)
@@ -85,7 +85,7 @@ def bulk_import(db: Session, words: list[str]) -> dict:
         if w in existing or w in seen:
             continue  # ponytail: silent dedupe; surfacing dup counts is YAGNI
         seen.add(w)
-        db.add(WordlistEntry(id=uuid.uuid4(), word=w, length=len(w), status="active"))
+        db.add(WordpoolGeneric(id=uuid.uuid4(), word=w, length=len(w), status="active"))
         added += 1
     db.flush()
     return {"added": added, "rejected": rejected}
@@ -94,13 +94,13 @@ def bulk_import(db: Session, words: list[str]) -> dict:
 def stats(db: Session) -> dict:
     def _count(status: str) -> int:
         return db.scalar(
-            select(func.count()).select_from(WordlistEntry).where(WordlistEntry.status == status)
+            select(func.count()).select_from(WordpoolGeneric).where(WordpoolGeneric.status == status)
         ) or 0
 
     rows = db.execute(
-        select(WordlistEntry.length, func.count())
-        .where(WordlistEntry.status == "active")
-        .group_by(WordlistEntry.length)
+        select(WordpoolGeneric.length, func.count())
+        .where(WordpoolGeneric.status == "active")
+        .group_by(WordpoolGeneric.length)
     ).all()
     by_len = {length: count for length, count in rows}
     return {

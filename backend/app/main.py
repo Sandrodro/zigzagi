@@ -1,6 +1,10 @@
+import logging
+
 from fastapi import FastAPI
 
 from app.routers import admin, play
+
+logging.basicConfig(level=logging.INFO)
 
 app = FastAPI(title="Zigzagi")
 app.include_router(play.router)

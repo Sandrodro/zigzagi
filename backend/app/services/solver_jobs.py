@@ -87,6 +87,7 @@ def enqueue_fill(
     min_seeds: int,
     template_id: str | None = None,
     prefilled: dict[str, str] | None = None,
+    wordpool: str = "default",
 ) -> Job:
     job = Job(
         id=uuid.uuid4(), kind="fill", puzzle_id=puzzle_id, status="pending",
@@ -95,6 +96,7 @@ def enqueue_fill(
             "min_seeds": min_seeds,
             "template_id": template_id,
             "prefilled": prefilled or {},
+            "wordpool": wordpool,
         },
     )
     db.add(job)

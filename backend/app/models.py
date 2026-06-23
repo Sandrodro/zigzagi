@@ -43,8 +43,8 @@ class Entry(Base):
     puzzle: Mapped["Puzzle"] = relationship(back_populates="entries")
 
 
-class WordlistEntry(Base):
-    __tablename__ = "wordlist_entries"
+class WordpoolGeneric(Base):
+    __tablename__ = "wordpool_generic"
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     word: Mapped[str] = mapped_column(unique=True)
@@ -53,7 +53,7 @@ class WordlistEntry(Base):
 
 
 class WordpoolLemma(Base):
-    # Curated lemma-only pool, distinct from the inflected-form wordlist_entries.
+    # Curated lemma-only pool, distinct from the inflected-form wordpool_generic.
     # Populated from lemma datasets (UD_Georgian-GNC, simplemma). source records origin.
     __tablename__ = "wordpool_lemmas"
 

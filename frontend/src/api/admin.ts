@@ -189,6 +189,7 @@ export interface FillOpts {
   minSeeds?: number;
   templateId?: string;
   prefilled?: Record<string, string>;
+  wordpool?: string;
 }
 
 export async function requestFill(puzzleId: string, opts: FillOpts = {}): Promise<{ job_id: string }> {
@@ -200,6 +201,7 @@ export async function requestFill(puzzleId: string, opts: FillOpts = {}): Promis
       min_seeds: opts.minSeeds ?? 0,
       template_id: opts.templateId ?? null,
       prefilled: opts.prefilled ?? {},
+      wordpool: opts.wordpool ?? "default",
     }),
   });
   if (!res.ok) throw new Error("failed to start fill");

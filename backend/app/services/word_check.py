@@ -2,6 +2,7 @@ from collections import Counter
 
 from sqlalchemy.orm import Session
 
+import logging
 from app.ai.client import GeminiClient
 from app.models import Entry, Puzzle
 from app.services.wordlist import add_word, block_word
@@ -31,10 +32,14 @@ def entry_pattern(puzzle: Puzzle, entry: Entry) -> str:
 
 
 def _fits(word: str, pattern: str) -> bool:
-    return len(word) == len(pattern) and all(p == "_" or p == ch for p, ch in zip(pattern, word))
+    return len(word) == len(pattern) and all(
+        p == "_" or p == ch for p, ch in zip(pattern, word)
+    )
 
 
-def check_and_fix_entry(db: Session, puzzle: Puzzle, entry: Entry, ai: GeminiClient) -> dict:
+def check_and_fix_entry(
+    db: Session, puzzle: Puzzle, entry: Entry, ai: GeminiClient
+) -> dict:
     pattern = entry_pattern(puzzle, entry)
     verdict = ai.check_word(entry.answer, pattern, len(entry.answer))
     if verdict.valid:
@@ -59,8 +64,12 @@ def check_puzzle(db: Session, puzzle: Puzzle, ai: GeminiClient) -> dict:
         if not out["valid"]:
             invalid += 1
             if out["replaced_with"]:
-                replaced.append({
-                    "number": entry.number, "direction": entry.direction,
-                    "old": old, "new": out["replaced_with"],
-                })
+                replaced.append(
+                    {
+                        "number": entry.number,
+                        "direction": entry.direction,
+                        "old": old,
+                        "new": out["replaced_with"],
+                    }
+                )
     return {"checked": len(puzzle.entries), "invalid": invalid, "replaced": replaced}

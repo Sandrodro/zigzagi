@@ -1,5 +1,6 @@
 import json
 from collections.abc import Callable
+import logging
 
 from pydantic import ValidationError
 
@@ -41,7 +42,14 @@ _CLUE_PROMPT = (
 
 
 class GeminiExtractor:
-    def __init__(self, api_key, extract_model, suggest_model, clue_model=None, transport: Callable | None = None):
+    def __init__(
+        self,
+        api_key,
+        extract_model,
+        suggest_model,
+        clue_model=None,
+        transport: Callable | None = None,
+    ):
         self.extract_model = extract_model
         self.suggest_model = suggest_model
         self.clue_model = clue_model
@@ -92,7 +100,9 @@ class GeminiExtractor:
             f'დააბრუნე მხოლოდ JSON ობიექტი: {{"valid": true|false, "replacement": "სიტყვა"|null}}.'
         )
         for attempt in range(2):
+            logging.info(prompt)
             resp = self._call(self.suggest_model, prompt, WordCheck)
+            logging.info("%s", resp.text)
             try:
                 return WordCheck(**json.loads(resp.text))
             except (json.JSONDecodeError, ValidationError, TypeError):

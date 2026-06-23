@@ -13,6 +13,7 @@ import {
 export function PuzzleBuilder() {
   const [templates, setTemplates] = useState<TemplateDto[]>([]);
   const [templateId, setTemplateId] = useState("");
+  const [wordpool, setWordpool] = useState("default");
   const [engine, setEngine] = useState<CrosswordEngine | null>(null);
   // ponytail: mutable engine; counter forces a re-render after each mutation.
   const [, rerender] = useReducer((n: number) => n + 1, 0);
@@ -72,7 +73,7 @@ export function PuzzleBuilder() {
 
       const p = await createPuzzle();
       setPuzzleId(p.id);
-      const { job_id } = await requestFill(p.id, { templateId, prefilled, minSeeds: 0 });
+      const { job_id } = await requestFill(p.id, { templateId, prefilled, minSeeds: 0, wordpool });
       setStatus("filling");
       for (;;) {
         const job = await pollJob(job_id);
@@ -144,9 +145,18 @@ export function PuzzleBuilder() {
         </>
       )}
 
-      <Button onClick={generate} disabled={!templateId || status === "filling" || status === "creating"}>
-        გენერაცია
-      </Button>
+      <div className="flex items-end gap-2">
+        <label className="flex flex-col gap-1 text-sm">
+          <span>ლექსიკონი</span>
+          <select aria-label="ლექსიკონი" value={wordpool} onChange={(e) => setWordpool(e.target.value)}>
+            <option value="default">ზოგადი (wordpool_generic)</option>
+            <option value="lemmas">ლემები (wordpool_lemmas)</option>
+          </select>
+        </label>
+        <Button onClick={generate} disabled={!templateId || status === "filling" || status === "creating"}>
+          გენერაცია
+        </Button>
+      </div>
 
       {status && status !== "done" && <p className="text-sm text-ink-soft">{status}…</p>}
       {error && <p className="text-sm text-cinnabar">{error}</p>}

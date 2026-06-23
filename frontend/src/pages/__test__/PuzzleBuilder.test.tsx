@@ -37,8 +37,10 @@ describe("CREATE / PuzzleBuilder", () => {
     render(<RouterProvider router={router} />);
 
     await userEvent.click(await screen.findByRole("button", { name: "11x11-001" }));
-    const slotInput = await screen.findByLabelText("1 across");
-    await userEvent.type(slotInput, "დედა");
+    // Engine starts active at (0,0) across; type the 4 letters into the off-screen
+    // grid input so they land in slot 1-Across → prefilled={"1A":"დედა"}.
+    const cellInput = await screen.findByLabelText("cell input");
+    await userEvent.type(cellInput, "დედა");
     await userEvent.type(screen.getByLabelText("თემა"), "ტესტი");
     await userEvent.type(screen.getByLabelText("თარიღი"), "2026-07-01");
     await userEvent.click(screen.getByRole("button", { name: "გენერაცია" }));

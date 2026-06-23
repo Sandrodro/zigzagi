@@ -52,6 +52,18 @@ class WordlistEntry(Base):
     status: Mapped[str] = mapped_column(default="active")  # active | blocked
 
 
+class WordpoolLemma(Base):
+    # Curated lemma-only pool, distinct from the inflected-form wordlist_entries.
+    # Populated from lemma datasets (UD_Georgian-GNC, simplemma). source records origin.
+    __tablename__ = "wordpool_lemmas"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    word: Mapped[str] = mapped_column(unique=True)
+    length: Mapped[int] = mapped_column()
+    source: Mapped[str] = mapped_column()  # "ud" | "simplemma" | "ud+simplemma"
+    status: Mapped[str] = mapped_column(default="active")  # active | blocked
+
+
 class WordCandidate(Base):
     __tablename__ = "word_candidates"
 

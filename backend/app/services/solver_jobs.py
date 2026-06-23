@@ -80,10 +80,22 @@ def list_template_dtos() -> list[dict]:
     return out
 
 
-def enqueue_fill(db: Session, puzzle_id: uuid.UUID, seed_value: int, min_seeds: int) -> Job:
+def enqueue_fill(
+    db: Session,
+    puzzle_id: uuid.UUID,
+    seed_value: int,
+    min_seeds: int,
+    template_id: str | None = None,
+    prefilled: dict[str, str] | None = None,
+) -> Job:
     job = Job(
         id=uuid.uuid4(), kind="fill", puzzle_id=puzzle_id, status="pending",
-        params={"seed_value": seed_value, "min_seeds": min_seeds},
+        params={
+            "seed_value": seed_value,
+            "min_seeds": min_seeds,
+            "template_id": template_id,
+            "prefilled": prefilled or {},
+        },
     )
     db.add(job)
     db.flush()
@@ -96,10 +108,14 @@ def run_fill_job(
     job = db.get(Job, job_id)
     job.status = "running"
     db.flush()
-    template = pick_template(library, job.params["seed_value"])
+    tid = job.params.get("template_id")
+    template = next((t for t in library if t.id == tid), None) if tid else None
+    if template is None:
+        template = pick_template(library, job.params["seed_value"])
     outcome = fill(
         template, seeds, wordlist,
         seed_value=job.params["seed_value"], min_seeds=job.params["min_seeds"],
+        prefilled=job.params.get("prefilled") or {},
     )
     if isinstance(outcome, FillFailure):
         job.status = "failed"

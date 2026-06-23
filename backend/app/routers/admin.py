@@ -44,13 +44,16 @@ def templates():
 class FillRequest(BaseModel):
     seed_value: int = 0
     min_seeds: int = 10
+    template_id: str | None = None
+    prefilled: dict[str, str] = {}
 
 
 @router.post("/puzzles/{puzzle_id}/fill", status_code=202)
 def request_fill(puzzle_id: uuid.UUID, body: FillRequest, db: Session = Depends(get_db)):
     if db.get(Puzzle, puzzle_id) is None:
         raise HTTPException(404, "puzzle not found")
-    job = enqueue_fill(db, puzzle_id, body.seed_value, body.min_seeds)
+    job = enqueue_fill(db, puzzle_id, body.seed_value, body.min_seeds,
+                       template_id=body.template_id, prefilled=body.prefilled)
     db.commit()
     return {"job_id": str(job.id)}
 

@@ -72,7 +72,9 @@ def _connected(t: Template) -> bool:
     return seen == playable
 
 
-def validate_template(t: Template) -> list[str]:
+def validate_template(
+    t: Template, slot_density: tuple[float, float] = (SLOT_DENSITY_MIN, SLOT_DENSITY_MAX)
+) -> list[str]:
     problems = []
     for (r, c) in t.blocks:
         if (t.rows - 1 - r, t.cols - 1 - c) not in t.blocks:
@@ -83,8 +85,9 @@ def validate_template(t: Template) -> list[str]:
         problems.append("word run shorter than 3")
     slots = [run for run in _runs(t) if len(run) >= 3]
     # Slot count scales with grid area (see SLOT_DENSITY_MIN/MAX); 10x10 → 16-28.
+    # Callers (gen_templates --slot-band) may widen the band per run.
     area = t.rows * t.cols
-    lo, hi = round(area * SLOT_DENSITY_MIN), round(area * SLOT_DENSITY_MAX)
+    lo, hi = round(area * slot_density[0]), round(area * slot_density[1])
     if not (lo <= len(slots) <= hi):
         problems.append(f"slot count {len(slots)} outside {lo}-{hi}")
     if not _connected(t):

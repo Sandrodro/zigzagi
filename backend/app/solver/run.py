@@ -65,7 +65,7 @@ def fill(
         return FillFailure(reason=f"only {len(seed_slots)} seed slots available, need {min_seeds}")
 
     try:
-        assignment = backtrack_fill(constraints, order, bp, pools, deadline_s)
+        assignment = backtrack_fill(constraints, order, bp, pools, deadline_s, seed_value)
     except FillTimeout:
         return FillFailure(reason=f"fill exceeded {deadline_s:.0f}s deadline")
     if assignment is None:

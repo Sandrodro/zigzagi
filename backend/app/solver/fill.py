@@ -1,3 +1,4 @@
+import random
 import time
 from collections import defaultdict
 
@@ -24,6 +25,7 @@ def backtrack_fill(
     bp: dict[int, tuple[int, ...]],
     candidate_pools: dict[int, list[str]],
     deadline_s: float,
+    seed_value: int = 0,
 ) -> dict[tuple[int, int], str] | None:
     # Forward-checking CSP with dynamic MRV ordering. (order/bp are kept for
     # signature compatibility but superseded: MRV picks the variable and forward
@@ -53,6 +55,7 @@ def backtrack_fill(
     assigned: dict[int, str] = {}
     deadline = time.monotonic() + deadline_s
     EMPTY: frozenset[str] = frozenset()
+    rng = random.Random(seed_value)  # seeded => reproducible value order per puzzle
 
     def recurse() -> bool:
         if time.monotonic() > deadline:
@@ -64,7 +67,9 @@ def backtrack_fill(
             (j for j in range(n) if j not in assigned),
             key=lambda j: (len(domains[j]), j),
         )
-        for w in sorted(domains[i]):  # sorted => deterministic value order
+        cands = sorted(domains[i])  # stable base order, then seeded shuffle => reproducible
+        rng.shuffle(cands)
+        for w in cands:
             assigned[i] = w
             removed: dict[int, set[str]] = {}
             ok = True

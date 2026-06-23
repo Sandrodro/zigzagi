@@ -1,100 +1,105 @@
-import { useState } from "react";
-
-import {
-  createPuzzle,
-  fetchPuzzle,
-  pollJob,
-  requestFill,
-  type PuzzleEntry,
-} from "../api/admin";
-import { DataTable } from "../components/DataTable";
+import { Link } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
 import { Button } from "../components/ui/Button";
 import { Input } from "../components/ui/Input";
-import { SectionTitle } from "../components/ui/Typography";
+import { DataTable } from "../components/DataTable";
+import {
+  createPuzzle, fetchPuzzle, fetchTemplates, pollJob, requestFill,
+  type PuzzleDetail, type TemplateDto,
+} from "../api/admin";
 
-const LABEL = "text-[0.72rem] font-semibold uppercase tracking-[0.08em] text-ink-soft";
-
-const COLUMNS = [
-  { key: "number", header: "№" },
-  { key: "direction", header: "მიმართ." },
-  { key: "answer", header: "პასუხი" },
-  { key: "provenance", header: "წყარო" },
-] as const;
+const slotKey = (s: { number: number; direction: string }) =>
+  `${s.number}${s.direction === "across" ? "A" : "D"}`;
 
 export function PuzzleBuilder() {
+  const [templates, setTemplates] = useState<TemplateDto[]>([]);
+  const [templateId, setTemplateId] = useState("");
+  const [words, setWords] = useState<Record<string, string>>({});
   const [theme, setTheme] = useState("");
   const [liveDate, setLiveDate] = useState("");
-  const [puzzleId, setPuzzleId] = useState<string | null>(null);
-  const [minSeeds, setMinSeeds] = useState(15);
-  const [seedValue, setSeedValue] = useState(0);
-  const [jobId, setJobId] = useState<string | null>(null);
-  const [jobStatus, setJobStatus] = useState<string | null>(null);
+  const [status, setStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [entries, setEntries] = useState<PuzzleEntry[]>([]);
+  const [puzzleId, setPuzzleId] = useState<string | null>(null);
+  const [detail, setDetail] = useState<PuzzleDetail | null>(null);
 
-  const onCreate = async () => {
-    if (!theme.trim() || !liveDate) return;
-    const p = await createPuzzle(theme.trim(), liveDate);
-    setPuzzleId(p.id);
-    setEntries([]);
-    setJobStatus(null);
-    setError(null);
-  };
+  useEffect(() => { fetchTemplates().then(setTemplates).catch(() => setError("failed to load templates")); }, []);
+  const template = templates.find((t) => t.id === templateId);
 
-  const onFill = async () => {
-    if (!puzzleId) return;
-    const { job_id } = await requestFill(puzzleId, seedValue, minSeeds);
-    setJobId(job_id);
-    setJobStatus("pending");
-    setError(null);
-  };
-
-  const onCheck = async () => {
-    if (!jobId || !puzzleId) return;
-    const job = await pollJob(jobId);
-    setJobStatus(job.status);
-    if (job.status === "failed") {
-      setError(job.error);
-    } else if (job.status === "done") {
-      const detail = await fetchPuzzle(puzzleId);
-      setEntries(detail.entries);
+  async function generate() {
+    setError(null); setDetail(null); setStatus("creating");
+    try {
+      const prefilled = Object.fromEntries(
+        Object.entries(words).filter(([, w]) => w.trim().length > 0)
+      );
+      const p = await createPuzzle(theme.trim(), liveDate);
+      setPuzzleId(p.id);
+      const { job_id } = await requestFill(p.id, { templateId, prefilled, minSeeds: 0 });
+      setStatus("filling");
+      for (;;) {
+        const job = await pollJob(job_id);
+        if (job.status === "done") break;
+        if (job.status === "failed") { setError(job.error ?? "fill failed"); setStatus(null); return; }
+        await new Promise((r) => setTimeout(r, 1000));
+      }
+      setDetail(await fetchPuzzle(p.id));
+      setStatus("done");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "error"); setStatus(null);
     }
-  };
+  }
 
   return (
-    <section>
-      <SectionTitle>ფაზლის აწყობა</SectionTitle>
-      <div className="my-2.5 flex flex-col gap-1.5">
-        <label className={LABEL} htmlFor="pb-theme">თემა</label>
-        <Input id="pb-theme" aria-label="theme" placeholder="თემა" value={theme} onChange={(e) => setTheme(e.target.value)} />
-      </div>
-      <div className="my-2.5 flex flex-col gap-1.5">
-        <label className={LABEL} htmlFor="pb-date">გამოქვეყნების თარიღი</label>
-        <Input id="pb-date" aria-label="live date" type="date" value={liveDate} onChange={(e) => setLiveDate(e.target.value)} />
-      </div>
-      <Button variant="primary" onClick={onCreate}>შექმნა</Button>
+    <div className="flex flex-col gap-4">
+      <label className="flex flex-col gap-1 text-sm">
+        <span>შაბლონი</span>
+        <select aria-label="შაბლონი" value={templateId} onChange={(e) => { setTemplateId(e.target.value); setWords({}); }}>
+          <option value="">—</option>
+          {templates.map((t) => <option key={t.id} value={t.id}>{t.id}</option>)}
+        </select>
+      </label>
 
-      {puzzleId && (
-        <>
-          <p className="font-mono text-[0.85rem] text-ink-soft">ID: {puzzleId}</p>
-          <div className="my-4 flex flex-wrap items-center gap-2">
-            <label className={`${LABEL} flex items-center gap-1.5`}>
-              seeds min
-              <Input aria-label="min seeds" className="w-20" type="number" value={minSeeds} onChange={(e) => setMinSeeds(Number(e.target.value))} />
+      {template && (
+        <div className="grid grid-cols-2 gap-2">
+          {template.slots.map((s) => (
+            <label key={slotKey(s)} className="flex items-center gap-2 text-sm">
+              <span className="w-20 text-ink-soft">{s.number} {s.direction}</span>
+              <Input
+                aria-label={`${s.number} ${s.direction}`}
+                maxLength={s.length}
+                value={words[slotKey(s)] ?? ""}
+                onChange={(e) => setWords((w) => ({ ...w, [slotKey(s)]: e.target.value }))}
+              />
             </label>
-            <label className={`${LABEL} flex items-center gap-1.5`}>
-              seed
-              <Input aria-label="seed value" className="w-20" type="number" value={seedValue} onChange={(e) => setSeedValue(Number(e.target.value))} />
-            </label>
-            <Button variant="primary" size="sm" onClick={onFill}>შევსება</Button>
-          </div>
-        </>
+          ))}
+        </div>
       )}
 
-      {jobId && <Button size="sm" onClick={onCheck}>სტატუსის შემოწმება</Button>}
-      {jobStatus && <p className="font-mono text-[0.85rem] text-ink-soft">სტატუსი: {jobStatus}</p>}
-      {error && <p className="rounded border border-rule border-l-[3px] border-l-cinnabar bg-[#f8efef] px-3 py-1.5" role="alert">{error}</p>}
-      {entries.length > 0 && <DataTable columns={[...COLUMNS]} rows={entries} />}
-    </section>
+      <label className="flex flex-col gap-1 text-sm"><span>თემა</span>
+        <Input aria-label="თემა" value={theme} onChange={(e) => setTheme(e.target.value)} /></label>
+      <label className="flex flex-col gap-1 text-sm"><span>თარიღი</span>
+        <Input aria-label="თარიღი" type="date" value={liveDate} onChange={(e) => setLiveDate(e.target.value)} /></label>
+
+      <Button onClick={generate} disabled={!templateId || !theme.trim() || !liveDate || status === "filling" || status === "creating"}>
+        გენერაცია
+      </Button>
+
+      {status && status !== "done" && <p className="text-sm text-ink-soft">{status}…</p>}
+      {error && <p className="text-sm text-cinnabar">{error}</p>}
+
+      {detail && (
+        <>
+          <DataTable
+            columns={[{ key: "number", header: "#" }, { key: "direction", header: "მიმართ." },
+                      { key: "answer", header: "სიტყვა" }, { key: "provenance", header: "წყარო" }]}
+            rows={detail.entries}
+          />
+          {puzzleId && (
+            <Link to="/admin/puzzles/$puzzleId" params={{ puzzleId }} className="text-ochre underline">
+              სიაში ნახვა →
+            </Link>
+          )}
+        </>
+      )}
+    </div>
   );
 }

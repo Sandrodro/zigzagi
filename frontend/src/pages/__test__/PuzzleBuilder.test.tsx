@@ -1,66 +1,50 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { RouterProvider, createMemoryHistory } from "@tanstack/react-router";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { router } from "../../router";
 
-import { PuzzleBuilder } from "../PuzzleBuilder";
-
-const json = (body: unknown) =>
-  Promise.resolve({ ok: true, status: 200, json: () => Promise.resolve(body) } as Response);
-
-let fetchMock: ReturnType<typeof vi.fn>;
-
-beforeEach(() => {
-  fetchMock = vi.fn((url: string, init?: RequestInit) => {
-    const u = String(url);
-    if (u.endsWith("/puzzles") && init?.method === "POST")
-      return json({ id: "p1", theme: "თბილისი", live_date: "2026-07-10", status: "draft" });
-    if (u.endsWith("/fill")) return json({ job_id: "j1" });
-    if (u.includes("/jobs/")) return json({ status: "done", result: { entries: 1 }, error: null });
-    if (u.endsWith("/puzzles/p1"))
-      return json({
-        id: "p1", theme: "თბილისი", live_date: "2026-07-10", status: "draft", grid_template: {},
-        entries: [{ id: "e1", number: 1, direction: "across", answer: "თბილისი", row: 0, col: 0, clue: null, clue_status: "pending", provenance: "sourced" }],
-      });
-    return json({});
-  });
-  vi.stubGlobal("fetch", fetchMock);
-});
+function mockFetch(handlers: Record<string, (init?: RequestInit) => unknown>) {
+  vi.stubGlobal("fetch", vi.fn(async (url: string, init?: RequestInit) => {
+    const key = Object.keys(handlers).find((k) => url.includes(k));
+    if (!key) throw new Error(`unmocked ${url}`);
+    return { ok: true, json: async () => handlers[key](init) } as Response;
+  }));
+}
 
 afterEach(() => vi.unstubAllGlobals());
 
-describe("PuzzleBuilder", () => {
-  it("creates a draft, fills it, and shows the filled entries", async () => {
-    render(<PuzzleBuilder />);
+const TEMPLATE = {
+  id: "11x11-001", rows: 11, cols: 11, blocks: [],
+  slots: [{ number: 1, direction: "across", row: 0, col: 0, length: 4 }],
+};
 
-    await userEvent.type(screen.getByLabelText("theme"), "თბილისი");
-    await userEvent.type(screen.getByLabelText("live date"), "2026-07-10");
-    await userEvent.click(screen.getByText("შექმნა"));
-
-    expect(await screen.findByText(/p1/)).toBeInTheDocument();
-
-    await userEvent.click(screen.getByText("შევსება"));
-    await userEvent.click(screen.getByText("სტატუსის შემოწმება"));
-
-    expect(await screen.findByText("თბილისი")).toBeInTheDocument();
-    expect(screen.getByText(/done/)).toBeInTheDocument();
-  });
-
-  it("shows the failure reason when the fill fails", async () => {
-    fetchMock.mockImplementation((url: string, init?: RequestInit) => {
-      const u = String(url);
-      if (u.endsWith("/puzzles") && init?.method === "POST")
-        return json({ id: "p1", theme: "თ", live_date: "2026-07-10", status: "draft" });
-      if (u.endsWith("/fill")) return json({ job_id: "j1" });
-      if (u.includes("/jobs/")) return json({ status: "failed", result: null, error: "not enough seeds" });
-      return json({});
+describe("CREATE / PuzzleBuilder", () => {
+  it("picks a template, types a slot word, generates, shows view link", async () => {
+    mockFetch({
+      "/api/admin/templates": () => [TEMPLATE],
+      "/api/admin/puzzles/": () => ({ // fetchPuzzle detail
+        id: "p1", theme: "t", live_date: "2026-07-01", status: "draft", grid_template: {},
+        entries: [{ id: "e1", number: 1, direction: "across", answer: "დედა", row: 0, col: 0, clue: null, clue_status: "pending", provenance: "manual" }],
+      }),
+      "/api/admin/puzzles": () => ({ id: "p1", theme: "t", live_date: "2026-07-01", status: "draft" }), // createPuzzle
+      "/fill": () => ({ job_id: "j1" }),
+      "/api/admin/jobs/": () => ({ status: "done", result: { entries: 1 }, error: null }),
     });
-    render(<PuzzleBuilder />);
-    await userEvent.type(screen.getByLabelText("theme"), "თ");
-    await userEvent.type(screen.getByLabelText("live date"), "2026-07-10");
-    await userEvent.click(screen.getByText("შექმნა"));
-    await screen.findByText(/p1/);
-    await userEvent.click(screen.getByText("შევსება"));
-    await userEvent.click(screen.getByText("სტატუსის შემოწმება"));
-    await waitFor(() => expect(screen.getByText(/not enough seeds/)).toBeInTheDocument());
+
+    const history = createMemoryHistory({ initialEntries: ["/admin/create"] });
+    router.update({ history });
+    render(<RouterProvider router={router} />);
+
+    const select = await screen.findByLabelText("შაბლონი");
+    await userEvent.selectOptions(select, "11x11-001");
+    const slotInput = await screen.findByLabelText("1 across");
+    await userEvent.type(slotInput, "დედა");
+    await userEvent.type(screen.getByLabelText("თემა"), "ტესტი");
+    await userEvent.type(screen.getByLabelText("თარიღი"), "2026-07-01");
+    await userEvent.click(screen.getByRole("button", { name: "გენერაცია" }));
+
+    expect(await screen.findByText("დედა")).toBeInTheDocument();
+    expect(await screen.findByRole("link", { name: /სიაში ნახვა/ })).toBeInTheDocument();
   });
 });

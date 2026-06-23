@@ -1,7 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { useEffect, useReducer, useRef, useState } from "react";
 import { Button } from "../components/ui/Button";
-import { Input } from "../components/ui/Input";
 import { DataTable } from "../components/DataTable";
 import { Grid } from "../components/Grid";
 import { CrosswordEngine } from "../engine/crossword";
@@ -18,8 +17,6 @@ export function PuzzleBuilder() {
   // ponytail: mutable engine; counter forces a re-render after each mutation.
   const [, rerender] = useReducer((n: number) => n + 1, 0);
   const inputRef = useRef<HTMLInputElement>(null);
-  const [theme, setTheme] = useState("");
-  const [liveDate, setLiveDate] = useState("");
   const [status, setStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [puzzleId, setPuzzleId] = useState<string | null>(null);
@@ -73,7 +70,7 @@ export function PuzzleBuilder() {
         if (letters.every((l) => l !== "")) prefilled[slotKey(s)] = letters.join("");
       }
 
-      const p = await createPuzzle(theme.trim(), liveDate);
+      const p = await createPuzzle();
       setPuzzleId(p.id);
       const { job_id } = await requestFill(p.id, { templateId, prefilled, minSeeds: 0 });
       setStatus("filling");
@@ -147,12 +144,7 @@ export function PuzzleBuilder() {
         </>
       )}
 
-      <label className="flex flex-col gap-1 text-sm"><span>თემა</span>
-        <Input aria-label="თემა" value={theme} onChange={(e) => setTheme(e.target.value)} /></label>
-      <label className="flex flex-col gap-1 text-sm"><span>თარიღი</span>
-        <Input aria-label="თარიღი" type="date" value={liveDate} onChange={(e) => setLiveDate(e.target.value)} /></label>
-
-      <Button onClick={generate} disabled={!templateId || !theme.trim() || !liveDate || status === "filling" || status === "creating"}>
+      <Button onClick={generate} disabled={!templateId || status === "filling" || status === "creating"}>
         გენერაცია
       </Button>
 

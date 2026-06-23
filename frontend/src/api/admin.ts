@@ -164,11 +164,15 @@ export interface JobStatus {
   error: string | null;
 }
 
-export async function createPuzzle(theme: string, liveDate: string): Promise<PuzzleSummary> {
+export async function createPuzzle(theme?: string, liveDate?: string): Promise<PuzzleSummary> {
+  // Omit empty fields so the backend applies its defaults (theme/date guards removed).
+  const body: Record<string, unknown> = {};
+  if (theme && theme.trim()) body.theme = theme.trim();
+  if (liveDate) body.live_date = liveDate;
   const res = await fetch(`${BASE}/puzzles`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ theme, live_date: liveDate }),
+    body: JSON.stringify(body),
   });
   if (!res.ok) throw new Error(`createPuzzle failed: ${res.status}`);
   return res.json();

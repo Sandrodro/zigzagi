@@ -9,6 +9,16 @@ def test_create_puzzle_returns_draft(client):
     assert body["live_date"] == "2026-07-10"
 
 
+def test_create_puzzle_without_theme_or_date(client):
+    # theme/date guards removed: an empty body creates a draft with defaults.
+    resp = client.post("/api/admin/puzzles", json={})
+    assert resp.status_code == 201
+    body = resp.json()
+    assert body["status"] == "draft"
+    assert body["theme"]  # non-empty default
+    assert body["live_date"]  # defaults to today
+
+
 def test_get_puzzle_returns_structure_and_entries(client, db_session):
     import datetime as dt
     from app.models import Entry, Puzzle

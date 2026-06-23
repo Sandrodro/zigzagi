@@ -41,8 +41,7 @@ describe("CREATE / PuzzleBuilder", () => {
     // grid input so they land in slot 1-Across → prefilled={"1A":"დედა"}.
     const cellInput = await screen.findByLabelText("cell input");
     await userEvent.type(cellInput, "დედა");
-    await userEvent.type(screen.getByLabelText("თემა"), "ტესტი");
-    await userEvent.type(screen.getByLabelText("თარიღი"), "2026-07-01");
+    // No theme/date inputs anymore — Generate only needs a selected template.
     await userEvent.click(screen.getByRole("button", { name: "გენერაცია" }));
 
     expect(await screen.findByText("დედა")).toBeInTheDocument();

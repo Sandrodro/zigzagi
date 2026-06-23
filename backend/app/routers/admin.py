@@ -193,8 +193,10 @@ def wordlist_bulk(body: WordlistBulkRequest, db: Session = Depends(get_db)):
 
 
 class CreatePuzzleRequest(BaseModel):
-    theme: str
-    live_date: dt.date
+    # ponytail: theme/date guards removed for test-mode general crossword creation.
+    # Re-require these before launch if puzzles must carry a real theme + live date.
+    theme: str = "უსათაურო"
+    live_date: dt.date | None = None
 
 
 @router.get("/puzzles")
@@ -214,7 +216,7 @@ def list_puzzles(db: Session = Depends(get_db)):
 @router.post("/puzzles", status_code=201)
 def create_puzzle(body: CreatePuzzleRequest, db: Session = Depends(get_db)):
     puzzle = Puzzle(
-        id=uuid.uuid4(), live_date=body.live_date, theme=body.theme,
+        id=uuid.uuid4(), live_date=body.live_date or today_tbilisi(), theme=body.theme,
         grid_template={}, status="draft", seed=None, version=1,
     )
     db.add(puzzle)

@@ -91,6 +91,27 @@ class GeminiExtractor:
                     raise AIError("clue generation returned malformed JSON")
         raise AIError("unreachable")
 
+    def lemmatize(self, words, cheap=False) -> list[str]:
+        # ponytail: one call for the whole article; chunk if a paste ever blows the token limit.
+        # cheap=True uses the flash extract model instead of the pricier suggest model.
+        prompt = (
+            "For each Georgian word below, return its lemma (ლექსიკონური ძირითადი ფორმა). "
+            "For words that are nouns turned into adjectives (e.g. 'ემიგრაციული'), "
+            "return the lemma of the noun itself ('ემიგრაცია'). "
+            "Skip any token that is not a valid Georgian word or has no lemma. "
+            "Return only a JSON array of unique lemmas (strings). "
+            f"Words: {', '.join(words)}"
+        )
+        model = self.extract_model if cheap else self.suggest_model
+        for attempt in range(2):
+            resp = self._call(model, prompt, None)
+            try:
+                return [str(x) for x in json.loads(resp.text)]
+            except (json.JSONDecodeError, ValidationError, TypeError):
+                if attempt == 1:
+                    raise AIError("lemmatize returned malformed JSON")
+        raise AIError("unreachable")
+
     def check_word(self, word, pattern, length) -> WordCheck:
         prompt = (
             f"შეამოწმე, არის თუ არა '{word}' გამართული ქართული სიტყვა. "

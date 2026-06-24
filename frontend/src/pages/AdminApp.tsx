@@ -6,6 +6,7 @@ const NAV: { to: string; label: string }[] = [
   { to: "/admin", label: "სია" },        // LIST
   { to: "/admin/create", label: "შექმნა" }, // CREATE
   { to: "/admin/wordpool", label: "პული" }, // WORDPOOL
+  { to: "/admin/fromarticle", label: "სტატია" }, // FROM ARTICLE
 ];
 
 export function AdminApp() {

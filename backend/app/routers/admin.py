@@ -16,14 +16,18 @@ from app.services.pool import bulk_update, create_candidate, create_from_extract
 from app.services.publish import runway_days, schedule_puzzle
 from app.services.puzzles import delete_puzzle, list_all, today_tbilisi
 from app.services.solver_jobs import enqueue_fill, list_template_dtos
+from app.services.article import filter_article
 from app.services.word_check import check_and_fix_entry, check_puzzle
 from app.services.wordlist import (
     add_word,
     bulk_import,
+    bulk_import_lemmas,
+    existing_lemmas,
     list_words,
     stats,
     update_entry,
 )
+from app.sourcing.validate import is_georgian_word, valid_length
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
 
@@ -131,6 +135,37 @@ def pool_add(body: PoolAddRequest, db: Session = Depends(get_db)):
 def suggest(body: SuggestRequest, db: Session = Depends(get_db), ai: GeminiClient = Depends(get_gemini)):
     pool_words = [r.surface for r in list_pool(db, status="accepted")]
     return [s.model_dump() for s in ai.suggest(body.theme, pool_words)]
+
+
+class FromArticleRequest(BaseModel):
+    text: str
+    cheap: bool = False  # use the cheaper flash model instead of suggest
+
+
+@router.post("/from-article")
+def from_article(body: FromArticleRequest, db: Session = Depends(get_db), ai: GeminiClient = Depends(get_gemini)):
+    candidates = filter_article(body.text)
+    if not candidates:
+        return {"lemmas": []}
+    lemmas = (w for w in ai.lemmatize(candidates, cheap=body.cheap) if is_georgian_word(w) and valid_length(w))
+    have = existing_lemmas(db)
+    return {
+        "lemmas": [
+            {"word": w, "already_added": w in have}
+            for w in dict.fromkeys(lemmas)  # dedupe, preserve order
+        ]
+    }
+
+
+class LemmaBulkRequest(BaseModel):
+    words: list[str]
+
+
+@router.post("/wordlist/lemmas/bulk")
+def wordlist_lemmas_bulk(body: LemmaBulkRequest, db: Session = Depends(get_db)):
+    result = bulk_import_lemmas(db, body.words)
+    db.commit()
+    return result
 
 
 class WordlistAddRequest(BaseModel):

@@ -127,6 +127,31 @@ export async function bulkImport(text: string): Promise<ImportResult> {
   return res.json();
 }
 
+export interface ArticleLemma {
+  word: string;
+  already_added: boolean;
+}
+
+export async function articleLemmas(text: string, cheap = false): Promise<ArticleLemma[]> {
+  const res = await fetch(`${BASE}/from-article`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ text, cheap }),
+  });
+  if (!res.ok) throw new Error(`from-article failed: ${res.status}`);
+  return (await res.json()).lemmas;
+}
+
+export async function bulkImportLemmas(words: string[]): Promise<ImportResult> {
+  const res = await fetch(`${BASE}/wordlist/lemmas/bulk`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ words }),
+  });
+  if (!res.ok) throw new Error(`bulkImportLemmas failed: ${res.status}`);
+  return res.json();
+}
+
 export async function fetchWordlistStats(): Promise<WordlistStats> {
   const res = await fetch(`${BASE}/wordlist/stats`);
   if (!res.ok) throw new Error(`stats failed: ${res.status}`);

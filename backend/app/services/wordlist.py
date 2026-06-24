@@ -3,7 +3,7 @@ import uuid
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app.models import WordpoolGeneric
+from app.models import WordpoolGeneric, WordpoolLemma
 from app.sourcing.validate import is_georgian_word
 
 
@@ -89,6 +89,27 @@ def bulk_import(db: Session, words: list[str]) -> dict:
         added += 1
     db.flush()
     return {"added": added, "rejected": rejected}
+
+
+def bulk_import_lemmas(db: Session, words: list[str], source: str = "gemini") -> dict:
+    existing = set(db.scalars(select(WordpoolLemma.word)))
+    added, rejected, seen = 0, [], set()
+    for w in words:
+        reason = _reject_reason(w)
+        if reason is not None:
+            rejected.append({"word": w, "reason": reason})
+            continue
+        if w in existing or w in seen:
+            continue  # ponytail: silent dedupe, mirrors bulk_import
+        seen.add(w)
+        db.add(WordpoolLemma(id=uuid.uuid4(), word=w, length=len(w), source=source, status="active"))
+        added += 1
+    db.flush()
+    return {"added": added, "rejected": rejected}
+
+
+def existing_lemmas(db: Session) -> set[str]:
+    return set(db.scalars(select(WordpoolLemma.word)))
 
 
 def stats(db: Session) -> dict:

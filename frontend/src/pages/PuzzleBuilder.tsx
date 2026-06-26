@@ -1,7 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { useEffect, useReducer, useRef, useState } from "react";
 import { Button } from "../components/ui/Button";
-import { DataTable } from "../components/DataTable";
+import { PuzzleEntries } from "../components/PuzzleEntries";
 import { Grid } from "../components/Grid";
 import { CrosswordEngine } from "../engine/crossword";
 import { slotKey, templateToPuzzleData } from "../engine/puzzleData";
@@ -73,12 +73,38 @@ export function PuzzleBuilder() {
 
       const p = await createPuzzle();
       setPuzzleId(p.id);
-      const { job_id } = await requestFill(p.id, { templateId, prefilled, minSeeds: 0, wordpool });
+      // Random seed per generation so the same template yields a different fill each time
+      // (identical seed_value is byte-identical by design).
+      const seedValue = Math.floor(Math.random() * 1_000_000);
+      const { job_id } = await requestFill(p.id, { templateId, prefilled, minSeeds: 0, wordpool, seedValue });
       setStatus("filling");
       for (;;) {
         const job = await pollJob(job_id);
         if (job.status === "done") break;
         if (job.status === "failed") { setError(job.error ?? "fill failed"); setStatus(null); return; }
+        await new Promise((r) => setTimeout(r, 1000));
+      }
+      setDetail(await fetchPuzzle(p.id));
+      setStatus("done");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "error"); setStatus(null);
+    }
+  }
+
+  async function generateFreeform() {
+    setError(null); setDetail(null); setStatus("creating");
+    try {
+      const p = await createPuzzle();
+      setPuzzleId(p.id);
+      const seedValue = Math.floor(Math.random() * 1_000_000);
+      const { job_id } = await requestFill(p.id, {
+        mode: "freeform", wordCount: 28, wordpool, seedValue,
+      });
+      setStatus("filling");
+      for (;;) {
+        const job = await pollJob(job_id);
+        if (job.status === "done") break;
+        if (job.status === "failed") { setError(job.error ?? "freeform failed"); setStatus(null); return; }
         await new Promise((r) => setTimeout(r, 1000));
       }
       setDetail(await fetchPuzzle(p.id));
@@ -156,6 +182,9 @@ export function PuzzleBuilder() {
         <Button onClick={generate} disabled={!templateId || status === "filling" || status === "creating"}>
           გენერაცია
         </Button>
+        <Button onClick={generateFreeform} disabled={status === "filling" || status === "creating"}>
+          თავისუფალი ფორმა
+        </Button>
       </div>
 
       {status && status !== "done" && <p className="text-sm text-ink-soft">{status}…</p>}
@@ -163,10 +192,9 @@ export function PuzzleBuilder() {
 
       {detail && (
         <>
-          <DataTable
-            columns={[{ key: "number", header: "#" }, { key: "direction", header: "მიმართ." },
-                      { key: "answer", header: "სიტყვა" }, { key: "provenance", header: "წყარო" }]}
-            rows={detail.entries}
+          <PuzzleEntries
+            detail={detail}
+            reload={() => fetchPuzzle(detail.id).then(setDetail)}
           />
           {puzzleId && (
             <Link to="/admin/puzzles/$puzzleId" params={{ puzzleId }} className="text-ochre underline">

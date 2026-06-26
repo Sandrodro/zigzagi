@@ -215,6 +215,9 @@ export interface FillOpts {
   templateId?: string;
   prefilled?: Record<string, string>;
   wordpool?: string;
+  mode?: string;
+  wordCount?: number;
+  targetDensity?: number;
 }
 
 export async function requestFill(puzzleId: string, opts: FillOpts = {}): Promise<{ job_id: string }> {
@@ -227,6 +230,9 @@ export async function requestFill(puzzleId: string, opts: FillOpts = {}): Promis
       template_id: opts.templateId ?? null,
       prefilled: opts.prefilled ?? {},
       wordpool: opts.wordpool ?? "default",
+      mode: opts.mode ?? "normal",
+      word_count: opts.wordCount ?? 28,
+      target_density: opts.targetDensity ?? 0.6,
     }),
   });
   if (!res.ok) throw new Error("failed to start fill");
@@ -253,6 +259,13 @@ export async function fetchRunway(): Promise<Runway> {
 export async function generateClues(puzzleId: string): Promise<{ generated: number }> {
   const res = await fetch(`${BASE}/puzzles/${puzzleId}/clues`, { method: "POST" });
   if (!res.ok) throw new Error(`generateClues failed: ${res.status}`);
+  return res.json();
+}
+
+// One-shot: LLM picks a theme + writes a clue for every answer.
+export async function autoClue(puzzleId: string): Promise<{ theme: string; generated: number }> {
+  const res = await fetch(`${BASE}/puzzles/${puzzleId}/autoclue`, { method: "POST" });
+  if (!res.ok) throw new Error(`autoClue failed: ${res.status}`);
   return res.json();
 }
 
@@ -326,6 +339,23 @@ export async function checkPuzzleWords(puzzleId: string): Promise<{ checked: num
   const res = await fetch(`/api/admin/puzzles/${puzzleId}/check-words`, { method: "POST" });
   if (!res.ok) throw new Error("failed to check words");
   return res.json();
+}
+
+export async function swapEntry(puzzleId: string, entryId: string): Promise<{ replaced: boolean; word: string | null }> {
+  const res = await fetch(`/api/admin/puzzles/${puzzleId}/entries/${entryId}/swap`, { method: "POST" });
+  if (!res.ok) throw new Error("failed to swap entry");
+  return res.json();
+}
+
+export async function blockEntryWord(puzzleId: string, entryId: string): Promise<{ blocked: string; removed: boolean; replaced: boolean; word: string | null }> {
+  const res = await fetch(`/api/admin/puzzles/${puzzleId}/entries/${entryId}/block-word`, { method: "POST" });
+  if (!res.ok) throw new Error("failed to block word");
+  return res.json();
+}
+
+export async function deleteEntry(puzzleId: string, entryId: string): Promise<void> {
+  const res = await fetch(`/api/admin/puzzles/${puzzleId}/entries/${entryId}`, { method: "DELETE" });
+  if (!res.ok) throw new Error("failed to delete entry");
 }
 
 export async function addPoolWord(surface: string, theme: string): Promise<PoolWord> {

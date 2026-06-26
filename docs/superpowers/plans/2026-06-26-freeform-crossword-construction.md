@@ -35,7 +35,7 @@
   - `_placement_valid(grid: dict[tuple[int,int],str], word: str, r0: int, c0: int, direction: str, wordset: set[str]) -> bool`
   - `_letter_index(wordlist: Wordlist, min_len: int) -> dict[str, list[tuple[str,int]]]`
 
-- [ ] **Step 1: Add `Wordlist.all()`**
+- [x] **Step 1: Add `Wordlist.all()`**
 
 Modify `backend/app/solver/index.py`, inside `class Wordlist`, after `__len__`:
 
@@ -44,7 +44,7 @@ Modify `backend/app/solver/index.py`, inside `class Wordlist`, after `__len__`:
         return [w for bucket in self._by_len.values() for w in bucket]
 ```
 
-- [ ] **Step 2: Write the failing validity tests**
+- [x] **Step 2: Write the failing validity tests**
 
 Create `backend/tests/solver/test_freeform_validity.py` (ASCII letters — the engine is character-agnostic):
 
@@ -93,7 +93,7 @@ def test_invalid_incidental_run_rejected():
     assert _placement_valid(g, "qxr", 2, 0, "across", {"qxr"}) is False
 ```
 
-- [ ] **Step 3: Implement the engine core**
+- [x] **Step 3: Implement the engine core**
 
 Create `backend/app/solver/freeform.py`:
 
@@ -162,12 +162,12 @@ def _letter_index(wordlist: Wordlist, min_len: int) -> dict[str, list[tuple[str,
     return idx
 ```
 
-- [ ] **Step 4: Run the validity tests**
+- [x] **Step 4: Run the validity tests**
 
 Run: `cd backend && uv run pytest tests/solver/test_freeform_validity.py -v`
 Expected: all five PASS (`test_run_through_returns_maximal_run`, `test_valid_crossing_accepted`, `test_overlap_mismatch_rejected`, `test_collinear_merge_rejected`, `test_invalid_incidental_run_rejected`).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 cd backend && git add app/solver/freeform.py app/solver/index.py tests/solver/test_freeform_validity.py
@@ -190,7 +190,7 @@ git commit -m "feat(freeform): word index + placement validity gate"
   - `cross_ratio(t: Template) -> float` (moved here from gen_templates)
   - `_finalize(placed_grid: dict[tuple[int,int],str]) -> FreeformResult`
 
-- [ ] **Step 1: Write the failing finalize test**
+- [x] **Step 1: Write the failing finalize test**
 
 Create `backend/tests/solver/test_freeform_finalize.py`:
 
@@ -217,7 +217,7 @@ def test_finalize_normalizes_and_reproduces_words():
 Run: `cd backend && uv run pytest tests/solver/test_freeform_finalize.py -v`
 Expected: FAIL (`_finalize` not defined / `FreeformResult` missing).
 
-- [ ] **Step 2: Move `cross_ratio` into the engine**
+- [x] **Step 2: Move `cross_ratio` into the engine**
 
 In `backend/app/solver/freeform.py`, add the new imports at the top (Task 1 already imported `Wordlist`; add only these) and the function (copy the body verbatim from `scripts/gen_templates.py`):
 
@@ -246,7 +246,7 @@ def cross_ratio(t: Template) -> float:
 
 Then in `backend/scripts/gen_templates.py`: delete its local `def cross_ratio(t):` block and add `from app.solver.freeform import cross_ratio` next to the other `app.solver` imports.
 
-- [ ] **Step 3: Implement `FreeformResult` + `_finalize`**
+- [x] **Step 3: Implement `FreeformResult` + `_finalize`**
 
 Append to `backend/app/solver/freeform.py`:
 
@@ -291,7 +291,7 @@ def _finalize(placed_grid: dict[tuple[int, int], str]) -> FreeformResult:
     )
 ```
 
-- [ ] **Step 4: Run finalize test + the gen_templates import sanity check**
+- [x] **Step 4: Run finalize test + the gen_templates import sanity check**
 
 Run: `cd backend && uv run pytest tests/solver/test_freeform_finalize.py -v`
 Expected: PASS.
@@ -299,7 +299,7 @@ Expected: PASS.
 Run: `cd backend && uv run python -c "import scripts.gen_templates; print('gen_templates imports cross_ratio OK')"`
 Expected: prints the OK line (no ImportError).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 cd backend && git add app/solver/freeform.py scripts/gen_templates.py tests/solver/test_freeform_finalize.py
@@ -319,7 +319,7 @@ git commit -m "feat(freeform): finalize to normalized grid + shared cross_ratio"
 - Produces:
   - `construct(wordlist: Wordlist, seed_value: int, *, target_words: int = 28, target_density: float = 0.6, min_len: int = 3, seed_min_len: int = 10, min_words: int = 20, backtrack_budget: int = 2000, max_iters: int = 200000, deadline_s: float = 20.0) -> FreeformResult | FillFailure`
 
-- [ ] **Step 1: Write the failing construct tests**
+- [x] **Step 1: Write the failing construct tests**
 
 Create `backend/tests/solver/test_freeform_construct.py`:
 
@@ -368,7 +368,7 @@ def test_construct_is_deterministic():
 Run: `cd backend && uv run pytest tests/solver/test_freeform_construct.py -v`
 Expected: FAIL (`construct` not defined).
 
-- [ ] **Step 2: Implement `construct()`**
+- [x] **Step 2: Implement `construct()`**
 
 Append to `backend/app/solver/freeform.py` (add `import random` and `import time` at the top):
 
@@ -477,17 +477,17 @@ def construct(wordlist, seed_value, *, target_words=28, target_density=0.6,
     return _finalize(final_grid)
 ```
 
-- [ ] **Step 3: Run the construct tests**
+- [x] **Step 3: Run the construct tests**
 
 Run: `cd backend && uv run pytest tests/solver/test_freeform_construct.py -v`
 Expected: PASS (valid connected puzzle ≥3 words; deterministic across two runs).
 
-- [ ] **Step 4: Run the whole solver suite (no regressions)**
+- [x] **Step 4: Run the whole solver suite (no regressions)** — non-perf suite green (25 passed); `test_perf` fails pre-existing (`0/20`, needs real wordlist; excluded by `-m "not perf"`), unaffected by these additive changes.
 
 Run: `cd backend && uv run pytest tests/solver -q`
 Expected: all pass.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 cd backend && git add app/solver/freeform.py tests/solver/test_freeform_construct.py
@@ -509,7 +509,7 @@ git commit -m "feat(freeform): construct() greedy grow + bounded backtracking"
   - `persist_freeform(db: Session, puzzle_id: uuid.UUID, result: FreeformResult) -> None`
   - `run_fill_job` branches to freeform when `params["mode"] == "freeform"`.
 
-- [ ] **Step 1: Write the failing service tests**
+- [x] **Step 1: Write the failing service tests**
 
 Create `backend/tests/test_solver_jobs_freeform.py`:
 
@@ -569,7 +569,7 @@ def test_run_fill_job_freeform_branch_persists(db_session):
 Run: `cd backend && uv run pytest tests/test_solver_jobs_freeform.py -v`
 Expected: FAIL (`persist_freeform` not defined; `enqueue_fill` has no `mode`).
 
-- [ ] **Step 2: Extend `enqueue_fill` with the freeform params**
+- [x] **Step 2: Extend `enqueue_fill` with the freeform params**
 
 In `backend/app/services/solver_jobs.py`, change the `enqueue_fill` signature and `params` dict:
 
@@ -604,7 +604,7 @@ def enqueue_fill(
     return job
 ```
 
-- [ ] **Step 3: Add `persist_freeform`**
+- [x] **Step 3: Add `persist_freeform`**
 
 In `backend/app/services/solver_jobs.py`, add (near `persist_fill`); add `from app.solver.freeform import FreeformResult, construct` to the imports and `from app.solver.templates import Template` is already present:
 
@@ -627,7 +627,7 @@ def persist_freeform(db: Session, puzzle_id: uuid.UUID, result) -> None:
     db.flush()
 ```
 
-- [ ] **Step 4: Branch `run_fill_job` for freeform**
+- [x] **Step 4: Branch `run_fill_job` for freeform** — also pass `min_words=min(word_count, 20)` (plan branch omitted it; default floor of 20 made any `word_count<20` request always fail).
 
 In `backend/app/services/solver_jobs.py`, at the start of `run_fill_job` (right after `job.status = "running"; db.flush()`), insert:
 
@@ -656,12 +656,12 @@ In `backend/app/services/solver_jobs.py`, at the start of `run_fill_job` (right 
 
 (This sits before the existing `tid = job.params.get("template_id")` block so freeform never hits the template path.)
 
-- [ ] **Step 5: Run the service tests + the existing solver_jobs tests**
+- [x] **Step 5: Run the service tests + the existing solver_jobs tests**
 
 Run: `cd backend && uv run pytest tests/test_solver_jobs_freeform.py tests/test_solver_jobs.py -v`
 Expected: PASS (new freeform tests + existing fill/persist tests still green).
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 cd backend && git add app/services/solver_jobs.py tests/test_solver_jobs_freeform.py
@@ -680,7 +680,7 @@ git commit -m "feat(freeform): job branch + persist_freeform"
 - Consumes: `enqueue_fill(..., mode=, word_count=, target_density=)` from Task 4.
 - Produces: `FillRequest` gains `mode: str = "normal"`, `word_count: int = 28`, `target_density: float = 0.6`; `request_fill` forwards them.
 
-- [ ] **Step 1: Write the failing endpoint test**
+- [x] **Step 1: Write the failing endpoint test**
 
 Create `backend/tests/test_admin_fill_freeform.py`:
 
@@ -714,7 +714,7 @@ def test_fill_request_enqueues_freeform_job(client, db_session):
 Run: `cd backend && uv run pytest tests/test_admin_fill_freeform.py -v`
 Expected: FAIL (FillRequest has no `mode`; param not stored).
 
-- [ ] **Step 2: Extend `FillRequest` and `request_fill`**
+- [x] **Step 2: Extend `FillRequest` and `request_fill`**
 
 In `backend/app/routers/admin.py`, update the model and the call:
 
@@ -741,17 +741,17 @@ And in `request_fill`, pass the new fields:
 
 (Leave the existing `log.info("fill enqueued ...")` line; optionally append `mode=%s`.)
 
-- [ ] **Step 3: Run the endpoint test**
+- [x] **Step 3: Run the endpoint test**
 
 Run: `cd backend && uv run pytest tests/test_admin_fill_freeform.py tests/test_admin_fill.py -v`
 Expected: PASS (new + existing fill endpoint tests).
 
-- [ ] **Step 4: Full backend suite**
+- [x] **Step 4: Full backend suite** — 133 passed (`-m "not perf"`).
 
 Run: `cd backend && uv run pytest -m "not perf" -q`
 Expected: all pass.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 cd backend && git add app/routers/admin.py tests/test_admin_fill_freeform.py
@@ -771,7 +771,7 @@ git commit -m "feat(freeform): accept mode/word_count on fill endpoint"
 - Consumes: existing `createPuzzle`, `requestFill`, `pollJob`, `fetchPuzzle`.
 - Produces: `FillOpts` gains `mode?`, `wordCount?`, `targetDensity?`; `requestFill` sends them; a `generateFreeform()` handler.
 
-- [ ] **Step 1: Extend `FillOpts` + `requestFill`**
+- [x] **Step 1: Extend `FillOpts` + `requestFill`**
 
 In `frontend/src/api/admin.ts`:
 
@@ -796,7 +796,7 @@ And in the `requestFill` body object add:
       target_density: opts.targetDensity ?? 0.6,
 ```
 
-- [ ] **Step 2: Write the failing component test**
+- [x] **Step 2: Write the failing component test**
 
 Create `frontend/src/pages/__test__/PuzzleBuilder.freeform.test.tsx`:
 
@@ -847,7 +847,7 @@ test("freeform button posts mode=freeform", async () => {
 Run: `cd frontend && npx vitest run src/pages/__test__/PuzzleBuilder.freeform.test.tsx`
 Expected: FAIL (no „თავისუფალი ფორმა" button).
 
-- [ ] **Step 3: Add the freeform handler + button**
+- [x] **Step 3: Add the freeform handler + button**
 
 In `frontend/src/pages/PuzzleBuilder.tsx`, add a handler next to `generate()`:
 
@@ -884,7 +884,7 @@ Then add the button next to the existing Generate button (in the `flex items-end
         </Button>
 ```
 
-- [ ] **Step 4: Run the component test + typecheck**
+- [x] **Step 4: Run the component test + typecheck** — freeform test passes, `tsc --noEmit` clean. (Pre-existing `AdminApp.test.tsx` failure is from the in-progress WordPool removal, outside this plan.)
 
 Run: `cd frontend && npx vitest run src/pages/__test__/PuzzleBuilder.freeform.test.tsx`
 Expected: PASS.
@@ -892,7 +892,7 @@ Expected: PASS.
 Run: `cd frontend && npx tsc --noEmit`
 Expected: no errors.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 cd frontend && git add src/api/admin.ts src/pages/PuzzleBuilder.tsx src/pages/__test__/PuzzleBuilder.freeform.test.tsx

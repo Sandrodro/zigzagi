@@ -1,4 +1,5 @@
 import datetime as dt
+import logging
 import os
 import uuid
 
@@ -11,15 +12,16 @@ from app.ai.client import GeminiClient
 from app.ai.gemini import GeminiExtractor
 from app.db import get_db
 from app.models import Entry, Job, Puzzle
-from app.services.clues import generate_clues, review_clue
+from app.services.clues import generate_clues, generate_theme_and_clues, review_clue
 from app.services.pool import bulk_update, create_candidate, create_from_extraction, list_pool
 from app.services.publish import runway_days, schedule_puzzle
 from app.services.puzzles import delete_puzzle, list_all, today_tbilisi
 from app.services.solver_jobs import enqueue_fill, list_template_dtos
 from app.services.article import filter_article
-from app.services.word_check import check_and_fix_entry, check_puzzle
+from app.services.word_check import check_and_fix_entry, check_puzzle, swap_slot
 from app.services.wordlist import (
     add_word,
+    block_everywhere,
     bulk_import,
     bulk_import_lemmas,
     existing_lemmas,
@@ -30,13 +32,14 @@ from app.services.wordlist import (
 from app.sourcing.validate import is_georgian_word, valid_length
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
+log = logging.getLogger(__name__)
 
 
 def get_gemini() -> GeminiClient:  # overridden in tests
     return GeminiExtractor(
         api_key=os.environ["GEMINI_API_KEY"],
-        extract_model=os.environ.get("GEMINI_EXTRACT_MODEL", "gemini-2.5-flash"),
-        suggest_model=os.environ.get("GEMINI_SUGGEST_MODEL", "gemini-2.5-flash"),
+        dumb_model=os.environ.get("GEMINI_DUMB", "gemini-2.5-flash"),
+        smart_model=os.environ.get("GEMINI_SMART", "gemini-2.5-flash"),
         clue_model=os.environ.get("GEMINI_CLUE_MODEL", "gemini-2.5-pro"),
     )
 
@@ -52,6 +55,9 @@ class FillRequest(BaseModel):
     template_id: str | None = None
     prefilled: dict[str, str] = {}
     wordpool: str = "default"  # "default" (wordpool_generic) | "lemmas" (wordpool_lemmas)
+    mode: str = "normal"          # "normal" | "freeform"
+    word_count: int = 28
+    target_density: float = 0.6
 
 
 @router.post("/puzzles/{puzzle_id}/fill", status_code=202)
@@ -60,8 +66,12 @@ def request_fill(puzzle_id: uuid.UUID, body: FillRequest, db: Session = Depends(
         raise HTTPException(404, "puzzle not found")
     job = enqueue_fill(db, puzzle_id, body.seed_value, body.min_seeds,
                        template_id=body.template_id, prefilled=body.prefilled,
-                       wordpool=body.wordpool)
+                       wordpool=body.wordpool, mode=body.mode,
+                       word_count=body.word_count, target_density=body.target_density)
     db.commit()
+    log.info("fill enqueued: puzzle=%s job=%s template=%s wordpool=%s prefilled=%d seed=%s",
+             puzzle_id, job.id, body.template_id, body.wordpool,
+             len(body.prefilled or {}), body.seed_value)
     return {"job_id": str(job.id)}
 
 
@@ -165,6 +175,7 @@ class LemmaBulkRequest(BaseModel):
 def wordlist_lemmas_bulk(body: LemmaBulkRequest, db: Session = Depends(get_db)):
     result = bulk_import_lemmas(db, body.words)
     db.commit()
+    log.info("wordpool lemmas bulk: submitted=%d result=%s", len(body.words), result)
     return result
 
 
@@ -205,8 +216,10 @@ def wordlist_add(body: WordlistAddRequest, db: Session = Depends(get_db)):
     try:
         row = add_word(db, body.word)
     except ValueError as e:
+        log.info("wordpool add rejected: word=%r reason=%s", body.word, e)
         raise HTTPException(422, str(e))
     db.commit()
+    log.info("wordpool add: word=%r length=%d status=%s", row.word, row.length, row.status)
     return _wordlist_row(row)
 
 
@@ -224,8 +237,10 @@ def wordlist_update(entry_id: uuid.UUID, body: WordlistUpdateRequest, db: Sessio
 
 @router.post("/wordlist/bulk")
 def wordlist_bulk(body: WordlistBulkRequest, db: Session = Depends(get_db)):
-    result = bulk_import(db, body.text.split())
+    words = body.text.split()
+    result = bulk_import(db, words)
     db.commit()
+    log.info("wordpool bulk: submitted=%d result=%s", len(words), result)
     return result
 
 
@@ -258,6 +273,7 @@ def create_puzzle(body: CreatePuzzleRequest, db: Session = Depends(get_db)):
     )
     db.add(puzzle)
     db.commit()
+    log.info("puzzle created: id=%s theme=%r live_date=%s", puzzle.id, puzzle.theme, puzzle.live_date)
     return {
         "id": str(puzzle.id), "theme": puzzle.theme,
         "live_date": puzzle.live_date.isoformat(), "status": puzzle.status,
@@ -279,6 +295,16 @@ def gen_clues(puzzle_id: uuid.UUID, db: Session = Depends(get_db), ai: GeminiCli
     return {"generated": n}
 
 
+@router.post("/puzzles/{puzzle_id}/autoclue")
+def autoclue(puzzle_id: uuid.UUID, db: Session = Depends(get_db), ai: GeminiClient = Depends(get_gemini)):
+    puzzle = db.get(Puzzle, puzzle_id)
+    if puzzle is None:
+        raise HTTPException(404, "puzzle not found")
+    n = generate_theme_and_clues(db, puzzle, ai)
+    db.commit()
+    return {"theme": puzzle.theme, "generated": n}
+
+
 @router.patch("/puzzles/{puzzle_id}/clues/{entry_id}")
 def review(puzzle_id: uuid.UUID, entry_id: uuid.UUID, body: ClueReviewRequest, db: Session = Depends(get_db), ai: GeminiClient = Depends(get_gemini)):
     entry = review_clue(db, entry_id, body.action, body.clue, ai=ai)
@@ -286,18 +312,56 @@ def review(puzzle_id: uuid.UUID, entry_id: uuid.UUID, body: ClueReviewRequest, d
     return {"clue_status": entry.clue_status}
 
 
-@router.post("/puzzles/{puzzle_id}/entries/{entry_id}/check")
-def check_entry(puzzle_id: uuid.UUID, entry_id: uuid.UUID,
-                db: Session = Depends(get_db), ai: GeminiClient = Depends(get_gemini)):
+def _load_puzzle_entry(db: Session, puzzle_id: uuid.UUID, entry_id: uuid.UUID) -> tuple[Puzzle, Entry]:
     puzzle = db.get(Puzzle, puzzle_id)
     if puzzle is None:
         raise HTTPException(404, "puzzle not found")
     entry = db.get(Entry, entry_id)
     if entry is None or entry.puzzle_id != puzzle_id:
         raise HTTPException(404, "entry not found")
+    return puzzle, entry
+
+
+@router.post("/puzzles/{puzzle_id}/entries/{entry_id}/check")
+def check_entry(puzzle_id: uuid.UUID, entry_id: uuid.UUID,
+                db: Session = Depends(get_db), ai: GeminiClient = Depends(get_gemini)):
+    puzzle, entry = _load_puzzle_entry(db, puzzle_id, entry_id)
     out = check_and_fix_entry(db, puzzle, entry, ai)
     db.commit()
     return out
+
+
+@router.post("/puzzles/{puzzle_id}/entries/{entry_id}/swap")
+def swap_entry(puzzle_id: uuid.UUID, entry_id: uuid.UUID, db: Session = Depends(get_db)):
+    puzzle, entry = _load_puzzle_entry(db, puzzle_id, entry_id)
+    out = swap_slot(db, puzzle, entry)
+    db.commit()
+    return out
+
+
+@router.post("/puzzles/{puzzle_id}/entries/{entry_id}/block-word")
+def block_entry_word(puzzle_id: uuid.UUID, entry_id: uuid.UUID, db: Session = Depends(get_db)):
+    """Button 1: block the word in the wordpool(s), then re-fill the slot.
+
+    The block always happens. If nothing else fits, drop the entry rather than
+    leave the blocked word in the grid (the removal was the request).
+    """
+    puzzle, entry = _load_puzzle_entry(db, puzzle_id, entry_id)
+    old = entry.answer
+    block_everywhere(db, old)
+    out = swap_slot(db, puzzle, entry, exclude={old})
+    if not out["replaced"]:
+        db.delete(entry)
+    db.commit()
+    return {"blocked": old, "removed": not out["replaced"], **out}
+
+
+@router.delete("/puzzles/{puzzle_id}/entries/{entry_id}", status_code=204)
+def delete_entry(puzzle_id: uuid.UUID, entry_id: uuid.UUID, db: Session = Depends(get_db)):
+    """Button 2: remove the word from this crossword (its non-crossing cells clear automatically)."""
+    _, entry = _load_puzzle_entry(db, puzzle_id, entry_id)
+    db.delete(entry)
+    db.commit()
 
 
 @router.post("/puzzles/{puzzle_id}/check-words")

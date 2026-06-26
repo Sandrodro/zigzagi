@@ -1,3 +1,5 @@
+import random
+import time
 from dataclasses import dataclass
 
 from app.solver.index import Wordlist
@@ -118,3 +120,107 @@ def _finalize(placed_grid: dict[tuple[int, int], str]) -> FreeformResult:
         rows=rows, cols=cols, blocks=sorted(blocks), grid=grid,
         entries=entries, density=cross_ratio(template),
     )
+
+
+def _apply(grid, word, r0, c0, direction):
+    dr, dc = _DELTA[direction]
+    added = []
+    for i, ch in enumerate(word):
+        cell = (r0 + dr * i, c0 + dc * i)
+        if cell not in grid:
+            added.append(cell)
+        grid[cell] = ch
+    return added  # cells this placement newly occupied (for undo)
+
+
+def _new_crossings(grid, word, r0, c0, direction) -> int:
+    dr, dc = _DELTA[direction]
+    pdr, pdc = (dc, dr)
+    score = 0
+    for i in range(len(word)):
+        cell = (r0 + dr * i, c0 + dc * i)
+        if cell in grid:
+            continue  # crossing an existing word: already counted by that word
+        r, c = cell
+        if (r + pdr, c + pdc) in grid or (r - pdr, c - pdc) in grid:
+            score += 1
+    return score
+
+
+def _candidate_placements(grid, placed, letter_idx, wordset):
+    """Yield (word, r0, c0, direction) valid placements crossing existing cells."""
+    for word, pr, pc, pdir in placed:
+        pdr, pdc = _DELTA[pdir]
+        cross_dir = "down" if pdir == "across" else "across"
+        dr, dc = _DELTA[cross_dir]
+        for i in range(len(word)):
+            cell = (pr + pdr * i, pc + pdc * i)
+            L = grid[cell]
+            for cand, offset in letter_idx.get(L, ()):
+                r0, c0 = cell[0] - dr * offset, cell[1] - dc * offset
+                if _placement_valid(grid, cand, r0, c0, cross_dir, wordset):
+                    yield (cand, r0, c0, cross_dir)
+
+
+def construct(wordlist, seed_value, *, target_words=28, target_density=0.6,
+              min_len=3, seed_min_len=10, min_words=20, backtrack_budget=2000,
+              max_iters=200000, deadline_s=20.0):
+    rng = random.Random(seed_value)
+    words = wordlist.all()
+    if not words:
+        return FillFailure(reason="freeform: empty wordlist")
+    wordset = set(words)
+    letter_idx = _letter_index(wordlist, min_len)
+
+    seed_pool = [w for w in words if len(w) >= seed_min_len] or \
+        sorted(words, key=len, reverse=True)[: max(1, len(words) // 10)]
+    seed_word = rng.choice(sorted(seed_pool))
+
+    grid: dict[tuple[int, int], str] = {}
+    _apply(grid, seed_word, 0, 0, "across")
+    placed = [(seed_word, 0, 0, "across")]
+    best = list(placed)
+    best_grid = dict(grid)
+
+    blacklist: set = set()
+    undos = 0
+    deadline = time.monotonic() + deadline_s
+
+    for _ in range(max_iters):
+        if len(placed) >= target_words or time.monotonic() > deadline:
+            break
+        # gather + score candidates (skip blacklisted at this depth)
+        depth = len(placed)
+        cands = []
+        for cand in _candidate_placements(grid, placed, letter_idx, wordset):
+            if (depth, cand) in blacklist:
+                continue
+            cands.append(cand)
+        if cands:
+            # prefer most new crossings (density), then mid-length (5-9), then seeded shuffle
+            rng.shuffle(cands)
+            cands.sort(key=lambda c: (
+                -_new_crossings(grid, c[0], c[1], c[2], c[3]),
+                abs(len(c[0]) - 7),
+            ))
+            chosen = cands[0]
+            _apply(grid, *chosen)
+            placed.append(chosen)
+            if len(placed) > len(best):
+                best, best_grid = list(placed), dict(grid)
+        else:
+            # dead-end: backtrack
+            if len(placed) <= 1 or undos >= backtrack_budget:
+                break
+            last = placed.pop()
+            blacklist.add((len(placed), last))
+            # rebuild grid from scratch (simple + correct for an experiment)
+            grid = {}
+            for w, r, c, d in placed:
+                _apply(grid, w, r, c, d)
+            undos += 1
+
+    final_placed, final_grid = (best, best_grid) if len(best) >= len(placed) else (placed, grid)
+    if len(final_placed) < min_words:
+        return FillFailure(reason=f"freeform: only {len(final_placed)} words (need {min_words})")
+    return _finalize(final_grid)

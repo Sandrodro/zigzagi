@@ -12,3 +12,9 @@ class Wordlist:
 
     def by_length(self, n: int) -> list[str]:
         return list(self._by_len.get(n, []))
+
+    def __len__(self) -> int:
+        return sum(len(v) for v in self._by_len.values())
+
+    def all(self) -> list[str]:
+        return [w for bucket in self._by_len.values() for w in bucket]

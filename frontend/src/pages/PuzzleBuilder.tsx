@@ -91,29 +91,6 @@ export function PuzzleBuilder() {
     }
   }
 
-  async function generateFreeform() {
-    setError(null); setDetail(null); setStatus("creating");
-    try {
-      const p = await createPuzzle();
-      setPuzzleId(p.id);
-      const seedValue = Math.floor(Math.random() * 1_000_000);
-      const { job_id } = await requestFill(p.id, {
-        mode: "freeform", wordCount: 28, wordpool, seedValue,
-      });
-      setStatus("filling");
-      for (;;) {
-        const job = await pollJob(job_id);
-        if (job.status === "done") break;
-        if (job.status === "failed") { setError(job.error ?? "freeform failed"); setStatus(null); return; }
-        await new Promise((r) => setTimeout(r, 1000));
-      }
-      setDetail(await fetchPuzzle(p.id));
-      setStatus("done");
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "error"); setStatus(null);
-    }
-  }
-
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-col gap-2 text-sm">
@@ -181,9 +158,6 @@ export function PuzzleBuilder() {
         </label>
         <Button onClick={generate} disabled={!templateId || status === "filling" || status === "creating"}>
           გენერაცია
-        </Button>
-        <Button onClick={generateFreeform} disabled={status === "filling" || status === "creating"}>
-          თავისუფალი ფორმა
         </Button>
       </div>
 

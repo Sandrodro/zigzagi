@@ -215,9 +215,6 @@ export interface FillOpts {
   templateId?: string;
   prefilled?: Record<string, string>;
   wordpool?: string;
-  mode?: string;
-  wordCount?: number;
-  targetDensity?: number;
 }
 
 export async function requestFill(puzzleId: string, opts: FillOpts = {}): Promise<{ job_id: string }> {
@@ -230,9 +227,6 @@ export async function requestFill(puzzleId: string, opts: FillOpts = {}): Promis
       template_id: opts.templateId ?? null,
       prefilled: opts.prefilled ?? {},
       wordpool: opts.wordpool ?? "default",
-      mode: opts.mode ?? "normal",
-      word_count: opts.wordCount ?? 28,
-      target_density: opts.targetDensity ?? 0.6,
     }),
   });
   if (!res.ok) throw new Error("failed to start fill");

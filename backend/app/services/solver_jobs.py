@@ -5,7 +5,6 @@ from pathlib import Path
 from sqlalchemy.orm import Session
 
 from app.models import Entry, Job, Puzzle
-from app.solver.freeform import FreeformResult, construct
 from app.solver.index import Wordlist
 from app.solver.model import build_constraints
 from app.solver.numbering import number_cells
@@ -60,24 +59,6 @@ def persist_fill(db: Session, puzzle_id: uuid.UUID, result: FillResult) -> None:
     db.flush()
 
 
-def persist_freeform(db: Session, puzzle_id: uuid.UUID, result: FreeformResult) -> None:
-    puzzle = db.get(Puzzle, puzzle_id)
-    if puzzle is None:
-        raise ValueError("puzzle not found")
-    template = Template(id="freeform", rows=result.rows, cols=result.cols,
-                        blocks=frozenset(tuple(b) for b in result.blocks))
-    puzzle.grid_template = grid_template_from(template)
-    for fe in result.entries:
-        puzzle.entries.append(
-            Entry(
-                id=uuid.uuid4(), number=fe.number, direction=fe.direction,
-                answer=fe.answer, row=fe.row, col=fe.col,
-                clue=None, clue_status="pending", provenance=fe.provenance,
-            )
-        )
-    db.flush()
-
-
 def list_template_dtos() -> list[dict]:
     out = []
     for t in load_library(_LIB_DIR):
@@ -109,9 +90,6 @@ def enqueue_fill(
     template_id: str | None = None,
     prefilled: dict[str, str] | None = None,
     wordpool: str = "default",
-    mode: str = "normal",
-    word_count: int = 28,
-    target_density: float = 0.6,
 ) -> Job:
     job = Job(
         id=uuid.uuid4(), kind="fill", puzzle_id=puzzle_id, status="pending",
@@ -121,9 +99,6 @@ def enqueue_fill(
             "template_id": template_id,
             "prefilled": prefilled or {},
             "wordpool": wordpool,
-            "mode": mode,
-            "word_count": word_count,
-            "target_density": target_density,
         },
     )
     db.add(job)
@@ -137,29 +112,6 @@ def run_fill_job(
     job = db.get(Job, job_id)
     job.status = "running"
     db.flush()
-    if job.params.get("mode") == "freeform":
-        word_count = job.params.get("word_count", 28)
-        outcome = construct(
-            wordlist, job.params["seed_value"],
-            target_words=word_count,
-            target_density=job.params.get("target_density", 0.6),
-            # floor at 20 for real puzzles, but never demand more than asked.
-            min_words=min(word_count, 20),
-        )
-        if isinstance(outcome, FreeformResult):
-            persist_freeform(db, job.puzzle_id, outcome)
-            job.status = "done"
-            job.result = {"mode": "freeform", "entries": len(outcome.entries),
-                          "density": round(outcome.density, 3)}
-            log.info("freeform done: puzzle=%s job=%s entries=%d density=%.2f",
-                     job.puzzle_id, job.id, len(outcome.entries), outcome.density)
-        else:
-            job.status = "failed"
-            job.error = outcome.reason
-            log.warning("freeform failed: puzzle=%s job=%s reason=%s",
-                        job.puzzle_id, job.id, outcome.reason)
-        db.flush()
-        return job
     tid = job.params.get("template_id")
     if tid:
         template = next((t for t in library if t.id == tid), None)

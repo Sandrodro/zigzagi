@@ -40,11 +40,23 @@ from app.db import SessionLocal
 from app.models import WordpoolGeneric, WordpoolLemma
 from app.solver.index import Wordlist
 from app.solver.model import build_constraints
-from app.solver.freeform import cross_ratio
 from app.solver.run import FillResult, fill
 from app.solver.templates import Template, validate_template
 
 LIB = Path(__file__).resolve().parents[1] / "app" / "solver" / "templates"
+
+
+def cross_ratio(t):
+    """Fraction of white cells that are crossed by BOTH an across and a down word.
+    Lower = words overlap less (more unchecked cells, airier interlock)."""
+    blocks = t.blocks
+    def in_word(r, c, dr, dc):
+        prev = 0 <= r - dr < t.rows and 0 <= c - dc < t.cols and (r - dr, c - dc) not in blocks
+        nxt = 0 <= r + dr < t.rows and 0 <= c + dc < t.cols and (r + dr, c + dc) not in blocks
+        return prev or nxt
+    play = [(r, c) for r in range(t.rows) for c in range(t.cols) if (r, c) not in blocks]
+    crossed = sum(1 for (r, c) in play if in_word(r, c, 0, 1) and in_word(r, c, 1, 0))
+    return crossed / len(play)
 
 
 def len_buckets(t):

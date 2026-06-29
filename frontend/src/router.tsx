@@ -3,10 +3,12 @@ import {
   createRoute,
   createRouter,
   Outlet,
+  redirect,
 } from "@tanstack/react-router";
 
 import { AdminApp } from "./pages/AdminApp";
 import { PlayView } from "./pages/PlayView";
+import { PuzzleList } from "./pages/PuzzleList";
 import { PuzzleListAdmin } from "./pages/PuzzleListAdmin";
 import { PuzzleBuilder } from "./pages/PuzzleBuilder";
 import { FromArticle } from "./pages/FromArticle";
@@ -17,7 +19,13 @@ const rootRoute = createRootRoute({ component: () => <Outlet /> });
 const indexRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/",
-  component: () => <PlayView />,
+  beforeLoad: () => { throw redirect({ to: "/list" }); },
+});
+
+const listRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/list",
+  component: PuzzleList,
 });
 
 const playRoute = createRoute({
@@ -70,6 +78,7 @@ const adminTree = adminRoute.addChildren([
 
 const routeTree = rootRoute.addChildren([
   indexRoute,
+  listRoute,
   playRoute,
   adminTree,
 ]);

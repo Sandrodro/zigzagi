@@ -37,6 +37,19 @@ async function postReveal(id: string, cells: Cell[]): Promise<RevealResult> {
   return res.json();
 }
 
+export type PuzzleListItem = { id: string; date: string; theme: string | null; status: string };
+
+async function fetchPuzzleList(): Promise<PuzzleListItem[]> {
+  const res = await fetch(`${BASE}/puzzles`);
+  if (!res.ok) throw new Error(`list failed: ${res.status}`);
+  return res.json();
+}
+
+// All published puzzles (past, present, or future live_date).
+export function usePuzzleList() {
+  return useQuery({ queryKey: ["puzzle-list"], queryFn: fetchPuzzleList });
+}
+
 // Open a puzzle by id (from /list) or, falling back, by date / "today".
 export function usePuzzle(key: { id?: string; date?: string } = {}) {
   return useQuery({

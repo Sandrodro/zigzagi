@@ -76,6 +76,7 @@ def to_play_dto(puzzle: Puzzle) -> dict:
         "theme": puzzle.theme,
         "size": {"rows": gt["rows"], "cols": gt["cols"]},
         "blocks": gt["blocks"],
+        "absent": gt.get("absent", []),
         "cells": gt["cells"],
         "clues": {"across": across, "down": down},
     }

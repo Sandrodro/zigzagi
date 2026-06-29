@@ -19,12 +19,13 @@ const ChevronRight = () => (
 
 export function ClueBar({ clue, onPrev, onNext, onToggleDirection }: ClueBarProps) {
   return (
-    <div role="group" aria-label="clue bar" className="flex items-stretch rounded bg-teal text-white">
+    <div role="group" aria-label="clue bar" className="flex h-14 items-stretch rounded bg-teal text-white">
       <button type="button" aria-label="წინა" onClick={onPrev} className="flex items-center px-2">
         <ChevronLeft />
       </button>
-      <button type="button" onClick={onToggleDirection} className="flex-1 px-2 py-2 text-left text-sm">
-        {clue ? clue.text : ""}
+      {/* Fixed height + 2-line clamp: switching clues never changes the bar height (so the grid stays put). */}
+      <button type="button" onClick={onToggleDirection} className="flex flex-1 items-center px-2 text-left text-sm">
+        <span className="line-clamp-2">{clue ? clue.text : ""}</span>
       </button>
       <button type="button" aria-label="შემდეგი" onClick={onNext} className="flex items-center px-2">
         <ChevronRight />

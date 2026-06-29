@@ -9,6 +9,14 @@ import { useTimer } from "../hooks/useTimer";
 import { ClueBar } from "../components/ClueBar";
 import { ClueList } from "../components/ClueList";
 import { Grid, U } from "../components/Grid";
+import { PageTitle } from "../components/ui/Typography";
+
+// "2026-06-29" -> "ორშაბათი, 29 ივნისი, 2026" (parsed as local time, not UTC).
+function formatDate(iso: string): string {
+  const d = new Date(`${iso}T00:00:00`);
+  if (Number.isNaN(d.getTime())) return iso;
+  return d.toLocaleDateString("ka-GE", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
+}
 
 export function PlayView({ id, date }: { id?: string; date?: string } = {}) {
   const { data: puzzle } = usePuzzle({ id, date });
@@ -136,12 +144,12 @@ export function PlayView({ id, date }: { id?: string; date?: string } = {}) {
   const gridWidth = engine.size.cols * U;
   const gridHeight = engine.size.rows * U;
 
-  // On mobile, cap the grid so it fits the height left over after the toolbar / clue bar / keyboard,
-  // keeping the whole grid visible without scrolling. (~140px: top pad + toolbar + clue bar + gaps.)
+  // On mobile, cap the grid so it fits the height left over after the header / toolbar / clue bar /
+  // keyboard, keeping the whole grid visible without scrolling. (~190px: header + toolbar + clue bar + pads.)
   const isMobile = vp.w > 0 && vp.w < 768;
   const aspect = engine.size.cols / engine.size.rows;
   const gridMax = isMobile
-    ? Math.max(160, Math.min(vp.w - 16, (vp.h - 140) * aspect))
+    ? Math.max(160, Math.min(vp.w - 16, (vp.h - 190) * aspect))
     : gridWidth;
 
   const clueNav = {
@@ -154,6 +162,10 @@ export function PlayView({ id, date }: { id?: string; date?: string } = {}) {
 
   return (
     <div className="mx-auto max-w-[1080px] px-5 pt-4 pb-4 md:pt-8 md:pb-16">
+      <header className="mb-3 flex flex-wrap items-baseline gap-x-3">
+        <PageTitle className="text-[1.4rem] md:text-[1.85rem]">{puzzle.theme}</PageTitle>
+        <span className="font-serif text-[1.05rem] md:text-[1.4rem]">{formatDate(puzzle.date)}</span>
+      </header>
       <PlayToolbar onClear={handleClear} onReveal={handleReveal} onCheck={handleCheck} />
       <div className="flex flex-col gap-8 md:flex-row md:items-start">
         {/* Left half: header + current-clue bar + grid, the block sized to the grid. */}

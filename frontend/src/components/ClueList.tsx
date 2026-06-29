@@ -40,7 +40,7 @@ function Section({
                 data-active={active ? "true" : "false"}
                 onClick={() => onSelect(c.number, direction)}
               >
-                <span className="min-w-[1.4em] font-serif font-semibold text-teal-deep">{c.number}</span>
+                <span className="min-w-[1.4em] font-serif font-semibold text-black">{c.number}</span>
                 <span>{c.text}</span>
               </button>
             </li>

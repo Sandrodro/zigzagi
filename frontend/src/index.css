@@ -16,9 +16,13 @@
   --color-ochre-tint: #f1e7d5;
   --color-cinnabar: #b23a3a;
 
-  --font-serif: Palatino, "Palatino Linotype", "Iowan Old Style", Georgia, serif;
-  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
-  --font-mono: ui-monospace, Menlo, "SF Mono", monospace;
+  /* crossword grid accents (match play screenshot) */
+  --color-cell-active: #f2a07e; /* coral — selected cell */
+  --color-cell-word: #f6e7a0; /* warm yellow — current word run */
+
+  --font-serif: "Noto Sans", "Noto Sans Georgian", system-ui, sans-serif;
+  --font-sans: "Noto Sans", "Noto Sans Georgian", system-ui, sans-serif;
+  --font-mono: "Noto Sans", "Noto Sans Georgian", ui-monospace, monospace;
 }
 
 @layer base {

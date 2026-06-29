@@ -19,12 +19,13 @@ export function PlayView({ id, date }: { id?: string; date?: string } = {}) {
 
   const checkMutation = useCheckCells(puzzle?.id ?? "");
 
-  // Keyboard inset: keep the mobile clue bar pinned just above the native keyboard.
-  const [kbInset, setKbInset] = useState(0);
+  // Track the visual viewport: keyboard inset (pin the clue bar) + size (fit the grid).
+  const [vp, setVp] = useState({ kbInset: 0, w: 0, h: 0 });
   useEffect(() => {
     const vv = window.visualViewport;
     if (!vv) return;
-    const update = () => setKbInset(Math.max(0, window.innerHeight - vv.height - vv.offsetTop));
+    const update = () =>
+      setVp({ kbInset: Math.max(0, window.innerHeight - vv.height - vv.offsetTop), w: vv.width, h: vv.height });
     vv.addEventListener("resize", update);
     vv.addEventListener("scroll", update);
     update();
@@ -110,6 +111,14 @@ export function PlayView({ id, date }: { id?: string; date?: string } = {}) {
   const gridWidth = engine.size.cols * U;
   const gridHeight = engine.size.rows * U;
 
+  // On mobile, cap the grid so it fits the height left over after the clue bar / keyboard,
+  // keeping the whole grid visible without scrolling. (~88px reserved: top pad + clue bar + gap.)
+  const isMobile = vp.w > 0 && vp.w < 768;
+  const aspect = engine.size.cols / engine.size.rows;
+  const gridMax = isMobile
+    ? Math.max(160, Math.min(vp.w - 16, (vp.h - 88) * aspect))
+    : gridWidth;
+
   const clueNav = {
     clue: cur,
     direction: engine.direction,
@@ -119,15 +128,15 @@ export function PlayView({ id, date }: { id?: string; date?: string } = {}) {
   };
 
   return (
-    <div className="mx-auto max-w-[1080px] px-5 pt-8 pb-28 md:pb-16">
+    <div className="mx-auto max-w-[1080px] px-5 pt-4 pb-4 md:pt-8 md:pb-16">
       <div className="flex flex-col gap-8 md:flex-row md:items-start">
         {/* Left half: header + current-clue bar + grid, the block sized to the grid. */}
         <div className="w-full md:flex-1">
-          <div className="mx-auto w-full" style={{ maxWidth: gridWidth }}>
+          <div className="mx-auto w-full" style={{ maxWidth: gridMax }}>
             {/* One clue bar: fixed above the keyboard on mobile, static above the grid on desktop. */}
             <div
               className="fixed inset-x-0 z-20 px-2 md:static md:mb-4 md:px-0"
-              style={{ bottom: kbInset }}
+              style={{ bottom: vp.kbInset }}
             >
               <ClueBar {...clueNav} />
             </div>

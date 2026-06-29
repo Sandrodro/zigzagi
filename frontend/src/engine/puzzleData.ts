@@ -22,6 +22,7 @@ export function templateToPuzzleData(t: TemplateDto): PuzzleData {
     theme: "",
     size: { rows: t.rows, cols: t.cols },
     blocks: t.blocks,
+    absent: t.absent ?? [],
     cells: [...seen.values()],
     clues: { across: [], down: [] },
   };
@@ -31,6 +32,7 @@ interface GridTemplate {
   rows: number;
   cols: number;
   blocks: [number, number][];
+  absent?: [number, number][];
   cells: { row: number; col: number; number: number }[];
 }
 
@@ -48,6 +50,7 @@ export function puzzleDetailToPuzzleData(d: PuzzleDetail): PuzzleData | null {
     theme: d.theme,
     size: { rows: gt.rows, cols: gt.cols ?? 0 },
     blocks: gt.blocks ?? [],
+    absent: gt.absent ?? [],
     cells: (gt.cells ?? []).map((c): NumberedCell => ({ row: c.row, col: c.col, number: c.number })),
     clues: { across: [], down: [] },
   };

@@ -5,7 +5,7 @@ interface GridProps {
   onCellClick: (row: number, col: number) => void;
 }
 
-const U = 36; // cell size in SVG units; the grid scales to its container via viewBox
+export const U = 54; // cell size in SVG units; the grid scales to its container via viewBox
 
 const RECT =
   "fill-paper-raised stroke-rule [stroke-width:1] " +
@@ -35,6 +35,9 @@ export function Grid({ engine, onCellClick }: GridProps) {
           Array.from({ length: cols }).map((_, col) => {
             const x = col * U;
             const y = row * U;
+            if (engine.isAbsent(row, col)) {
+              return null; // outside the puzzle shape — empty background
+            }
             if (engine.isBlock(row, col)) {
               return <rect key={`${row}-${col}`} data-block="true" className="fill-ink" x={x} y={y} width={U} height={U} />;
             }

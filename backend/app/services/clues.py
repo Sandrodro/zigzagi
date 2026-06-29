@@ -1,3 +1,4 @@
+import logging
 import uuid
 
 from sqlalchemy.orm import Session
@@ -5,11 +6,15 @@ from sqlalchemy.orm import Session
 from app.ai.client import ClueRequest, GeminiClient
 from app.models import ClueEvent, Entry, Puzzle
 
+log = logging.getLogger(__name__)
+
 
 def generate_clues(db: Session, puzzle: Puzzle, ai: GeminiClient) -> int:
     pending = [e for e in puzzle.entries if e.clue_status in ("pending", "rejected")]
     if not pending:
+        log.info("clue gen skipped: puzzle=%s no pending entries", puzzle.id)
         return 0
+    log.info("clue gen start: puzzle=%s pending=%d", puzzle.id, len(pending))
     batch = [
         ClueRequest(
             entry_id=str(e.id),
@@ -31,6 +36,40 @@ def generate_clues(db: Session, puzzle: Puzzle, ai: GeminiClient) -> int:
             entry.clue_status = "generated"
             n += 1
     db.flush()
+    log.info("clue gen done: puzzle=%s clues=%d/%d", puzzle.id, n, len(pending))
+    return n
+
+
+def generate_theme_and_clues(db: Session, puzzle: Puzzle, ai: GeminiClient) -> int:
+    """One LLM call over ALL answers → sets puzzle.theme + a clue per entry."""
+    entries = list(puzzle.entries)
+    if not entries:
+        log.info("autoclue skipped: puzzle=%s has no entries", puzzle.id)
+        return 0
+    log.info("autoclue start: puzzle=%s answers=%d", puzzle.id, len(entries))
+    batch = [
+        ClueRequest(
+            entry_id=str(e.id),
+            answer=e.answer,
+            direction=e.direction,
+            number=e.number,
+            theme=puzzle.theme,
+            source_snippet=None,
+        )
+        for e in entries
+    ]
+    result = ai.theme_and_clues(batch)
+    puzzle.theme = result.theme
+    by_id = {str(e.id): e for e in entries}
+    n = 0
+    for c in result.clues:
+        entry = by_id.get(c.entry_id)
+        if entry is not None:
+            entry.clue = c.clue
+            entry.clue_status = "generated"
+            n += 1
+    db.flush()
+    log.info("autoclue done: puzzle=%s theme=%r clues=%d/%d", puzzle.id, result.theme, n, len(entries))
     return n
 
 

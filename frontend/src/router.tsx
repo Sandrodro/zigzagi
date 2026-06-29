@@ -9,7 +9,6 @@ import { AdminApp } from "./pages/AdminApp";
 import { PlayView } from "./pages/PlayView";
 import { PuzzleListAdmin } from "./pages/PuzzleListAdmin";
 import { PuzzleBuilder } from "./pages/PuzzleBuilder";
-import { WordPool } from "./pages/WordPool";
 import { FromArticle } from "./pages/FromArticle";
 import { PuzzleDetail } from "./pages/PuzzleDetail";
 
@@ -51,11 +50,6 @@ const adminCreateRoute = createRoute({
   path: "create",
   component: PuzzleBuilder,
 });
-const adminWordpoolRoute = createRoute({
-  getParentRoute: () => adminRoute,
-  path: "wordpool",
-  component: WordPool,
-});
 const adminFromArticleRoute = createRoute({
   getParentRoute: () => adminRoute,
   path: "fromarticle",
@@ -70,7 +64,6 @@ const adminDetailRoute = createRoute({
 const adminTree = adminRoute.addChildren([
   adminIndexRoute,
   adminCreateRoute,
-  adminWordpoolRoute,
   adminFromArticleRoute,
   adminDetailRoute,
 ]);

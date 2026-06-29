@@ -1,10 +1,12 @@
+import random
 from collections import Counter
 
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 import logging
 from app.ai.client import GeminiClient
-from app.models import Entry, Puzzle
+from app.models import Entry, Puzzle, WordpoolGeneric, WordpoolLemma
 from app.services.wordlist import add_word, block_word
 from app.sourcing.validate import is_georgian_word
 
@@ -35,6 +37,28 @@ def _fits(word: str, pattern: str) -> bool:
     return len(word) == len(pattern) and all(
         p == "_" or p == ch for p, ch in zip(pattern, word)
     )
+
+
+def _active_pool_words(db: Session) -> set[str]:
+    g = db.scalars(select(WordpoolGeneric.word).where(WordpoolGeneric.status == "active"))
+    lemmas = db.scalars(select(WordpoolLemma.word).where(WordpoolLemma.status == "active"))
+    return set(g) | set(lemmas)
+
+
+def swap_slot(db: Session, puzzle: Puzzle, entry: Entry, exclude: set[str] = frozenset()) -> dict:
+    """Place a different active-pool word in this slot, keeping crossing cells fixed.
+
+    Synchronous, deterministic candidate set, random pick so repeated clicks vary.
+    Returns {replaced, word}; replaced=False when nothing else fits the crossing pattern.
+    """
+    pattern = entry_pattern(puzzle, entry)
+    avoid = {entry.answer, *exclude}
+    cands = sorted(w for w in _active_pool_words(db) if w not in avoid and _fits(w, pattern))
+    if not cands:
+        return {"replaced": False, "word": None}
+    entry.answer = random.choice(cands)
+    db.flush()
+    return {"replaced": True, "word": entry.answer}
 
 
 def check_and_fix_entry(

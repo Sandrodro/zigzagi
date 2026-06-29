@@ -5,6 +5,7 @@ const key = (row: number, col: number) => `${row},${col}`;
 export class CrosswordEngine {
   private readonly puzzle: PuzzleData;
   private readonly blocks: Set<string>;
+  private readonly absent: Set<string>;
   private values: Record<string, string> = {};
   private statuses: Record<string, CellStatus> = {};
   private _active: Cell = { row: 0, col: 0 };
@@ -13,14 +14,16 @@ export class CrosswordEngine {
   constructor(puzzle: PuzzleData) {
     this.puzzle = puzzle;
     this.blocks = new Set(puzzle.blocks.map(([r, c]) => key(r, c)));
+    this.absent = new Set((puzzle.absent ?? []).map(([r, c]) => key(r, c)));
     outer: for (let r = 0; r < puzzle.size.rows; r++) {
       for (let c = 0; c < puzzle.size.cols; c++) {
-        if (!this.isBlock(r, c)) {
+        if (this.playable(r, c)) {
           this._active = { row: r, col: c };
           break outer;
         }
       }
     }
+    if (!this.currentClue()) this._direction = "down";
   }
 
   get size() { return this.puzzle.size; }
@@ -31,12 +34,16 @@ export class CrosswordEngine {
     return this.blocks.has(key(row, col));
   }
 
+  isAbsent(row: number, col: number): boolean {
+    return this.absent.has(key(row, col));
+  }
+
   private inBounds(row: number, col: number): boolean {
     return row >= 0 && col >= 0 && row < this.puzzle.size.rows && col < this.puzzle.size.cols;
   }
 
   private playable(row: number, col: number): boolean {
-    return this.inBounds(row, col) && !this.isBlock(row, col);
+    return this.inBounds(row, col) && !this.isBlock(row, col) && !this.isAbsent(row, col);
   }
 
   getValue(row: number, col: number): string {
@@ -50,11 +57,20 @@ export class CrosswordEngine {
   }
 
   setActive(row: number, col: number): void {
-    if (this.playable(row, col)) this._active = { row, col };
+    if (!this.playable(row, col)) return;
+    this._active = { row, col };
+    // If the current direction has no clue at this cell (unchecked cell), try the other.
+    if (!this.currentClue()) {
+      this._direction = this._direction === "across" ? "down" : "across";
+    }
   }
 
   toggleDirection(): void {
-    this._direction = this._direction === "across" ? "down" : "across";
+    const other: Direction = this._direction === "across" ? "down" : "across";
+    // Only flip if a clue exists in the other direction at the active cell.
+    if (this.clueForCell(this._active.row, this._active.col, other)) {
+      this._direction = other;
+    }
   }
 
   type(letter: string): void {

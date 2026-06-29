@@ -71,14 +71,13 @@ def promote_tick(db: Session, today: dt.date) -> int:
 
 
 def run_forever(poll_s: float = 2.0) -> None:  # pragma: no cover - operational entrypoint
-    library = load_library(_LIB_DIR)
-    last_promote = None
     while True:
         today = today_tbilisi()
+        library = load_library(_LIB_DIR)  # reload each tick so new templates are picked up live
         with SessionLocal() as db:
-            if today != last_promote:
-                promote_tick(db, today)
-                last_promote = today
+            # ponytail: promote every tick — cheap idempotent UPDATE. Once-per-day
+            # gating missed puzzles scheduled-for-today after the day's first tick.
+            promote_tick(db, today)
             did = tick(db, library)
         if not did:
             time.sleep(poll_s)

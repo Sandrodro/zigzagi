@@ -10,6 +10,6 @@ describe("AdminApp shell", () => {
     render(<RouterProvider router={router} />);
     expect(await screen.findByRole("link", { name: "სია" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "შექმნა" })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "პული" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "სტატია" })).toBeInTheDocument();
   });
 });

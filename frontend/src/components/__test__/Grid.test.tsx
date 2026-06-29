@@ -39,4 +39,18 @@ describe("Grid", () => {
     await userEvent.click(screen.getByTestId("cell-2-3"));
     expect(onClick).toHaveBeenCalledWith(2, 3);
   });
+
+  it("renders nothing for absent cells (no cell, no block)", () => {
+    const withAbsent: PuzzleData = {
+      ...PUZZLE,
+      absent: [[0, 0]],
+      cells: [{ row: 0, col: 1, number: 1 }],
+    };
+    const { container } = render(
+      <Grid engine={new CrosswordEngine(withAbsent)} onCellClick={() => {}} />,
+    );
+    expect(screen.queryByTestId("cell-0-0")).not.toBeInTheDocument();
+    expect(container.querySelectorAll('[data-block="true"]')).toHaveLength(0);
+    expect(screen.getByTestId("cell-0-1")).toBeInTheDocument();
+  });
 });

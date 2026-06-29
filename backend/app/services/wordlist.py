@@ -41,6 +41,19 @@ def block_word(db: Session, word: str) -> WordpoolGeneric:
     return row
 
 
+def block_everywhere(db: Session, word: str) -> None:
+    """Block `word` in whichever pool(s) it lives in; if absent, record it blocked in generic."""
+    found = False
+    for Model in (WordpoolGeneric, WordpoolLemma):
+        row = db.scalar(select(Model).where(Model.word == word))
+        if row is not None:
+            row.status = "blocked"
+            found = True
+    if not found:
+        db.add(WordpoolGeneric(id=uuid.uuid4(), word=word, length=len(word), status="blocked"))
+    db.flush()
+
+
 def list_words(
     db: Session, status: str | None = None, length: int | None = None, search: str | None = None
 ) -> list[WordpoolGeneric]:

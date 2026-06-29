@@ -132,6 +132,43 @@ const CLUE_PUZZLE: PuzzleData = {
   },
 };
 
+// Puzzle where (1,0) and (2,0) are only part of a DOWN word — no across run.
+const UNCHECKED_PUZZLE: PuzzleData = {
+  id: "p3",
+  date: "2026-06-18",
+  theme: "test",
+  size: { rows: 3, cols: 2 },
+  blocks: [[1, 1], [2, 1]],
+  cells: [
+    { row: 0, col: 0, number: 1 },
+    { row: 0, col: 1, number: 2 },
+  ],
+  clues: {
+    across: [{ number: 1, cell: [0, 0], length: 2, text: "1A" }],
+    down: [
+      { number: 1, cell: [0, 0], length: 3, text: "1D" },
+    ],
+  },
+};
+
+describe("CrosswordEngine unchecked cells", () => {
+  it("setActive auto-switches direction when no clue exists in current direction", () => {
+    const e = new CrosswordEngine(UNCHECKED_PUZZLE);
+    expect(e.direction).toBe("across");
+    e.setActive(1, 0); // (1,0) has no across clue
+    expect(e.currentClue()).not.toBeNull();
+    expect(e.direction).toBe("down");
+  });
+
+  it("toggleDirection does not flip when other direction has no clue", () => {
+    const e = new CrosswordEngine(UNCHECKED_PUZZLE);
+    e.setActive(1, 0); // auto-switches to "down"
+    e.toggleDirection(); // no across clue here — should stay "down"
+    expect(e.direction).toBe("down");
+    expect(e.currentClue()).not.toBeNull();
+  });
+});
+
 describe("CrosswordEngine clue model", () => {
   it("currentClue tracks the active cell and direction", () => {
     const e = new CrosswordEngine(CLUE_PUZZLE);

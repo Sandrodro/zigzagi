@@ -1,16 +1,12 @@
 import { useEffect, useReducer, useRef, useState } from "react";
 
-import { useCheckCells, usePuzzle, useRevealCells } from "../api/play";
+import { useCheckCells, usePuzzle } from "../api/play";
 import { CrosswordEngine } from "../engine/crossword";
 import { loadProgress, saveProgress } from "../progress/local";
 import { useTimer } from "../hooks/useTimer";
-import { Background } from "../components/Background";
 import { ClueBar } from "../components/ClueBar";
 import { ClueList } from "../components/ClueList";
-import { Grid } from "../components/Grid";
-import { Timer } from "../components/Timer";
-import { Button } from "../components/ui/Button";
-import { PageHeader } from "../components/ui/PageHeader";
+import { Grid, U } from "../components/Grid";
 
 export function PlayView({ id, date }: { id?: string; date?: string } = {}) {
   const { data: puzzle } = usePuzzle({ id, date });
@@ -20,10 +16,8 @@ export function PlayView({ id, date }: { id?: string; date?: string } = {}) {
   const timer = useTimer();
   const inputRef = useRef<HTMLInputElement>(null);
   const [completedAt, setCompletedAt] = useState<string | null>(null);
-  const [bgEnabled, setBgEnabled] = useState(() => localStorage.getItem("zigzagi:bg") !== "off");
 
   const checkMutation = useCheckCells(puzzle?.id ?? "");
-  const revealMutation = useRevealCells(puzzle?.id ?? "");
 
   // Build the engine when the puzzle arrives, hydrating from localStorage.
   useEffect(() => {
@@ -97,49 +91,54 @@ export function PlayView({ id, date }: { id?: string; date?: string } = {}) {
 
   const focusInput = () => inputRef.current?.focus();
 
-  const onCheck = async (scope: "square" | "word" | "puzzle") => {
-    const cells = engine
-      .cellsForScope(scope)
-      .map((c) => ({ row: c.row, col: c.col, value: engine.getValue(c.row, c.col) }))
-      .filter((c) => c.value);
-    if (cells.length === 0) return;
-    const { results } = await checkMutation.mutateAsync(cells);
-    engine.applyCheck(results);
-    rerender();
-  };
-
-  const onReveal = async (scope: "square" | "word" | "puzzle") => {
-    const cells = engine.cellsForScope(scope).map((c) => ({ row: c.row, col: c.col }));
-    const { cells: filled } = await revealMutation.mutateAsync(cells);
-    engine.applyReveal(filled);
-    persist();
-  };
-
   const cur = engine.currentClue();
+  const gridWidth = engine.size.cols * U;
+  const gridHeight = engine.size.rows * U;
 
   return (
-    <div className="mx-auto max-w-[560px] px-5 pt-8 pb-16">
-      <Background enabled={bgEnabled} />
+    <div className="mx-auto max-w-[1080px] px-5 pt-8 pb-16">
+      <div className="flex flex-col gap-8 md:flex-row md:items-start">
+        {/* Left half: header + current-clue bar + grid, the block sized to the grid. */}
+        <div className="w-full md:flex-1">
+          <div className="mx-auto w-full" style={{ maxWidth: gridWidth }}>
+            <ClueBar
+              clue={cur}
+              direction={engine.direction}
+              onPrev={() => { engine.prevClue(); rerender(); }}
+              onNext={() => { engine.nextClue(); rerender(); }}
+              onToggleDirection={() => { engine.toggleDirection(); rerender(); }}
+            />
 
-      <PageHeader title={puzzle.theme} eyebrow="დღის კროსვორდი" right={<Timer seconds={timer.seconds} />} />
+            <Grid
+              engine={engine}
+              onCellClick={(row, col) => {
+                if (engine.active.row === row && engine.active.col === col) engine.toggleDirection();
+                else engine.setActive(row, col);
+                focusInput();
+                rerender();
+              }}
+            />
+          </div>
+        </div>
 
-      <ClueBar
-        clue={cur}
-        direction={engine.direction}
-        onPrev={() => { engine.prevClue(); rerender(); }}
-        onNext={() => { engine.nextClue(); rerender(); }}
-        onToggleDirection={() => { engine.toggleDirection(); rerender(); }}
-      />
-
-      <Grid
-        engine={engine}
-        onCellClick={(row, col) => {
-          if (engine.active.row === row && engine.active.col === col) engine.toggleDirection();
-          else engine.setActive(row, col);
-          focusInput();
-          rerender();
-        }}
-      />
+        {/* Right half: scrollable clue columns, roughly grid-height tall. */}
+        <div className="w-full md:flex-1">
+          <ClueList
+            across={puzzle.clues.across}
+            down={puzzle.clues.down}
+            activeNumber={cur?.number ?? null}
+            activeDirection={engine.direction}
+            columnMaxHeight={gridHeight}
+            onSelect={(number, direction) => {
+              if (engine.direction !== direction) engine.toggleDirection();
+              const clue = (direction === "across" ? puzzle.clues.across : puzzle.clues.down).find((c) => c.number === number);
+              if (clue) engine.setActive(clue.cell[0], clue.cell[1]);
+              focusInput();
+              rerender();
+            }}
+          />
+        </div>
+      </div>
 
       {/* Single off-screen input: summons the native keyboard on mobile, captures physical keys on desktop. */}
       <input
@@ -154,45 +153,6 @@ export function PlayView({ id, date }: { id?: string; date?: string } = {}) {
         onKeyDown={onKeyDown}
         style={{ position: "absolute", left: -9999, width: 1, height: 1, opacity: 0 }}
       />
-
-      <div className="my-4 flex flex-wrap items-center gap-2">
-        <span className="mr-1 text-[0.72rem] font-semibold uppercase tracking-[0.1em] text-ink-soft">შემოწმება</span>
-        <Button variant="primary" size="sm" onClick={() => onCheck("square")}>Check square</Button>
-        <Button variant="primary" size="sm" onClick={() => onCheck("word")}>Check word</Button>
-        <Button variant="primary" size="sm" onClick={() => onCheck("puzzle")}>Check puzzle</Button>
-      </div>
-      <div className="my-4 flex flex-wrap items-center gap-2">
-        <span className="mr-1 text-[0.72rem] font-semibold uppercase tracking-[0.1em] text-ink-soft">გახსნა</span>
-        <Button size="sm" onClick={() => onReveal("square")}>Reveal square</Button>
-        <Button size="sm" onClick={() => onReveal("word")}>Reveal word</Button>
-        <Button size="sm" onClick={() => onReveal("puzzle")}>Reveal puzzle</Button>
-      </div>
-
-      <ClueList
-        across={puzzle.clues.across}
-        down={puzzle.clues.down}
-        activeNumber={cur?.number ?? null}
-        activeDirection={engine.direction}
-        onSelect={(number, direction) => {
-          if (engine.direction !== direction) engine.toggleDirection();
-          const clue = (direction === "across" ? puzzle.clues.across : puzzle.clues.down).find((c) => c.number === number);
-          if (clue) engine.setActive(clue.cell[0], clue.cell[1]);
-          focusInput();
-          rerender();
-        }}
-      />
-
-      <label className="mt-6 inline-flex items-center gap-1.5 text-[0.8rem] text-ink-soft">
-        <input
-          type="checkbox"
-          checked={bgEnabled}
-          onChange={(e) => {
-            setBgEnabled(e.target.checked);
-            localStorage.setItem("zigzagi:bg", e.target.checked ? "on" : "off");
-          }}
-        />
-        ფონის ანიმაცია
-      </label>
     </div>
   );
 }

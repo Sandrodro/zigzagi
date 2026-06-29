@@ -291,6 +291,7 @@ export interface TemplateDto {
   rows: number;
   cols: number;
   blocks: [number, number][];
+  absent?: [number, number][];
   slots: SlotDto[];
 }
 

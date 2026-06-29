@@ -1,36 +1,20 @@
 import { useParams } from "@tanstack/react-router";
-import { useEffect, useMemo, useReducer, useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "../components/ui/Button";
 import { SectionTitle } from "../components/ui/Typography";
-import { Grid } from "../components/Grid";
-import { CrosswordEngine } from "../engine/crossword";
-import { answerFills, puzzleDetailToPuzzleData } from "../engine/puzzleData";
+import { PuzzleEntries } from "../components/PuzzleEntries";
 import {
-  checkEntry, checkPuzzleWords, fetchPuzzle, schedulePuzzle, type PuzzleDetail as Detail,
+  checkPuzzleWords, fetchPuzzle, schedulePuzzle, type PuzzleDetail as Detail,
 } from "../api/admin";
 
 export function PuzzleDetail() {
   const { puzzleId } = useParams({ from: "/admin/puzzles/$puzzleId" });
   const [detail, setDetail] = useState<Detail | null>(null);
   const [pubStatus, setPubStatus] = useState<string | null>(null);
-  const [results, setResults] = useState<Record<string, string>>({}); // entryId -> message
   const [busy, setBusy] = useState(false);
-  // ponytail: mutable engine; counter forces a re-render after each mutation.
-  const [, rerender] = useReducer((n: number) => n + 1, 0);
-
-  // Rebuild the read-only finished-crossword engine whenever the detail changes.
-  const engine = useMemo(() => {
-    if (!detail) return null;
-    const data = puzzleDetailToPuzzleData(detail);
-    if (!data) return null;
-    const e = new CrosswordEngine(data);
-    e.loadFills(answerFills(detail.entries));
-    return e;
-  }, [detail]);
 
   async function load() {
-    const d = await fetchPuzzle(puzzleId);
-    setDetail(d);
+    setDetail(await fetchPuzzle(puzzleId));
   }
   useEffect(() => { load(); }, [puzzleId]);
 
@@ -41,12 +25,6 @@ export function PuzzleDetail() {
       setPubStatus(r.status);
       await load();
     } finally { setBusy(false); }
-  }
-
-  async function checkOne(entryId: string) {
-    const r = await checkEntry(puzzleId, entryId);
-    setResults((m) => ({ ...m, [entryId]: r.valid ? "✓" : r.replaced_with ? `→ ${r.replaced_with}` : "✗" }));
-    await load();
   }
 
   async function checkAll() {
@@ -66,29 +44,7 @@ export function PuzzleDetail() {
         <Button variant="ghost" onClick={checkAll} disabled={busy}>სიტყვების შემოწმება</Button>
       </div>
 
-      {engine && (
-        <Grid
-          engine={engine}
-          onCellClick={(r, c) => { engine.setActive(r, c); rerender(); }}
-        />
-      )}
-
-      <table className="w-full text-sm">
-        <thead><tr className="text-left text-ink-soft">
-          <th className="py-1">#</th><th>მიმართ.</th><th>სიტყვა</th><th>შედეგი</th><th />
-        </tr></thead>
-        <tbody>
-          {detail.entries.map((e) => (
-            <tr key={e.id} className="border-t border-rule">
-              <td className="py-1">{e.number}</td>
-              <td>{e.direction}</td>
-              <td>{e.answer}</td>
-              <td>{results[e.id] ?? ""}</td>
-              <td><Button size="sm" variant="ghost" onClick={() => checkOne(e.id)}>შემოწმება</Button></td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <PuzzleEntries detail={detail} reload={load} />
     </div>
   );
 }

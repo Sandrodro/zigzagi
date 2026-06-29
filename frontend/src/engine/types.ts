@@ -22,6 +22,7 @@ export interface PuzzleData {
   theme: string;
   size: { rows: number; cols: number };
   blocks: [number, number][];
+  absent?: [number, number][]; // cells outside the puzzle shape (empty background)
   cells: NumberedCell[];
   clues: { across: ClueRef[]; down: ClueRef[] };
 }

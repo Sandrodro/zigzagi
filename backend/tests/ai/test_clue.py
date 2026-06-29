@@ -21,7 +21,7 @@ def test_real_clue_parses_and_uses_pro_model():
         seen.append(model)
         return _Resp()
 
-    ex = GeminiExtractor(api_key="x", extract_model="f", suggest_model="f", clue_model="m-pro", transport=transport)
+    ex = GeminiExtractor(api_key="x", dumb_model="f", smart_model="f", clue_model="m-pro", transport=transport)
     out = ex.clue([ClueRequest(entry_id="e1", answer="თბილისი", direction="across", number=1, theme="თ", source_snippet=None)])
     assert out[0].entry_id == "e1" and seen == ["m-pro"]
 
@@ -30,6 +30,6 @@ def test_real_clue_retries_once_then_raises():
     class _Resp:
         text = "nope"
 
-    ex = GeminiExtractor(api_key="x", extract_model="f", suggest_model="f", clue_model="m-pro", transport=lambda *a: _Resp())
+    ex = GeminiExtractor(api_key="x", dumb_model="f", smart_model="f", clue_model="m-pro", transport=lambda *a: _Resp())
     with pytest.raises(AIError):
         ex.clue([])

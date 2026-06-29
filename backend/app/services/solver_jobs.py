@@ -31,7 +31,8 @@ def grid_template_from(template: Template) -> dict:
     return {
         "rows": template.rows,
         "cols": template.cols,
-        "blocks": sorted([r, c] for (r, c) in template.blocks),
+        "blocks": sorted([r, c] for (r, c) in template.blocks - template.absent),
+        "absent": sorted([r, c] for (r, c) in template.absent),
         "cells": cells,
     }
 
@@ -76,7 +77,8 @@ def list_template_dtos() -> list[dict]:
             "id": t.id,
             "rows": t.rows,
             "cols": t.cols,
-            "blocks": sorted([r, c] for (r, c) in t.blocks),
+            "blocks": sorted([r, c] for (r, c) in t.blocks - t.absent),
+            "absent": sorted([r, c] for (r, c) in t.absent),
             "slots": slots,
         })
     return out

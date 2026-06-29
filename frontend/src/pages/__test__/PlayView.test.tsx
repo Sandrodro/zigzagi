@@ -49,17 +49,6 @@ describe("PlayView", () => {
     await waitFor(() => expect(screen.getByTestId("cell-0-0")).toBeInTheDocument());
   });
 
-  it("checking applies server results to the grid", async () => {
-    renderPlayView();
-    await waitFor(() => screen.getByTestId("cell-0-0"));
-    await userEvent.click(screen.getByTestId("cell-0-0"));
-    await userEvent.keyboard("ა");
-    await userEvent.click(screen.getByRole("button", { name: "Check square" }));
-    await waitFor(() =>
-      expect(screen.getByTestId("cell-0-0")).toHaveAttribute("data-status", "correct"),
-    );
-  });
-
   it("typing fills the grid and persists to localStorage", async () => {
     renderPlayView();
     await waitFor(() => screen.getByTestId("cell-0-0"));
@@ -85,60 +74,6 @@ describe("PlayView", () => {
     await waitFor(() => screen.getByTestId("cell-0-0"));
     await userEvent.click(screen.getByRole("button", { name: /1A/ }));
     expect(screen.getByTestId("cell-0-0")).toHaveAttribute("data-active", "true");
-  });
-
-  it("check word posts exactly the current word's filled cells", async () => {
-    const calls: { url: string; body: unknown }[] = [];
-    vi.stubGlobal(
-      "fetch",
-      vi.fn((url: string, opts?: RequestInit) => {
-        calls.push({ url, body: opts?.body ? JSON.parse(opts.body as string) : null });
-        if (url.endsWith("/today")) return json(PUZZLE);
-        if (url.endsWith("/check")) return json({ results: [] });
-        return json({ cells: [] });
-      }),
-    );
-    renderPlayView();
-    await waitFor(() => screen.getByTestId("cell-0-0"));
-    // Select 1-Across (active at 0,0, direction across, input focused), then fill two cells.
-    await userEvent.click(screen.getByRole("button", { name: /1A/ }));
-    await userEvent.keyboard("ა");
-    await userEvent.keyboard("ბ");
-    await userEvent.click(screen.getByRole("button", { name: "Check word" }));
-
-    const checkCall = calls.find((c) => c.url.endsWith("/check"));
-    expect(checkCall?.body).toEqual({
-      cells: [
-        { row: 0, col: 0, value: "ა" },
-        { row: 0, col: 1, value: "ბ" },
-      ],
-    });
-  });
-
-  it("reveal puzzle fills every cell from the server", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn((url: string) => {
-        if (url.endsWith("/today")) return json(PUZZLE);
-        if (url.endsWith("/reveal"))
-          return json({
-            cells: [
-              { row: 0, col: 0, value: "ა" },
-              { row: 0, col: 1, value: "ბ" },
-              { row: 0, col: 2, value: "გ" },
-            ],
-          });
-        return json({ results: [] });
-      }),
-    );
-    renderPlayView();
-    await waitFor(() => screen.getByTestId("cell-0-0"));
-    await userEvent.click(screen.getByRole("button", { name: "Reveal puzzle" }));
-    await waitFor(() => {
-      expect(screen.getByTestId("cell-0-0")).toHaveTextContent("ა");
-      expect(screen.getByTestId("cell-0-2")).toHaveTextContent("გ");
-      expect(screen.getByTestId("cell-0-2")).toHaveAttribute("data-status", "revealed");
-    });
   });
 
   it("shows the congrats modal on all-correct completion", async () => {

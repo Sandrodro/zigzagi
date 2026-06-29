@@ -12,7 +12,7 @@ function Menu({ label, items }: { label: string; items: Item[] }) {
       >
         {label}
       </button>
-      <div className="absolute left-0 top-full z-30 hidden min-w-[10rem] border border-rule bg-white shadow-md group-hover:block group-focus-within:block">
+      <div className="absolute right-0 top-full z-30 hidden min-w-[10rem] border border-rule bg-white shadow-md group-hover:block group-focus-within:block">
         {items.map((it) => (
           <button
             key={it.label}
@@ -36,7 +36,7 @@ interface PlayToolbarProps {
 
 export function PlayToolbar({ onClear, onReveal, onCheck }: PlayToolbarProps) {
   return (
-    <div role="toolbar" aria-label="ხელსაწყოები" className="mb-4 flex border-b border-rule">
+    <div role="toolbar" aria-label="ხელსაწყოები" className="mb-4 flex justify-end border-b border-rule">
       <Menu
         label="გასუფთავება"
         items={[

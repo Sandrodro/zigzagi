@@ -17,9 +17,9 @@ const sizes: Record<"md" | "sm", string> = {
 
 const variants: Record<Variant, string> = {
   primary: "bg-teal border-teal text-white hover:bg-teal-deep hover:border-teal-deep",
-  ghost: "bg-paper-raised border-rule-strong text-ink hover:border-ink-soft",
+  ghost: "bg-paper-raised border-rule-strong text-black hover:border-ink-soft",
   danger: "bg-paper-raised border-[#e0c4c4] text-cinnabar hover:bg-[#f6ecec] hover:border-cinnabar",
-  quiet: "bg-transparent border-transparent text-ink hover:bg-teal-faint",
+  quiet: "bg-transparent border-transparent text-black hover:bg-teal-faint",
 };
 
 export function Button({ variant = "ghost", size = "md", className = "", ...rest }: ButtonProps) {

@@ -1,7 +1,9 @@
 import { useEffect, useReducer, useRef, useState } from "react";
 
-import { useCheckCells, usePuzzle } from "../api/play";
+import { useCheckCells, useRevealCells, usePuzzle } from "../api/play";
 import { CrosswordEngine } from "../engine/crossword";
+import type { Scope } from "../engine/types";
+import { PlayToolbar } from "../components/PlayToolbar";
 import { loadProgress, saveProgress } from "../progress/local";
 import { useTimer } from "../hooks/useTimer";
 import { ClueBar } from "../components/ClueBar";
@@ -18,6 +20,7 @@ export function PlayView({ id, date }: { id?: string; date?: string } = {}) {
   const [completedAt, setCompletedAt] = useState<string | null>(null);
 
   const checkMutation = useCheckCells(puzzle?.id ?? "");
+  const revealMutation = useRevealCells(puzzle?.id ?? "");
 
   // Track the visual viewport: keyboard inset (pin the clue bar) + size (fit the grid).
   const [vp, setVp] = useState({ kbInset: 0, w: 0, h: 0 });
@@ -105,18 +108,40 @@ export function PlayView({ id, date }: { id?: string; date?: string } = {}) {
     persist();
   };
 
-  const focusInput = () => inputRef.current?.focus();
+  // preventScroll: the input sits off-screen, so a plain focus() would scroll the page to it.
+  const focusInput = () => inputRef.current?.focus({ preventScroll: true });
+
+  const handleClear = (scope: Scope) => {
+    engine.clear(scope);
+    persist();
+  };
+
+  const handleCheck = async (scope: Scope) => {
+    const cells = engine
+      .cellsForScope(scope)
+      .map((c) => ({ row: c.row, col: c.col, value: engine.getValue(c.row, c.col) }));
+    const { results } = await checkMutation.mutateAsync(cells);
+    engine.applyCheck(results);
+    rerender();
+  };
+
+  const handleReveal = async (scope: Scope) => {
+    const cells = engine.cellsForScope(scope).map((c) => ({ row: c.row, col: c.col }));
+    const { cells: revealed } = await revealMutation.mutateAsync(cells);
+    engine.applyReveal(revealed);
+    persist();
+  };
 
   const cur = engine.currentClue();
   const gridWidth = engine.size.cols * U;
   const gridHeight = engine.size.rows * U;
 
-  // On mobile, cap the grid so it fits the height left over after the clue bar / keyboard,
-  // keeping the whole grid visible without scrolling. (~88px reserved: top pad + clue bar + gap.)
+  // On mobile, cap the grid so it fits the height left over after the toolbar / clue bar / keyboard,
+  // keeping the whole grid visible without scrolling. (~140px: top pad + toolbar + clue bar + gaps.)
   const isMobile = vp.w > 0 && vp.w < 768;
   const aspect = engine.size.cols / engine.size.rows;
   const gridMax = isMobile
-    ? Math.max(160, Math.min(vp.w - 16, (vp.h - 88) * aspect))
+    ? Math.max(160, Math.min(vp.w - 16, (vp.h - 140) * aspect))
     : gridWidth;
 
   const clueNav = {
@@ -129,6 +154,7 @@ export function PlayView({ id, date }: { id?: string; date?: string } = {}) {
 
   return (
     <div className="mx-auto max-w-[1080px] px-5 pt-4 pb-4 md:pt-8 md:pb-16">
+      <PlayToolbar onClear={handleClear} onReveal={handleReveal} onCheck={handleCheck} />
       <div className="flex flex-col gap-8 md:flex-row md:items-start">
         {/* Left half: header + current-clue bar + grid, the block sized to the grid. */}
         <div className="w-full md:flex-1">

@@ -36,7 +36,7 @@ function Section({
           return (
             <li key={`${direction}-${c.number}`}>
               <button
-                className="flex w-full cursor-pointer gap-2 border-0 px-2 py-1 text-left text-sm text-ink hover:bg-teal-faint data-[active=true]:bg-teal-tint"
+                className="flex w-full cursor-pointer gap-2 border-0 px-2 py-1 text-left text-sm text-black hover:bg-teal-faint data-[active=true]:bg-teal-tint"
                 data-active={active ? "true" : "false"}
                 onClick={() => onSelect(c.number, direction)}
               >

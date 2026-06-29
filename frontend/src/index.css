@@ -2,6 +2,7 @@
 
 /* Academic palette + type, exposed as Tailwind theme tokens (bg-paper, text-ink, font-serif, …) */
 @theme {
+  --color-black: #121212; /* "black" text/letters render as near-black, not pure #000 */
   --color-paper: #f4f4ef;
   --color-paper-raised: #ffffff;
   --color-ink: #23272f;
@@ -27,7 +28,7 @@
 
 @layer base {
   body {
-    @apply bg-white text-ink font-sans antialiased;
+    @apply bg-white text-black font-sans antialiased;
     line-height: 1.55;
   }
   :focus-visible {

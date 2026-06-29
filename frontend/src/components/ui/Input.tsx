@@ -1,6 +1,6 @@
 import type { InputHTMLAttributes, TextareaHTMLAttributes } from "react";
 
-const field = "w-full rounded border border-rule-strong bg-paper-raised px-2.5 py-2 text-[0.9rem] text-ink";
+const field = "w-full rounded border border-rule-strong bg-paper-raised px-2.5 py-2 text-[0.9rem] text-black";
 
 export function Input({ className = "", ...rest }: InputHTMLAttributes<HTMLInputElement>) {
   return <input className={`${field} ${className}`.trim()} {...rest} />;

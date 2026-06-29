@@ -13,9 +13,10 @@ const RECT =
   "group-data-[inword=true]:fill-cell-word " +
   "group-data-[active=true]:fill-cell-active";
 
+// Correct → blue letter; incorrect → letter stays black (a red cross is drawn over the cell).
 const VAL =
-  "font-serif text-[18px] fill-black [fill:#000] " +
-  "group-data-[status=correct]:fill-teal group-data-[status=incorrect]:fill-cinnabar group-data-[status=revealed]:fill-ochre";
+  "font-serif text-[22px] fill-black [fill:#121212] " +
+  "group-data-[status=correct]:fill-blue-600 group-data-[status=revealed]:fill-ochre";
 
 export function Grid({ engine, onCellClick }: GridProps) {
   const { rows, cols } = engine.size;
@@ -45,6 +46,7 @@ export function Grid({ engine, onCellClick }: GridProps) {
             const isActive = active.row === row && active.col === col;
             const num = numbered.find((c) => c.row === row && c.col === col)?.number;
             const value = engine.getValue(row, col);
+            const status = engine.getStatus(row, col);
             return (
               <g
                 key={`${row}-${col}`}
@@ -53,12 +55,18 @@ export function Grid({ engine, onCellClick }: GridProps) {
                 data-testid={`cell-${row}-${col}`}
                 data-active={isActive ? "true" : "false"}
                 data-inword={!isActive && wordKeys.has(`${row},${col}`) ? "true" : "false"}
-                data-status={engine.getStatus(row, col)}
+                data-status={status}
                 onClick={() => onCellClick(row, col)}
               >
                 <rect className={RECT} x={x} y={y} width={U} height={U} />
+                {status === "incorrect" && (
+                  <>
+                    <line className="stroke-red-600 [stroke-width:2.5]" x1={x} y1={y} x2={x + U} y2={y + U} />
+                    <line className="stroke-red-600 [stroke-width:2.5]" x1={x + U} y1={y} x2={x} y2={y + U} />
+                  </>
+                )}
                 {num !== undefined && (
-                  <text fill="#000" className="font-serif text-[11px]" x={x + 3} y={y + 12}>
+                  <text fill="#121212" className="font-serif text-[11px]" x={x + 3} y={y + 12}>
                     {num}
                   </text>
                 )}

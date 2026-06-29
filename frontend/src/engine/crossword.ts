@@ -136,6 +136,13 @@ export class CrosswordEngine {
     }
   }
 
+  clear(scope: Scope): void {
+    for (const c of this.cellsForScope(scope)) {
+      this.values[key(c.row, c.col)] = "";
+      delete this.statuses[key(c.row, c.col)];
+    }
+  }
+
   private allPlayableCells(): Cell[] {
     const cells: Cell[] = [];
     for (let r = 0; r < this.puzzle.size.rows; r++) {

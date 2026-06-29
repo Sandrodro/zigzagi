@@ -225,6 +225,18 @@ describe("CrosswordEngine clue model", () => {
     expect(e.cellsForScope("puzzle")).toHaveLength(8);
   });
 
+  it("clear empties values and statuses for the given scope only", () => {
+    const e = new CrosswordEngine(CLUE_PUZZLE);
+    e.loadFills({ "0,0": "ა", "0,1": "ბ", "0,2": "გ", "1,0": "დ" });
+    e.applyCheck([{ row: 0, col: 0, correct: false }]);
+    e.setActive(0, 1); // across word = row 0, cols 0..2
+    e.clear("word");
+    expect(e.getValue(0, 0)).toBe("");
+    expect(e.getValue(0, 2)).toBe("");
+    expect(e.getStatus(0, 0)).toBe("empty"); // status cleared too
+    expect(e.getValue(1, 0)).toBe("დ"); // outside the word, untouched
+  });
+
   it("loadFills overwrites values from a persisted dict", () => {
     const e = new CrosswordEngine(CLUE_PUZZLE);
     e.loadFills({ "0,0": "ა", "1,1": "ბ" });

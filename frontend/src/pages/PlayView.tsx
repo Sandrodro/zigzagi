@@ -57,6 +57,8 @@ export function PlayView({ id, date }: { id?: string; date?: string } = {}) {
     }
     setEngine(e);
     timer.start();
+    // Focus the off-screen input without scrolling to it (would otherwise scroll the page down on load).
+    inputRef.current?.focus({ preventScroll: true });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [puzzle]);
 
@@ -214,7 +216,6 @@ export function PlayView({ id, date }: { id?: string; date?: string } = {}) {
       <input
         ref={inputRef}
         aria-label="cell input"
-        autoFocus
         defaultValue=""
         inputMode="text"
         autoCapitalize="none"

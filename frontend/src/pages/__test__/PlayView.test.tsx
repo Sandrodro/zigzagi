@@ -72,7 +72,7 @@ describe("PlayView", () => {
   it("clicking a clue in the list activates it", async () => {
     renderPlayView();
     await waitFor(() => screen.getByTestId("cell-0-0"));
-    await userEvent.click(screen.getByRole("button", { name: /1A/ }));
+    await userEvent.click(screen.getByRole("button", { name: "1 1A" })); // clue-list item (number + text)
     expect(screen.getByTestId("cell-0-0")).toHaveAttribute("data-active", "true");
   });
 
@@ -94,7 +94,7 @@ describe("PlayView", () => {
     );
     renderPlayView();
     await waitFor(() => screen.getByTestId("cell-0-0"));
-    await userEvent.click(screen.getByRole("button", { name: /1A/ }));
+    await userEvent.click(screen.getByRole("button", { name: "1 1A" })); // clue-list item (number + text)
     await userEvent.keyboard("ააა"); // fills all three cells
     await waitFor(() => {
       const saved = JSON.parse(localStorage.getItem("zigzagi:progress:p1") ?? "{}");

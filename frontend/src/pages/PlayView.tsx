@@ -19,6 +19,21 @@ export function PlayView({ id, date }: { id?: string; date?: string } = {}) {
 
   const checkMutation = useCheckCells(puzzle?.id ?? "");
 
+  // Keyboard inset: keep the mobile clue bar pinned just above the native keyboard.
+  const [kbInset, setKbInset] = useState(0);
+  useEffect(() => {
+    const vv = window.visualViewport;
+    if (!vv) return;
+    const update = () => setKbInset(Math.max(0, window.innerHeight - vv.height - vv.offsetTop));
+    vv.addEventListener("resize", update);
+    vv.addEventListener("scroll", update);
+    update();
+    return () => {
+      vv.removeEventListener("resize", update);
+      vv.removeEventListener("scroll", update);
+    };
+  }, []);
+
   // Build the engine when the puzzle arrives, hydrating from localStorage.
   useEffect(() => {
     if (!puzzle) return;
@@ -95,19 +110,27 @@ export function PlayView({ id, date }: { id?: string; date?: string } = {}) {
   const gridWidth = engine.size.cols * U;
   const gridHeight = engine.size.rows * U;
 
+  const clueNav = {
+    clue: cur,
+    direction: engine.direction,
+    onPrev: () => { engine.prevClue(); focusInput(); rerender(); },
+    onNext: () => { engine.nextClue(); focusInput(); rerender(); },
+    onToggleDirection: () => { engine.toggleDirection(); focusInput(); rerender(); },
+  };
+
   return (
-    <div className="mx-auto max-w-[1080px] px-5 pt-8 pb-16">
+    <div className="mx-auto max-w-[1080px] px-5 pt-8 pb-28 md:pb-16">
       <div className="flex flex-col gap-8 md:flex-row md:items-start">
         {/* Left half: header + current-clue bar + grid, the block sized to the grid. */}
         <div className="w-full md:flex-1">
           <div className="mx-auto w-full" style={{ maxWidth: gridWidth }}>
-            <ClueBar
-              clue={cur}
-              direction={engine.direction}
-              onPrev={() => { engine.prevClue(); rerender(); }}
-              onNext={() => { engine.nextClue(); rerender(); }}
-              onToggleDirection={() => { engine.toggleDirection(); rerender(); }}
-            />
+            {/* One clue bar: fixed above the keyboard on mobile, static above the grid on desktop. */}
+            <div
+              className="fixed inset-x-0 z-20 px-2 md:static md:mb-4 md:px-0"
+              style={{ bottom: kbInset }}
+            >
+              <ClueBar {...clueNav} />
+            </div>
 
             <Grid
               engine={engine}
@@ -121,8 +144,8 @@ export function PlayView({ id, date }: { id?: string; date?: string } = {}) {
           </div>
         </div>
 
-        {/* Right half: scrollable clue columns, roughly grid-height tall. */}
-        <div className="w-full md:flex-1">
+        {/* Right half: scrollable clue columns (desktop only). */}
+        <div className="hidden w-full md:block md:flex-1">
           <ClueList
             across={puzzle.clues.across}
             down={puzzle.clues.down}

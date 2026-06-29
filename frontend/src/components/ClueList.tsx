@@ -29,7 +29,7 @@ function Section({
 }) {
   return (
     <div>
-      <h3 className="mt-0 mb-2 border-b border-rule pb-1 text-[0.72rem] font-bold uppercase tracking-[0.12em] text-ink-soft">{title}</h3>
+      <h3 className="mt-0 mb-2 border-b border-rule pb-1 text-[0.85rem] font-bold text-black">{title}</h3>
       <ul className="m-0 list-none overflow-y-auto p-0" style={{ maxHeight: columnMaxHeight }}>
         {clues.map((c) => {
           const active = c.number === activeNumber && direction === activeDirection;

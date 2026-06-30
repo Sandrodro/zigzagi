@@ -22,7 +22,7 @@ class SourceAdapter(Protocol):
 
 
 def run_scrape(
-    adapters: list[SourceAdapter], ai: GeminiClient, theme: str, db: Session, within_days: int = 31
+    adapters: list[SourceAdapter], ai: GeminiClient, db: Session, within_days: int = 31
 ) -> int:
     total = 0
     for adapter in adapters:
@@ -33,8 +33,8 @@ def run_scrape(
         except Exception:  # isolate per-source failure (§10)
             continue
         for article in articles:
-            candidates = ai.extract(article.text, theme, [])  # snippet only; never store full body
-            rows, _ = create_from_extraction(db, candidates, theme)
+            candidates = ai.extract(article.text, [])  # snippet only; never store full body
+            rows, _ = create_from_extraction(db, candidates)
             for r in rows:
                 r.source_url = article.url
             total += len(rows)

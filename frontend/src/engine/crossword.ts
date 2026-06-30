@@ -78,8 +78,20 @@ export class CrosswordEngine {
     if (!this.playable(row, col)) return;
     this.values[key(row, col)] = letter;
     delete this.statuses[key(row, col)];
-    const next = this._direction === "across" ? { row, col: col + 1 } : { row: row + 1, col };
-    if (this.playable(next.row, next.col)) this._active = next;
+    // Advance to the next empty cell in the current word, jumping over already-filled ones.
+    const stepRow = this._direction === "down" ? 1 : 0;
+    const stepCol = this._direction === "across" ? 1 : 0;
+    let r = row + stepRow;
+    let c = col + stepCol;
+    while (this.playable(r, c) && this.getValue(r, c)) {
+      r += stepRow;
+      c += stepCol;
+    }
+    if (this.playable(r, c)) {
+      this._active = { row: r, col: c }; // first empty cell ahead
+    } else if (this.playable(row + stepRow, col + stepCol)) {
+      this._active = { row: row + stepRow, col: col + stepCol }; // word full ahead → immediate next
+    }
   }
 
   backspace(): void {

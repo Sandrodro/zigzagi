@@ -19,7 +19,6 @@ export interface ClueRef {
 export interface PuzzleData {
   id: string;
   date: string;
-  theme: string;
   size: { rows: number; cols: number };
   blocks: [number, number][];
   absent?: [number, number][]; // cells outside the puzzle shape (empty background)

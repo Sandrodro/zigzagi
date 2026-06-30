@@ -43,7 +43,6 @@ def seed_demo_puzzle(db: Session, live_date: dt.date, status: str = "published")
     puzzle = Puzzle(
         id=uuid.uuid4(),
         live_date=live_date,
-        theme="დემო",
         grid_template={"rows": 5, "cols": 5, "blocks": [], "cells": _NUMBERED_CELLS},
         status=status,
         seed=None,

@@ -1,7 +1,7 @@
 import datetime as dt
 import uuid
 
-from sqlalchemy import ARRAY, DateTime, ForeignKey, String, func
+from sqlalchemy import DateTime, ForeignKey, func
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -13,7 +13,6 @@ class Puzzle(Base):
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     live_date: Mapped[dt.date] = mapped_column()
-    theme: Mapped[str] = mapped_column()
     grid_template: Mapped[dict] = mapped_column(JSONB)
     status: Mapped[str] = mapped_column(default="draft")
     seed: Mapped[int | None] = mapped_column(nullable=True)
@@ -73,7 +72,6 @@ class WordCandidate(Base):
     length: Mapped[int] = mapped_column()
     source_url: Mapped[str | None] = mapped_column(nullable=True)
     snippet: Mapped[str | None] = mapped_column(nullable=True)
-    theme_tags: Mapped[list[str]] = mapped_column(ARRAY(String), default=list)
     status: Mapped[str] = mapped_column(default="offered")  # offered|accepted|edited|rejected
 
 

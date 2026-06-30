@@ -16,7 +16,7 @@ def test_extract_parses_structured_json():
         return _Resp('[{"surface":"თბილისი","lemma":"თბილისი","length":7,"snippet":"s","theme_relevance":0.9}]')
 
     ex = GeminiExtractor(api_key="x", dumb_model="m-flash", smart_model="m-flash", transport=transport)
-    out = ex.extract("text", "თბილისი", [])
+    out = ex.extract("text", [])
     assert out[0].surface == "თბილისი"
     assert calls == ["m-flash"]
 
@@ -27,4 +27,4 @@ def test_extract_retries_once_then_raises():
 
     ex = GeminiExtractor(api_key="x", dumb_model="m", smart_model="m", transport=transport)
     with pytest.raises(AIError):
-        ex.extract("t", "th", [])
+        ex.extract("t", [])

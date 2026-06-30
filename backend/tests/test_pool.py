@@ -10,7 +10,7 @@ def test_create_revalidates_and_dedupes(db_session):
     rows, dropped = create_from_extraction(
         db_session,
         [_cand("თბილისი"), _cand("ab"), _cand("თბილისი")],  # latin dropped, dup dropped
-        theme="თბილისი",
+        
     )
     db_session.flush()
     assert {r.surface for r in rows} == {"თბილისი"}
@@ -19,7 +19,7 @@ def test_create_revalidates_and_dedupes(db_session):
 
 
 def test_bulk_accept_and_reject(db_session):
-    rows, _ = create_from_extraction(db_session, [_cand("თბილისი"), _cand("მთაწმინდა")], theme="თ")
+    rows, _ = create_from_extraction(db_session, [_cand("თბილისი"), _cand("მთაწმინდა")])
     db_session.flush()
     n = bulk_update(db_session, [
         {"id": str(rows[0].id), "action": "accept"},
@@ -31,7 +31,7 @@ def test_bulk_accept_and_reject(db_session):
 
 
 def test_list_filters_by_status(db_session):
-    rows, _ = create_from_extraction(db_session, [_cand("თბილისი")], theme="თ")
+    rows, _ = create_from_extraction(db_session, [_cand("თბილისი")])
     db_session.flush()
     bulk_update(db_session, [{"id": str(rows[0].id), "action": "accept"}])
     db_session.flush()

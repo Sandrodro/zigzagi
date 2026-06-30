@@ -5,7 +5,7 @@ from app.models import Entry, Puzzle
 
 
 def _ready_puzzle(db, day):  # a puzzle whose clues are all accepted
-    p = Puzzle(id=uuid.uuid4(), live_date=day, theme="t", grid_template={}, status="draft", seed=1, version=1)
+    p = Puzzle(id=uuid.uuid4(), live_date=day, grid_template={}, status="draft", seed=1, version=1)
     p.entries.append(Entry(id=uuid.uuid4(), number=1, direction="across", answer="თბილისი", row=0, col=0, clue="c", clue_status="accepted", provenance="sourced"))
     db.add(p)
     db.flush()
@@ -22,7 +22,7 @@ def test_schedule_succeeds(client, db_session):
 
 def test_schedule_allowed_with_unfinished_clues(client, db_session):
     # Clue-status guard removed: scheduling no longer requires accepted clues.
-    p = Puzzle(id=uuid.uuid4(), live_date=dt.date(2026, 9, 4), theme="t", grid_template={}, status="draft", seed=1, version=1)
+    p = Puzzle(id=uuid.uuid4(), live_date=dt.date(2026, 9, 4), grid_template={}, status="draft", seed=1, version=1)
     p.entries.append(Entry(id=uuid.uuid4(), number=1, direction="across", answer="თბილისი", row=0, col=0, clue="c", clue_status="generated", provenance="sourced"))
     db_session.add(p)
     db_session.flush()

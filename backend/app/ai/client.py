@@ -22,7 +22,6 @@ class ClueRequest(BaseModel):
     answer: str
     direction: str
     number: int
-    theme: str
     source_snippet: str | None = None
 
 
@@ -31,22 +30,14 @@ class ClueResult(BaseModel):
     clue: str
 
 
-class ThemeAndClues(BaseModel):
-    theme: str
-    clues: list[ClueResult]
-
-
 class WordCheck(BaseModel):
     valid: bool
     replacement: str | None = None
 
 
 class GeminiClient(Protocol):
-    def extract(
-        self, text: str, theme: str, pool: list[str]
-    ) -> list[ExtractedCandidate]: ...
-    def suggest(self, theme: str, pool: list[str]) -> list[Suggestion]: ...
+    def extract(self, text: str, pool: list[str]) -> list[ExtractedCandidate]: ...
+    def suggest(self, pool: list[str]) -> list[Suggestion]: ...
     def clue(self, batch: list[ClueRequest]) -> list[ClueResult]: ...
-    def theme_and_clues(self, batch: list[ClueRequest]) -> ThemeAndClues: ...
     def check_word(self, word: str, pattern: str, length: int) -> WordCheck: ...
     def lemmatize(self, words: list[str], cheap: bool = False) -> list[str]: ...

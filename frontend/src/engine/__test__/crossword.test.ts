@@ -6,7 +6,7 @@ import type { PuzzleData } from "../types";
 const PUZZLE: PuzzleData = {
   id: "p1",
   date: "2026-06-18",
-  theme: "დემო",
+  
   size: { rows: 5, cols: 5 },
   blocks: [],
   cells: [
@@ -38,6 +38,16 @@ describe("CrosswordEngine", () => {
     e.type("ა");
     expect(e.getValue(0, 0)).toBe("ა");
     expect(e.active).toEqual({ row: 0, col: 1 });
+  });
+
+  it("typing jumps over an already-filled cell to the next empty one", () => {
+    const e = new CrosswordEngine(PUZZLE);
+    e.setActive(0, 1);
+    e.type("ბ"); // fills (0,1)
+    e.setActive(0, 0);
+    e.type("ა"); // fills (0,0); (0,1) occupied -> skip to (0,2)
+    expect(e.getValue(0, 0)).toBe("ა");
+    expect(e.active).toEqual({ row: 0, col: 2 });
   });
 
   it("does not advance past the last cell of the row", () => {
@@ -107,7 +117,7 @@ describe("CrosswordEngine check/reveal", () => {
 const CLUE_PUZZLE: PuzzleData = {
   id: "p2",
   date: "2026-06-18",
-  theme: "დემო",
+  
   size: { rows: 3, cols: 3 },
   // middle of the right column is a block: (1,2)
   blocks: [[1, 2]],
@@ -136,7 +146,7 @@ const CLUE_PUZZLE: PuzzleData = {
 const UNCHECKED_PUZZLE: PuzzleData = {
   id: "p3",
   date: "2026-06-18",
-  theme: "test",
+  
   size: { rows: 3, cols: 2 },
   blocks: [[1, 1], [2, 1]],
   cells: [

@@ -5,7 +5,7 @@ from app.models import Job, Puzzle
 
 
 def _draft(db):
-    p = Puzzle(id=uuid.uuid4(), live_date=dt.date(2026, 7, 2), theme="t",
+    p = Puzzle(id=uuid.uuid4(), live_date=dt.date(2026, 7, 2), 
                grid_template={}, status="draft", seed=1, version=1)
     db.add(p)
     db.flush()

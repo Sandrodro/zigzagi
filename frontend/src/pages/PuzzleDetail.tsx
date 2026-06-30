@@ -36,7 +36,7 @@ export function PuzzleDetail() {
 
   return (
     <div className="flex flex-col gap-4">
-      <SectionTitle>{detail.theme}</SectionTitle>
+      <SectionTitle>ზიგზაგი</SectionTitle>
       <p className="text-sm text-ink-soft">სტატუსი: {detail.status}{pubStatus ? ` → ${pubStatus}` : ""}</p>
 
       <div className="flex items-end gap-2">

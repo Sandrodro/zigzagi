@@ -19,7 +19,6 @@ export function templateToPuzzleData(t: TemplateDto): PuzzleData {
   return {
     id: t.id,
     date: "",
-    theme: "",
     size: { rows: t.rows, cols: t.cols },
     blocks: t.blocks,
     absent: t.absent ?? [],
@@ -47,7 +46,6 @@ export function puzzleDetailToPuzzleData(d: PuzzleDetail): PuzzleData | null {
   return {
     id: d.id,
     date: d.live_date,
-    theme: d.theme,
     size: { rows: gt.rows, cols: gt.cols ?? 0 },
     blocks: gt.blocks ?? [],
     absent: gt.absent ?? [],

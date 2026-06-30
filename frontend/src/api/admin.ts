@@ -29,11 +29,11 @@ export interface Suggestion {
 
 export type BulkOp = { id: string; action: "accept" | "reject" | "edit"; surface?: string };
 
-export async function extractText(text: string, theme: string): Promise<ExtractResult> {
+export async function extractText(text: string): Promise<ExtractResult> {
   const res = await fetch(`${BASE}/extract`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ text, theme }),
+    body: JSON.stringify({ text }),
   });
   if (!res.ok) throw new Error(`extract failed: ${res.status}`);
   return res.json();
@@ -56,12 +56,8 @@ export async function bulkUpdate(ops: BulkOp[]): Promise<{ updated: number }> {
   return res.json();
 }
 
-export async function suggest(theme: string): Promise<Suggestion[]> {
-  const res = await fetch(`${BASE}/suggest`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ theme }),
-  });
+export async function suggest(): Promise<Suggestion[]> {
+  const res = await fetch(`${BASE}/suggest`, { method: "POST" });
   if (!res.ok) throw new Error(`suggest failed: ${res.status}`);
   return res.json();
 }
@@ -160,7 +156,6 @@ export async function fetchWordlistStats(): Promise<WordlistStats> {
 
 export interface PuzzleSummary {
   id: string;
-  theme: string;
   live_date: string;
   status: string;
   entry_count: number;
@@ -189,10 +184,9 @@ export interface JobStatus {
   error: string | null;
 }
 
-export async function createPuzzle(theme?: string, liveDate?: string): Promise<PuzzleSummary> {
-  // Omit empty fields so the backend applies its defaults (theme/date guards removed).
+export async function createPuzzle(liveDate?: string): Promise<PuzzleSummary> {
+  // Omit empty fields so the backend applies its defaults (date guard removed).
   const body: Record<string, unknown> = {};
-  if (theme && theme.trim()) body.theme = theme.trim();
   if (liveDate) body.live_date = liveDate;
   const res = await fetch(`${BASE}/puzzles`, {
     method: "POST",
@@ -256,8 +250,8 @@ export async function generateClues(puzzleId: string): Promise<{ generated: numb
   return res.json();
 }
 
-// One-shot: LLM picks a theme + writes a clue for every answer.
-export async function autoClue(puzzleId: string): Promise<{ theme: string; generated: number }> {
+// One-shot: LLM writes a clue for every answer.
+export async function autoClue(puzzleId: string): Promise<{ generated: number }> {
   const res = await fetch(`${BASE}/puzzles/${puzzleId}/autoclue`, { method: "POST" });
   if (!res.ok) throw new Error(`autoClue failed: ${res.status}`);
   return res.json();
@@ -353,11 +347,11 @@ export async function deleteEntry(puzzleId: string, entryId: string): Promise<vo
   if (!res.ok) throw new Error("failed to delete entry");
 }
 
-export async function addPoolWord(surface: string, theme: string): Promise<PoolWord> {
+export async function addPoolWord(surface: string): Promise<PoolWord> {
   const res = await fetch("/api/admin/pool", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ surface, theme }),
+    body: JSON.stringify({ surface }),
   });
   if (!res.ok) throw new Error("failed to add pool word");
   return res.json();

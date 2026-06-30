@@ -6,7 +6,7 @@ from app.models import Entry, Puzzle
 
 
 def _mk(db, status, day):
-    p = Puzzle(id=uuid.uuid4(), live_date=dt.date(2026, 7, day), theme=f"th{day}",
+    p = Puzzle(id=uuid.uuid4(), live_date=dt.date(2026, 7, day), 
                grid_template={}, status=status, seed=None, version=1)
     db.add(p)
     db.flush()

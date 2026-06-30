@@ -14,7 +14,7 @@ class FakeAI:
 
 
 def _seed(db):
-    p = Puzzle(id=uuid.uuid4(), live_date=dt.date(2026, 7, 1), theme="t",
+    p = Puzzle(id=uuid.uuid4(), live_date=dt.date(2026, 7, 1), 
                grid_template={}, status="draft", seed=None, version=1)
     db.add(p); db.flush()
     e = Entry(id=uuid.uuid4(), puzzle_id=p.id, number=1, direction="across",

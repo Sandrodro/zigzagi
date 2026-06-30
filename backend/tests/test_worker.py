@@ -19,7 +19,7 @@ def test_load_active_wordlist_excludes_blocked(db_session):
 
 
 def test_tick_processes_one_pending_job(db_session):
-    p = Puzzle(id=uuid.uuid4(), live_date=dt.date(2026, 7, 3), theme="t",
+    p = Puzzle(id=uuid.uuid4(), live_date=dt.date(2026, 7, 3), 
                grid_template={}, status="draft", seed=1, version=1)
     db_session.add(p)
     enqueue_fill(db_session, p.id, seed_value=1, min_seeds=99)  # will fail fast

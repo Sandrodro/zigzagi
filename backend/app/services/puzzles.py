@@ -73,7 +73,6 @@ def to_play_dto(puzzle: Puzzle) -> dict:
     return {
         "id": str(puzzle.id),
         "date": puzzle.live_date.isoformat(),
-        "theme": puzzle.theme,
         "size": {"rows": gt["rows"], "cols": gt["cols"]},
         "blocks": gt["blocks"],
         "absent": gt.get("absent", []),

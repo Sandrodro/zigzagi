@@ -8,7 +8,7 @@ from app.services.clues import accept_rate, generate_clues, review_clue
 
 
 def _puzzle_with_entry(db, clue_status="pending"):
-    p = Puzzle(id=uuid.uuid4(), live_date=dt.date(2026, 8, 1), theme="თბილისი", grid_template={}, status="draft", seed=1, version=1)
+    p = Puzzle(id=uuid.uuid4(), live_date=dt.date(2026, 8, 1), grid_template={}, status="draft", seed=1, version=1)
     e = Entry(id=uuid.uuid4(), number=1, direction="across", answer="თბილისი", row=0, col=0, clue=None, clue_status=clue_status, provenance="sourced")
     p.entries.append(e)
     db.add(p)

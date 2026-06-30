@@ -165,7 +165,7 @@ export function PlayView({ id, date }: { id?: string; date?: string } = {}) {
   return (
     <div className="mx-auto max-w-[1080px] px-5 pt-4 pb-4 md:pt-8 md:pb-16">
       <header className="mb-3 flex flex-wrap items-baseline gap-x-3">
-        <PageTitle className="text-[1.4rem] italic md:text-[1.85rem]" style={{ letterSpacing: "normal" }}>{puzzle.theme}</PageTitle>
+        <PageTitle className="text-[1.4rem] italic md:text-[1.85rem]" style={{ letterSpacing: "normal" }}>ზიგზაგი</PageTitle>
         <span className="font-serif text-[0.9rem] md:text-[1.1rem]">{formatDate(puzzle.date)}</span>
       </header>
       <PlayToolbar onClear={handleClear} onReveal={handleReveal} onCheck={handleCheck} />

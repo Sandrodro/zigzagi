@@ -8,7 +8,7 @@ def _puzzle(status="published", live_date=dt.date(2026, 6, 18)):
     return Puzzle(
         id=uuid.uuid4(),
         live_date=live_date,
-        theme="თბილისი",
+        
         grid_template={"rows": 5, "cols": 5, "blocks": [], "cells": []},
         status=status,
         seed=None,

@@ -2,20 +2,19 @@ import uuid
 
 
 def test_create_puzzle_returns_draft(client):
-    resp = client.post("/api/admin/puzzles", json={"theme": "თბილისი", "live_date": "2026-07-10"})
+    resp = client.post("/api/admin/puzzles", json={"live_date": "2026-07-10"})
     assert resp.status_code == 201
     body = resp.json()
-    assert body["status"] == "draft" and body["theme"] == "თბილისი"
+    assert body["status"] == "draft"
     assert body["live_date"] == "2026-07-10"
 
 
-def test_create_puzzle_without_theme_or_date(client):
-    # theme/date guards removed: an empty body creates a draft with defaults.
+def test_create_puzzle_without_date(client):
+    # date guard removed: an empty body creates a draft with defaults.
     resp = client.post("/api/admin/puzzles", json={})
     assert resp.status_code == 201
     body = resp.json()
     assert body["status"] == "draft"
-    assert body["theme"]  # non-empty default
     assert body["live_date"]  # defaults to today
 
 
@@ -24,7 +23,7 @@ def test_get_puzzle_returns_structure_and_entries(client, db_session):
     from app.models import Entry, Puzzle
 
     p = Puzzle(
-        id=uuid.uuid4(), live_date=dt.date(2026, 7, 11), theme="თბილისი",
+        id=uuid.uuid4(), live_date=dt.date(2026, 7, 11), 
         grid_template={"rows": 13, "cols": 13}, status="draft", seed=1, version=1,
     )
     p.entries.append(

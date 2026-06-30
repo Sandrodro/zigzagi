@@ -8,7 +8,7 @@ from app.models import Entry, Puzzle
 
 
 def _mk(db):
-    p = Puzzle(id=uuid.uuid4(), live_date=dt.date(2026, 7, 1), theme="th",
+    p = Puzzle(id=uuid.uuid4(), live_date=dt.date(2026, 7, 1), 
                grid_template={}, status="draft", seed=None, version=1)
     db.add(p)
     db.flush()

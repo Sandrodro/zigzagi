@@ -24,10 +24,10 @@ describe("CREATE / PuzzleBuilder", () => {
     mockFetch({
       "/api/admin/templates": () => [TEMPLATE],
       "/api/admin/puzzles/": () => ({ // fetchPuzzle detail
-        id: "p1", theme: "t", live_date: "2026-07-01", status: "draft", grid_template: {},
+        id: "p1", live_date: "2026-07-01", status: "draft", grid_template: {},
         entries: [{ id: "e1", number: 1, direction: "across", answer: "დედა", row: 0, col: 0, clue: null, clue_status: "pending", provenance: "manual" }],
       }),
-      "/api/admin/puzzles": () => ({ id: "p1", theme: "t", live_date: "2026-07-01", status: "draft" }), // createPuzzle
+      "/api/admin/puzzles": () => ({ id: "p1", live_date: "2026-07-01", status: "draft" }), // createPuzzle
       "/fill": () => ({ job_id: "j1" }),
       "/api/admin/jobs/": () => ({ status: "done", result: { entries: 1 }, error: null }),
     });

@@ -7,7 +7,7 @@ from app.services.publish import can_publish, promote_due_puzzles, schedule_puzz
 
 def _draft(db, live_date):
     p = Puzzle(
-        id=uuid.uuid4(), live_date=live_date, theme="t",
+        id=uuid.uuid4(), live_date=live_date, 
         grid_template={"rows": 5, "cols": 5, "blocks": [], "cells": []},
         status="draft", seed=None, version=1,
     )

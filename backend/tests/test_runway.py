@@ -6,7 +6,7 @@ from app.services.publish import runway_days
 
 
 def _live(db, day, status="scheduled"):
-    db.add(Puzzle(id=uuid.uuid4(), live_date=day, theme="t", grid_template={}, status=status, seed=1, version=1))
+    db.add(Puzzle(id=uuid.uuid4(), live_date=day, grid_template={}, status=status, seed=1, version=1))
 
 
 def test_runway_counts_consecutive_days(db_session):

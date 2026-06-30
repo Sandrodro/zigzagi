@@ -20,7 +20,7 @@ export function PuzzleList() {
               search={{ id: p.id }}
               className="flex items-center justify-between rounded border border-rule px-4 py-3 hover:bg-teal-faint"
             >
-              <span className="font-serif font-semibold">{p.theme || "უსათაურო"}</span>
+              <span className="font-serif font-semibold">ზიგზაგი</span>
               <span className="text-sm text-ink-soft">{p.date}</span>
             </Link>
           </li>

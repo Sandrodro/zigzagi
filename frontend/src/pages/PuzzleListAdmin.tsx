@@ -18,13 +18,12 @@ export function PuzzleListAdmin() {
       <SectionTitle>ჯვარედინები</SectionTitle>
       <table className="w-full text-sm">
         <thead><tr className="text-left text-ink-soft">
-          <th className="py-1">თემა</th><th>თარიღი</th><th>სტატუსი</th><th>სიტყვები</th><th />
+          <th className="py-1">თარიღი</th><th>სტატუსი</th><th>სიტყვები</th><th />
         </tr></thead>
         <tbody>
           {rows.map((p) => (
             <tr key={p.id} className="border-t border-rule">
-              <td className="py-1">{p.theme}</td>
-              <td>{p.live_date}</td>
+              <td className="py-1">{p.live_date}</td>
               <td>{p.status}</td>
               <td>{p.entry_count}</td>
               <td className="flex items-center gap-3 py-1">

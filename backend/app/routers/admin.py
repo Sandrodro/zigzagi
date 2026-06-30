@@ -12,7 +12,7 @@ from app.ai.client import GeminiClient
 from app.ai.gemini import GeminiExtractor
 from app.db import get_db
 from app.models import Entry, Job, Puzzle
-from app.services.clues import generate_clues, generate_theme_and_clues, review_clue
+from app.services.clues import generate_clues, review_clue
 from app.services.pool import bulk_update, create_candidate, create_from_extraction, list_pool
 from app.services.publish import runway_days, schedule_puzzle
 from app.services.puzzles import delete_puzzle, list_all, today_tbilisi
@@ -80,22 +80,17 @@ def poll_job(job_id: uuid.UUID, db: Session = Depends(get_db)):
 
 class ExtractRequest(BaseModel):
     text: str
-    theme: str
 
 
 class BulkRequest(BaseModel):
     ops: list[dict]
 
 
-class SuggestRequest(BaseModel):
-    theme: str
-
-
 @router.post("/extract")
 def extract(body: ExtractRequest, db: Session = Depends(get_db), ai: GeminiClient = Depends(get_gemini)):
     pool = [r.surface for r in list_pool(db, status="accepted")]
-    candidates = ai.extract(body.text, body.theme, pool)
-    rows, dropped = create_from_extraction(db, candidates, body.theme)
+    candidates = ai.extract(body.text, pool)
+    rows, dropped = create_from_extraction(db, candidates)
     db.commit()
     return {
         "dropped_count": dropped,
@@ -107,10 +102,10 @@ def extract(body: ExtractRequest, db: Session = Depends(get_db), ai: GeminiClien
 
 
 @router.get("/pool")
-def pool(status: str | None = None, theme: str | None = None, db: Session = Depends(get_db)):
+def pool(status: str | None = None, db: Session = Depends(get_db)):
     return [
         {"id": str(r.id), "surface": r.surface, "length": r.length, "status": r.status, "snippet": r.snippet}
-        for r in list_pool(db, status, theme)
+        for r in list_pool(db, status)
     ]
 
 
@@ -123,13 +118,12 @@ def pool_bulk(body: BulkRequest, db: Session = Depends(get_db)):
 
 class PoolAddRequest(BaseModel):
     surface: str
-    theme: str
 
 
 @router.post("/pool", status_code=201)
 def pool_add(body: PoolAddRequest, db: Session = Depends(get_db)):
     try:
-        row = create_candidate(db, body.surface.strip(), body.theme.strip())
+        row = create_candidate(db, body.surface.strip())
     except ValueError as e:
         raise HTTPException(422, str(e))
     db.commit()
@@ -137,9 +131,9 @@ def pool_add(body: PoolAddRequest, db: Session = Depends(get_db)):
 
 
 @router.post("/suggest")
-def suggest(body: SuggestRequest, db: Session = Depends(get_db), ai: GeminiClient = Depends(get_gemini)):
+def suggest(db: Session = Depends(get_db), ai: GeminiClient = Depends(get_gemini)):
     pool_words = [r.surface for r in list_pool(db, status="accepted")]
-    return [s.model_dump() for s in ai.suggest(body.theme, pool_words)]
+    return [s.model_dump() for s in ai.suggest(pool_words)]
 
 
 class FromArticleRequest(BaseModel):
@@ -240,9 +234,8 @@ def wordlist_bulk(body: WordlistBulkRequest, db: Session = Depends(get_db)):
 
 
 class CreatePuzzleRequest(BaseModel):
-    # ponytail: theme/date guards removed for test-mode general crossword creation.
-    # Re-require these before launch if puzzles must carry a real theme + live date.
-    theme: str = "უსათაურო"
+    # ponytail: date guard removed for test-mode general crossword creation.
+    # Re-require a live date before launch.
     live_date: dt.date | None = None
 
 
@@ -251,7 +244,6 @@ def list_puzzles(db: Session = Depends(get_db)):
     return [
         {
             "id": str(p.id),
-            "theme": p.theme,
             "live_date": p.live_date.isoformat(),
             "status": p.status,
             "entry_count": len(p.entries),
@@ -263,14 +255,14 @@ def list_puzzles(db: Session = Depends(get_db)):
 @router.post("/puzzles", status_code=201)
 def create_puzzle(body: CreatePuzzleRequest, db: Session = Depends(get_db)):
     puzzle = Puzzle(
-        id=uuid.uuid4(), live_date=body.live_date or today_tbilisi(), theme=body.theme,
+        id=uuid.uuid4(), live_date=body.live_date or today_tbilisi(),
         grid_template={}, status="draft", seed=None, version=1,
     )
     db.add(puzzle)
     db.commit()
-    log.info("puzzle created: id=%s theme=%r live_date=%s", puzzle.id, puzzle.theme, puzzle.live_date)
+    log.info("puzzle created: id=%s live_date=%s", puzzle.id, puzzle.live_date)
     return {
-        "id": str(puzzle.id), "theme": puzzle.theme,
+        "id": str(puzzle.id),
         "live_date": puzzle.live_date.isoformat(), "status": puzzle.status,
     }
 
@@ -295,9 +287,9 @@ def autoclue(puzzle_id: uuid.UUID, db: Session = Depends(get_db), ai: GeminiClie
     puzzle = db.get(Puzzle, puzzle_id)
     if puzzle is None:
         raise HTTPException(404, "puzzle not found")
-    n = generate_theme_and_clues(db, puzzle, ai)
+    n = generate_clues(db, puzzle, ai)
     db.commit()
-    return {"theme": puzzle.theme, "generated": n}
+    return {"generated": n}
 
 
 @router.patch("/puzzles/{puzzle_id}/clues/{entry_id}")
@@ -409,7 +401,7 @@ def get_puzzle(puzzle_id: uuid.UUID, db: Session = Depends(get_db)):
     if puzzle is None:
         raise HTTPException(404, "puzzle not found")
     return {
-        "id": str(puzzle.id), "theme": puzzle.theme,
+        "id": str(puzzle.id),
         "live_date": puzzle.live_date.isoformat(), "status": puzzle.status,
         "grid_template": puzzle.grid_template,
         "entries": [

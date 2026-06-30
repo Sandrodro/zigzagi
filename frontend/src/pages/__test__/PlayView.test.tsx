@@ -9,7 +9,7 @@ import { PlayView } from "../PlayView";
 const PUZZLE: PuzzleData = {
   id: "p1",
   date: "2026-06-18",
-  theme: "დემო",
+  
   size: { rows: 1, cols: 3 },
   blocks: [],
   cells: [{ row: 0, col: 0, number: 1 }],

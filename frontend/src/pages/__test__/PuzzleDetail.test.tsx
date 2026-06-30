@@ -7,7 +7,7 @@ import { router } from "../../router";
 afterEach(() => vi.unstubAllGlobals());
 
 const DETAIL = {
-  id: "p1", theme: "ალფა", live_date: "2026-07-02", status: "draft",
+  id: "p1", live_date: "2026-07-02", status: "draft",
   grid_template: { rows: 1, cols: 4, blocks: [], cells: [{ row: 0, col: 0, number: 1 }] },
   entries: [{ id: "e1", number: 1, direction: "across", answer: "დედა", row: 0, col: 0, clue: null, clue_status: "pending", provenance: "manual" }],
 };

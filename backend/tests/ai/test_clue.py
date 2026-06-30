@@ -7,7 +7,7 @@ from app.ai.gemini import AIError, GeminiExtractor
 
 def test_fake_returns_canned_clues():
     fake = FakeGeminiClient(clue_return=[ClueResult(entry_id="e1", clue="საქართველოს დედაქალაქი")])
-    out = fake.clue([ClueRequest(entry_id="e1", answer="თბილისი", direction="across", number=1, theme="თბილისი", source_snippet=None)])
+    out = fake.clue([ClueRequest(entry_id="e1", answer="თბილისი", direction="across", number=1, source_snippet=None)])
     assert out[0].clue == "საქართველოს დედაქალაქი"
 
 
@@ -22,7 +22,7 @@ def test_real_clue_parses_and_uses_smart_model():
         return _Resp()
 
     ex = GeminiExtractor(api_key="x", dumb_model="f", smart_model="m-pro", transport=transport)
-    out = ex.clue([ClueRequest(entry_id="e1", answer="თბილისი", direction="across", number=1, theme="თ", source_snippet=None)])
+    out = ex.clue([ClueRequest(entry_id="e1", answer="თბილისი", direction="across", number=1, source_snippet=None)])
     assert out[0].entry_id == "e1" and seen == ["m-pro"]
 
 

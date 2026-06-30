@@ -8,10 +8,10 @@ class FakeGeminiClient:
         self._clue = clue_return or []
         self._lemmatize = lemmatize_return or []
 
-    def extract(self, text, theme, pool) -> list[ExtractedCandidate]:
+    def extract(self, text, pool) -> list[ExtractedCandidate]:
         return list(self._extract)
 
-    def suggest(self, theme, pool) -> list[Suggestion]:
+    def suggest(self, pool) -> list[Suggestion]:
         return list(self._suggest)
 
     def clue(self, batch) -> list[ClueResult]:

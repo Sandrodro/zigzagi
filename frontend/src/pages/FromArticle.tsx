@@ -11,7 +11,6 @@ interface Row {
 
 export function FromArticle() {
   const [text, setText] = useState("");
-  const [cheap, setCheap] = useState(false);
   const [rows, setRows] = useState<Row[]>([]);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
@@ -20,7 +19,7 @@ export function FromArticle() {
     setBusy(true);
     setMsg(null);
     try {
-      const lemmas = await articleLemmas(text, cheap);
+      const lemmas = await articleLemmas(text);
       setRows(lemmas.map((l) => ({ word: l.word, added: l.already_added })));
       if (lemmas.length === 0) setMsg("ლემები ვერ მოიძებნა");
     } catch (e) {
@@ -59,10 +58,6 @@ export function FromArticle() {
               ყველას დამატება ({pending.length})
             </Button>
           )}
-          <label className="ml-auto flex items-center gap-1.5 text-sm text-ink-soft">
-            <input type="checkbox" checked={cheap} onChange={(e) => setCheap(e.target.checked)} />
-            იაფი მოდელი (flash)
-          </label>
         </div>
         {msg && <p className="text-sm text-ink-soft">{msg}</p>}
       </div>

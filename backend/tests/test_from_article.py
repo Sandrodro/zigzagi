@@ -35,11 +35,11 @@ def test_from_article_endpoint(client, db_session):
         app.dependency_overrides.pop(get_gemini, None)
 
 
-def test_lemmas_bulk_inserts_with_source_gemini(client, db_session):
-    res = client.post("/api/admin/wordlist/lemmas/bulk", json={"words": ["დედა", "მამა", "ab"]})
+def test_bulk_inserts_lemmas(client, db_session):
+    res = client.post("/api/admin/wordlist/bulk", json={"words": ["დედა", "მამა", "ab"]})
     assert res.status_code == 200
     body = res.json()
     assert body["added"] == 2
     assert body["rejected"] == [{"word": "ab", "reason": "length<3"}]
     rows = {r.word: r.source for r in db_session.query(WordpoolLemma).all()}
-    assert rows == {"დედა": "gemini", "მამა": "gemini"}
+    assert rows == {"დედა": "manual", "მამა": "manual"}

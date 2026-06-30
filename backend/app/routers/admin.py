@@ -23,7 +23,6 @@ from app.services.wordlist import (
     add_word,
     block_everywhere,
     bulk_import,
-    bulk_import_lemmas,
     existing_lemmas,
     list_words,
     stats,
@@ -53,7 +52,6 @@ class FillRequest(BaseModel):
     min_seeds: int = 10
     template_id: str | None = None
     prefilled: dict[str, str] = {}
-    wordpool: str = "default"  # "default" (wordpool_generic) | "lemmas" (wordpool_lemmas)
 
 
 @router.post("/puzzles/{puzzle_id}/fill", status_code=202)
@@ -61,11 +59,10 @@ def request_fill(puzzle_id: uuid.UUID, body: FillRequest, db: Session = Depends(
     if db.get(Puzzle, puzzle_id) is None:
         raise HTTPException(404, "puzzle not found")
     job = enqueue_fill(db, puzzle_id, body.seed_value, body.min_seeds,
-                       template_id=body.template_id, prefilled=body.prefilled,
-                       wordpool=body.wordpool)
+                       template_id=body.template_id, prefilled=body.prefilled)
     db.commit()
-    log.info("fill enqueued: puzzle=%s job=%s template=%s wordpool=%s prefilled=%d seed=%s",
-             puzzle_id, job.id, body.template_id, body.wordpool,
+    log.info("fill enqueued: puzzle=%s job=%s template=%s prefilled=%d seed=%s",
+             puzzle_id, job.id, body.template_id,
              len(body.prefilled or {}), body.seed_value)
     return {"job_id": str(job.id)}
 
@@ -138,7 +135,6 @@ def suggest(db: Session = Depends(get_db), ai: GeminiClient = Depends(get_gemini
 
 class FromArticleRequest(BaseModel):
     text: str
-    cheap: bool = False  # use the cheaper flash model instead of suggest
 
 
 @router.post("/from-article")
@@ -146,7 +142,7 @@ def from_article(body: FromArticleRequest, db: Session = Depends(get_db), ai: Ge
     candidates = filter_article(body.text)
     if not candidates:
         return {"lemmas": []}
-    lemmas = (w for w in ai.lemmatize(candidates, cheap=body.cheap) if is_georgian_word(w) and valid_length(w))
+    lemmas = (w for w in ai.lemmatize(candidates) if is_georgian_word(w) and valid_length(w))
     have = existing_lemmas(db)
     return {
         "lemmas": [
@@ -154,18 +150,6 @@ def from_article(body: FromArticleRequest, db: Session = Depends(get_db), ai: Ge
             for w in dict.fromkeys(lemmas)  # dedupe, preserve order
         ]
     }
-
-
-class LemmaBulkRequest(BaseModel):
-    words: list[str]
-
-
-@router.post("/wordlist/lemmas/bulk")
-def wordlist_lemmas_bulk(body: LemmaBulkRequest, db: Session = Depends(get_db)):
-    result = bulk_import_lemmas(db, body.words)
-    db.commit()
-    log.info("wordpool lemmas bulk: submitted=%d result=%s", len(body.words), result)
-    return result
 
 
 class WordlistAddRequest(BaseModel):
@@ -178,7 +162,7 @@ class WordlistUpdateRequest(BaseModel):
 
 
 class WordlistBulkRequest(BaseModel):
-    text: str
+    words: list[str]
 
 
 def _wordlist_row(r) -> dict:
@@ -226,10 +210,9 @@ def wordlist_update(entry_id: uuid.UUID, body: WordlistUpdateRequest, db: Sessio
 
 @router.post("/wordlist/bulk")
 def wordlist_bulk(body: WordlistBulkRequest, db: Session = Depends(get_db)):
-    words = body.text.split()
-    result = bulk_import(db, words)
+    result = bulk_import(db, body.words)
     db.commit()
-    log.info("wordpool bulk: submitted=%d result=%s", len(words), result)
+    log.info("wordpool bulk: submitted=%d result=%s", len(body.words), result)
     return result
 
 

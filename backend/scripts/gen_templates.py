@@ -37,7 +37,7 @@ import random
 from pathlib import Path
 
 from app.db import SessionLocal
-from app.models import WordpoolGeneric, WordpoolLemma
+from app.models import WordpoolLemma
 from app.solver.index import Wordlist
 from app.solver.model import build_constraints
 from app.solver.run import FillResult, fill
@@ -112,10 +112,9 @@ def main():
     args = ap.parse_args()
 
     db = SessionLocal()
-    Model = WordpoolLemma if args.pool == "lemmas" else WordpoolGeneric
-    allwords = [w for (w,) in db.query(Model.word).filter(Model.status == "active")]
+    allwords = [w for (w,) in db.query(WordpoolLemma.word).filter(WordpoolLemma.status == "active")]
     if not allwords:
-        raise SystemExit(f"wordpool '{args.pool}' is empty — load a wordlist first")
+        raise SystemExit("lemma wordpool is empty — load lemmas first")
     words = Wordlist(allwords)
 
     prefix = f"{args.rows}x{args.cols}-"

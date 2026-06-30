@@ -354,22 +354,24 @@ class GeminiExtractor:
                     raise AIError("clue generation returned malformed JSON")
         raise AIError("unreachable")
 
-    def lemmatize(self, words, cheap=False) -> list[str]:
+    def lemmatize(self, words) -> list[str]:
         # ponytail: one call for the whole article; chunk if a paste ever blows the token limit.
-        # cheap=True uses the flash extract model instead of the pricier suggest model.
+        # Always the dumb (flash) model — lemmatization needs no reasoning.
         prompt = (
             "For each Georgian word below, return its lemma (ლექსიკონური ძირითადი ფორმა). "
             "For an adjective derived from a noun, return the noun's lemma instead "
             "(e.g. 'ემიგრაციული' -> 'ემიგრაცია', 'სოცრეალისტური' -> 'სოცრეალიზმი'). "
-            "For a word in a non-nominative case or any inflected form, return its "
-            "nominative/base dictionary form (e.g. 'განედიდებინა' -> 'განდიდება'). "
+            "For a word in a non-nominative case, an adverbial form, or any other "
+            "inflected form, return its nominative/base dictionary form (e.g. "
+            "'განედიდებინა' -> 'განდიდება', 'ენობრივად' -> 'ენობრივი'). "
+            "EVERY returned lemma MUST be in the nominative case — never an adverbial "
+            "(-ად), oblique, or otherwise inflected form. "
             "Skip any token that is not a valid Georgian word or has no lemma. "
             "Return only a JSON array of unique lemmas (strings). "
             f"Words: {', '.join(words)}"
         )
-        model = self.dumb_model if cheap else self.smart_model
         for attempt in range(2):
-            resp = self._call(model, prompt, None, think=False)
+            resp = self._call(self.dumb_model, prompt, None, think=False)
             logging.info(resp)
             try:
                 return [str(x) for x in json.loads(resp.text)]

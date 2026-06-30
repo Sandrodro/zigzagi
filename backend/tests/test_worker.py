@@ -2,7 +2,7 @@ import datetime as dt
 import uuid
 from pathlib import Path
 
-from app.models import Job, Puzzle, WordpoolGeneric
+from app.models import Job, Puzzle, WordpoolLemma
 from app.services.solver_jobs import enqueue_fill
 from app.solver.templates import load_library
 from app.worker import load_active_wordlist, tick
@@ -11,8 +11,8 @@ _LIB = load_library(Path(__file__).resolve().parents[1] / "app" / "solver" / "te
 
 
 def test_load_active_wordlist_excludes_blocked(db_session):
-    db_session.add(WordpoolGeneric(id=uuid.uuid4(), word="აბგ", length=3, status="active"))
-    db_session.add(WordpoolGeneric(id=uuid.uuid4(), word="ბად", length=3, status="blocked"))
+    db_session.add(WordpoolLemma(id=uuid.uuid4(), word="აბგ", length=3, source="manual", status="active"))
+    db_session.add(WordpoolLemma(id=uuid.uuid4(), word="ბად", length=3, source="manual", status="blocked"))
     db_session.flush()
     wl = load_active_wordlist(db_session)
     assert wl.by_length(3) == ["აბგ"]

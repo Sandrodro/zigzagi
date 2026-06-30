@@ -3,7 +3,7 @@ import datetime as dt
 import uuid
 
 from app.ai.client import WordCheck
-from app.models import Entry, Puzzle, WordpoolGeneric
+from app.models import Entry, Puzzle, WordpoolLemma
 from app.services.word_check import check_and_fix_entry, check_puzzle, entry_pattern
 from sqlalchemy import select
 
@@ -39,9 +39,9 @@ def test_invalid_word_blocked_and_replaced(db_session):
     out = check_and_fix_entry(db_session, p, across, ai)
     assert out == {"valid": False, "replaced_with": "დილა"}
     assert across.answer == "დილა"
-    blocked = db_session.scalar(select(WordpoolGeneric).where(WordpoolGeneric.word == "დედა"))
+    blocked = db_session.scalar(select(WordpoolLemma).where(WordpoolLemma.word == "დედა"))
     assert blocked.status == "blocked"
-    added = db_session.scalar(select(WordpoolGeneric).where(WordpoolGeneric.word == "დილა"))
+    added = db_session.scalar(select(WordpoolLemma).where(WordpoolLemma.word == "დილა"))
     assert added.status == "active"
 
 

@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 
 import logging
 from app.ai.client import GeminiClient
-from app.models import Entry, Puzzle, WordpoolGeneric, WordpoolLemma
+from app.models import Entry, Puzzle, WordpoolLemma
 from app.services.wordlist import add_word, block_word
 from app.sourcing.validate import is_georgian_word
 
@@ -40,9 +40,8 @@ def _fits(word: str, pattern: str) -> bool:
 
 
 def _active_pool_words(db: Session) -> set[str]:
-    g = db.scalars(select(WordpoolGeneric.word).where(WordpoolGeneric.status == "active"))
     lemmas = db.scalars(select(WordpoolLemma.word).where(WordpoolLemma.status == "active"))
-    return set(g) | set(lemmas)
+    return set(lemmas)
 
 
 def swap_slot(db: Session, puzzle: Puzzle, entry: Entry, exclude: set[str] = frozenset()) -> dict:

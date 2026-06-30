@@ -114,10 +114,14 @@ export async function updateWord(
 }
 
 export async function bulkImport(text: string): Promise<ImportResult> {
+  return bulkImportWords(text.split(/\s+/).filter(Boolean));
+}
+
+export async function bulkImportWords(words: string[]): Promise<ImportResult> {
   const res = await fetch(`${BASE}/wordlist/bulk`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ text }),
+    body: JSON.stringify({ words }),
   });
   if (!res.ok) throw new Error(`bulkImport failed: ${res.status}`);
   return res.json();
@@ -128,25 +132,18 @@ export interface ArticleLemma {
   already_added: boolean;
 }
 
-export async function articleLemmas(text: string, cheap = false): Promise<ArticleLemma[]> {
+export async function articleLemmas(text: string): Promise<ArticleLemma[]> {
   const res = await fetch(`${BASE}/from-article`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ text, cheap }),
+    body: JSON.stringify({ text }),
   });
   if (!res.ok) throw new Error(`from-article failed: ${res.status}`);
   return (await res.json()).lemmas;
 }
 
-export async function bulkImportLemmas(words: string[]): Promise<ImportResult> {
-  const res = await fetch(`${BASE}/wordlist/lemmas/bulk`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ words }),
-  });
-  if (!res.ok) throw new Error(`bulkImportLemmas failed: ${res.status}`);
-  return res.json();
-}
+// ponytail: kept as a thin alias so FromArticle's call site is unchanged.
+export const bulkImportLemmas = bulkImportWords;
 
 export async function fetchWordlistStats(): Promise<WordlistStats> {
   const res = await fetch(`${BASE}/wordlist/stats`);
@@ -208,7 +205,6 @@ export interface FillOpts {
   minSeeds?: number;
   templateId?: string;
   prefilled?: Record<string, string>;
-  wordpool?: string;
 }
 
 export async function requestFill(puzzleId: string, opts: FillOpts = {}): Promise<{ job_id: string }> {
@@ -220,7 +216,6 @@ export async function requestFill(puzzleId: string, opts: FillOpts = {}): Promis
       min_seeds: opts.minSeeds ?? 0,
       template_id: opts.templateId ?? null,
       prefilled: opts.prefilled ?? {},
-      wordpool: opts.wordpool ?? "default",
     }),
   });
   if (!res.ok) throw new Error("failed to start fill");

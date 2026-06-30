@@ -42,18 +42,9 @@ class Entry(Base):
     puzzle: Mapped["Puzzle"] = relationship(back_populates="entries")
 
 
-class WordpoolGeneric(Base):
-    __tablename__ = "wordpool_generic"
-
-    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    word: Mapped[str] = mapped_column(unique=True)
-    length: Mapped[int] = mapped_column()
-    status: Mapped[str] = mapped_column(default="active")  # active | blocked
-
-
 class WordpoolLemma(Base):
-    # Curated lemma-only pool, distinct from the inflected-form wordpool_generic.
-    # Populated from lemma datasets (UD_Georgian-GNC, simplemma). source records origin.
+    # The wordpool used to fill crosswords (the only one). Populated from lemma
+    # datasets (UD_Georgian-GNC, simplemma) and the from-article flow; source records origin.
     __tablename__ = "wordpool_lemmas"
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)

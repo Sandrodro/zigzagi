@@ -17,5 +17,5 @@ class FakeGeminiClient:
     def clue(self, batch) -> list[ClueResult]:
         return list(self._clue)
 
-    def lemmatize(self, words, cheap=False) -> list[str]:
+    def lemmatize(self, words) -> list[str]:
         return list(self._lemmatize)

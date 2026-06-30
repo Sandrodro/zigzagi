@@ -13,7 +13,6 @@ import {
 export function PuzzleBuilder() {
   const [templates, setTemplates] = useState<TemplateDto[]>([]);
   const [templateId, setTemplateId] = useState("");
-  const [wordpool, setWordpool] = useState("default");
   const [engine, setEngine] = useState<CrosswordEngine | null>(null);
   // ponytail: mutable engine; counter forces a re-render after each mutation.
   const [, rerender] = useReducer((n: number) => n + 1, 0);
@@ -76,7 +75,7 @@ export function PuzzleBuilder() {
       // Random seed per generation so the same template yields a different fill each time
       // (identical seed_value is byte-identical by design).
       const seedValue = Math.floor(Math.random() * 1_000_000);
-      const { job_id } = await requestFill(p.id, { templateId, prefilled, minSeeds: 0, wordpool, seedValue });
+      const { job_id } = await requestFill(p.id, { templateId, prefilled, minSeeds: 0, seedValue });
       setStatus("filling");
       for (;;) {
         const job = await pollJob(job_id);
@@ -149,13 +148,6 @@ export function PuzzleBuilder() {
       )}
 
       <div className="flex items-end gap-2">
-        <label className="flex flex-col gap-1 text-sm">
-          <span>ლექსიკონი</span>
-          <select aria-label="ლექსიკონი" value={wordpool} onChange={(e) => setWordpool(e.target.value)}>
-            <option value="default">ზოგადი (wordpool_generic)</option>
-            <option value="lemmas">ლემები (wordpool_lemmas)</option>
-          </select>
-        </label>
         <Button onClick={generate} disabled={!templateId || status === "filling" || status === "creating"}>
           გენერაცია
         </Button>

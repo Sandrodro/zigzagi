@@ -26,7 +26,7 @@ def test_patch_unknown_returns_404(client):
 
 
 def test_bulk_import_reports_added_and_rejected(client):
-    resp = client.post("/api/admin/wordlist/bulk", json={"text": "თბილისი ბათუმი ab"})
+    resp = client.post("/api/admin/wordlist/bulk", json={"words": ["თბილისი", "ბათუმი", "ab"]})
     assert resp.status_code == 200
     body = resp.json()
     assert body["added"] == 2

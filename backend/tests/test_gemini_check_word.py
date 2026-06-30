@@ -17,7 +17,7 @@ def test_check_word_parses_object():
         return _Resp(json.dumps({"valid": False, "replacement": "დედამიწა"}))
 
     ai = GeminiExtractor(api_key="x", dumb_model="e", smart_model="s",
-                         clue_model="c", transport=transport)
+                         transport=transport)
     out = ai.check_word("ზზზზზზზზ", "__დ_____", 8)
     assert isinstance(out, WordCheck)
     assert out.valid is False

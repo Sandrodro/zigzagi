@@ -6,6 +6,8 @@ from pydantic import ValidationError
 
 from app.ai.client import ClueResult, ExtractedCandidate, Suggestion, ThemeAndClues, WordCheck
 
+log = logging.getLogger(__name__)
+
 
 class AIError(Exception):
     pass
@@ -107,6 +109,165 @@ never bend a clue toward the theme if doing so makes the answer harder, introduc
 ambiguity, or violates Monday ease. If a theme-flavored framing and a plain framing \
 compete, choose plain. Cohesion serves the solver; it never taxes them.
 
+Reference Examples (STYLE ONLY)
+Below are real clue→answer pairs from two early-week New York Times crosswords. They \
+are in ENGLISH and appear here solely to demonstrate the target straight-clue craft: \
+definitional synonyms, category-or-example, fill-in-the-blank of well-known \
+phrases/titles, brevity, and the occasional light wit. Study the *approach* — do NOT \
+translate, reuse, echo, or be limited by these specific clues or answers. Your output \
+must be original and written in Georgian.
+
+Puzzle A:
+Ritzy → POSH
+Like the caboose among all the cars on a train → LAST
+"Perry ___" (classic legal drama) → MASON
+Iams competitor → ALPO
+Regarding → ASTO
+Harden (to) → INURE
+When the Allied invasion of Normandy was launched → DDAY
+"Movin' On Up" and "I'll Be There for You," for two → THEMESONGS
+123 ___ Street (Big Bird's address) → SESAME
+Clear, as a diner's table → BUS
+Washington, D.C., baseball player, for short → NAT
+Sound at the start of "gentle" and "giant" → SOFTG
+Apply, as lotion → RUBIN
+Window fixtures most used in the summer, for short → ACS
+Kind of tide whose opposite is "spring" → NEAP
+"That's ___ hadn't heard!" → ONEI
+Board game in which pieces may be captured or crowned → CHECKERS
+Reply to "Who's there?" → ITSME
+Not glossy, as a photo finish → MATTE
+Baby dog → PUP
+Legitimate → VALID
+Submission to a contest → ENTRY
+Any "Jr.," to his father → NAMESAKE
+Rick's love in "Casablanca" → ILSA
+Composer Stravinsky → IGOR
+1992's "A Few Good ___" → MEN
+Run up, as expenses → INCUR
+Brusque → TERSE
+Victoria Beckham ___ Adams → NEE
+Pic taken at arm's length → SELFIE
+What draws recording artists to Nashville and jazz lovers to New Orleans → MUSICSCENE
+"___ Las Vegas" (1964 film) → VIVA
+Customer's routine order, with "the" → USUAL
+Big rig's cargo → HAUL
+401(k) alternatives, for short → IRAS
+Cylindrical pasta → PENNE
+On the ___ (unfriendly) → OUTS
+Certain email folder → SENT
+Protective gear for in-line skaters → PADS
+Ye ___ shoppe → OLDE
+Places to rejuvenate oneself → SPAS
+Georgetown University athletes → HOYAS
+Charge for an overdue payment → LATEFEE
+Cigar residue → ASH
+Office address abbr. → STE
+Mausoleum → TOMB
+Pageant whose hosts have included Bob Barker, Dick Clark and Steve Harvey → MISSUNIVERSE
+Year, in Buenos Aires → ANO
+Predominant religion of Indonesia and Pakistan → SUNNIISLAM
+Instrument heard at a ballpark → ORGAN
+Where eggs are laid → NEST
+Continental currency since 2002 → EURO
+Animal "relative" an astonished person may claim to be → MONKEYSUNCLE
+Covering seen at a ballpark → TARP
+Dashboard-mounted navigator → GPSUNIT
+Greek B's → BETAS
+Zenith → ACME
+Martial arts action star Jackie → CHAN
+What glows in the west at day's end → SETTINGSUN
+PC shortcut for "copy" → CTRLC
+Ike's partner in the candy aisle → MIKE
+Biblical garden → EDEN
+It may be turned with a swipe on an e-reader → PAGE
+Scrumptious bits → MORSELS
+War god who's a foe of Wonder Woman → ARES
+Occupied, as a lavatory → INUSE
+"It's my turn" → IMUP
+Rebounding sound → ECHO
+Pyromaniac's obsession → FIRE
+"Ghostbusters" director Reitman → IVAN
+Toward the dawn → EAST
+Actor McKellen → IAN
+___ de cologne → EAU
+Acorn, for one → NUT
+
+Puzzle B:
+"Get out" key → ESC
+Rocky outcroppings → CRAGS
+According to → ASPER
+Actor Mineo → SAL
+Watercolor and oil, for two → MEDIA
+Ingredient in laundry products → BORAX
+Make a goofy appearance in someone else's picture → PHOTOBOMB
+Little brats → SNOTS
+"Nevermore" speaker, in poetry → RAVEN
+Twins' org. → MLB
+Sitcom ET from the planet Melmac → ALF
+Angers → IRES
+Multipost rant online → TWEETSTORM
+How tuna or steak may be served → TARTARE
+Annoying complainer → WHINER
+Fancy → POSH
+Existential dread → ANGST
+What the "spinning beach ball of death" might indicate → COMPUTERCRASH
+Schwarzenegger, familiarly → ARNIE
+Ingredient in lemon curd → YOLK
+Greyhound station freebie → BUSMAP
+Crispy tortilla dish → TOSTADA
+Message sent to many recipients → EMAILBLAST
+Many a Mideasterner → ARAB
+Rank below cpl. → PFC
+Title equivalent to Dame → SIR
+Foamy part of un espresso → CREMA
+Bail on plans, with "out" → FLAKE
+Big times in Silicon Valley → TECHBOOMS
+Actress/model Bo → DEREK
+Not deserved → UNDUE
+Big name in jeans → LEE
+Brief comment to an audience → ASIDE
+Indiana pro basketballer → PACER
+Throw in → ADD
+Vivacity → ESPRIT
+Much of Chad and Mali → SAHARA
+Honey source → CLOVER
+"Hurry up!" → CMON
+Basketball stat: Abbr. → REB
+Tizzy → ADO
+"Ooh, I need that!" → GIMME
+Black → SABLE
+Six-pack contents → ABS
+Light piano piece → SONATINA
+Drags out → PROLONGS
+Subway line? → EATFRESH
+Pharmacy pickups → RXS
+Litmus ___ → TEST
+"Oh, and also...," in a text → BTW
+Short pants? → TROU
+Mae who said "I'll try anything once" → WEST
+Ocean beasts that lack bones, surprisingly → SHARKS
+Old TV star whose haircut was inspired by Mandinka warriors → MRT
+Take to a higher court → APPEAL
+"What's the big idea?!" → HEY
+Wads, as paper → CRUMPLES
+Watching the big game? → ONSAFARI
+Did an impression of → MIMICKED
+Goes bad → ROTS
+Coagulate → CLOT
+Fiver → ABE
+"Nova" network → PBS
+Tuber type → TARO
+Anatomical ring → AREOLA
+Blocked, as a river → DAMMED
+Degraded → ABASED
+Suddenly showed happiness → LITUP
+Impressive venue to sell out → ARENA
+"Good buddy" speaker → CBER
+Public health org. → FDA
+Barely manage, with "out" → EKE
+Rose or lilac → HUE
+
 Output
 Return ONLY a JSON object, no preamble, in exactly this shape:
 {{"theme": "<short Georgian theme label>", "clues": [{{"entry_id": "<id>", "clue": "<Georgian clue>"}}]}}
@@ -123,12 +284,10 @@ class GeminiExtractor:
         api_key,
         dumb_model,
         smart_model,
-        clue_model=None,
         transport: Callable | None = None,
     ):
         self.dumb_model = dumb_model
         self.smart_model = smart_model
-        self.clue_model = clue_model
         self._call = transport or _default_transport(api_key)
 
     def _parse(self, text: str, model_cls):
@@ -158,22 +317,42 @@ class GeminiExtractor:
 
     def clue(self, batch) -> list[ClueResult]:
         prompt = _CLUE_PROMPT.format(batch=[r.model_dump() for r in batch])
+        log.info("gemini clue start: model=%s entries=%d", self.smart_model, len(batch))
         for attempt in range(2):  # one bounded retry
-            resp = self._call(self.clue_model, prompt, ClueResult)
+            resp = self._call(self.smart_model, prompt, ClueResult)
             try:
-                return self._parse(resp.text, ClueResult)
-            except (json.JSONDecodeError, ValidationError, TypeError):
+                results = self._parse(resp.text, ClueResult)
+                log.info(
+                    "gemini clue ok: model=%s clues=%d attempt=%d",
+                    self.smart_model, len(results), attempt + 1,
+                )
+                return results
+            except (json.JSONDecodeError, ValidationError, TypeError) as exc:
+                log.warning(
+                    "gemini clue parse failed (attempt %d): %s; response=%.500s",
+                    attempt + 1, exc, resp.text,
+                )
                 if attempt == 1:
                     raise AIError("clue generation returned malformed JSON")
         raise AIError("unreachable")
 
     def theme_and_clues(self, batch) -> ThemeAndClues:
         prompt = _THEME_CLUE_PROMPT.format(batch=[r.model_dump() for r in batch])
+        log.info("gemini theme+clues start: model=%s entries=%d", self.smart_model, len(batch))
         for attempt in range(2):  # one bounded retry
             resp = self._call(self.smart_model, prompt, ThemeAndClues)
             try:
-                return ThemeAndClues(**json.loads(resp.text))
-            except (json.JSONDecodeError, ValidationError, TypeError):
+                result = ThemeAndClues(**json.loads(resp.text))
+                log.info(
+                    "gemini theme+clues ok: model=%s theme=%r clues=%d attempt=%d",
+                    self.smart_model, result.theme, len(result.clues), attempt + 1,
+                )
+                return result
+            except (json.JSONDecodeError, ValidationError, TypeError) as exc:
+                log.warning(
+                    "gemini theme+clues parse failed (attempt %d): %s; response=%.500s",
+                    attempt + 1, exc, resp.text,
+                )
                 if attempt == 1:
                     raise AIError("theme/clue generation returned malformed JSON")
         raise AIError("unreachable")

@@ -38,9 +38,8 @@ log = logging.getLogger(__name__)
 def get_gemini() -> GeminiClient:  # overridden in tests
     return GeminiExtractor(
         api_key=os.environ["GEMINI_API_KEY"],
-        dumb_model=os.environ.get("GEMINI_DUMB", "gemini-2.5-flash"),
-        smart_model=os.environ.get("GEMINI_SMART", "gemini-2.5-flash"),
-        clue_model=os.environ.get("GEMINI_CLUE_MODEL", "gemini-2.5-pro"),
+        dumb_model=os.environ["GEMINI_DUMB"],
+        smart_model=os.environ["GEMINI_SMART"],
     )
 
 

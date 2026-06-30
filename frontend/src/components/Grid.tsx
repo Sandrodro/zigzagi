@@ -9,13 +9,14 @@ export const U = 54; // cell size in SVG units; the grid scales to its container
 
 // Constant contrasty ink lines; selection only swaps the fill.
 const RECT =
-  "fill-paper-raised stroke-ink [stroke-width:1.5] [shape-rendering:crispEdges] " +
+  "fill-paper-raised stroke-ink [stroke-width:1] [shape-rendering:crispEdges] " +
   "group-data-[inword=true]:fill-cell-word " +
   "group-data-[active=true]:fill-cell-active";
 
+// newdesign Cell letter style: Noto Sans Georgian, semibold (600), ~0.56× cell.
 // Correct → blue letter; incorrect → letter stays black (a red cross is drawn over the cell).
 const VAL =
-  "font-serif text-[22px] fill-black [fill:#121212] " +
+  "font-sans font-semibold text-[30px] fill-black [fill:#121212] " +
   "group-data-[status=correct]:fill-blue-600 group-data-[status=revealed]:fill-ochre";
 
 export function Grid({ engine, onCellClick }: GridProps) {
@@ -41,7 +42,7 @@ export function Grid({ engine, onCellClick }: GridProps) {
               return null; // outside the puzzle shape — empty background
             }
             if (engine.isBlock(row, col)) {
-              return <rect key={`${row}-${col}`} data-block="true" className="fill-ink stroke-ink [stroke-width:1.5] [shape-rendering:crispEdges]" x={x} y={y} width={U} height={U} />;
+              return <rect key={`${row}-${col}`} data-block="true" className="fill-ink stroke-ink [stroke-width:1] [shape-rendering:crispEdges]" x={x} y={y} width={U} height={U} />;
             }
             const isActive = active.row === row && active.col === col;
             const num = numbered.find((c) => c.row === row && c.col === col)?.number;
@@ -66,12 +67,26 @@ export function Grid({ engine, onCellClick }: GridProps) {
                   </>
                 )}
                 {num !== undefined && (
-                  <text fill="#121212" className="font-serif text-[11px]" x={x + 3} y={y + 12}>
+                  // newdesign Cell number style: medium (500), soft gray, tabular numerals.
+                  <text
+                    className="font-sans"
+                    x={x + 3}
+                    y={y + 12}
+                    style={{ fontSize: 12, fontWeight: 500, fill: "#3a3a3a", fontFeatureSettings: "'tnum' 1, 'lnum' 1" }}
+                  >
                     {num}
                   </text>
                 )}
                 {value && (
-                  <text className={VAL} x={x + U / 2} y={y + U * 0.72} textAnchor="middle">
+                  // key={value}: remount on letter change so the pop replays (newdesign cell-pop).
+                  <text
+                    key={value}
+                    className={VAL}
+                    x={x + U / 2}
+                    y={y + U * 0.72}
+                    textAnchor="middle"
+                    style={{ transformBox: "fill-box", transformOrigin: "center", animation: "krosi-cell-pop var(--dur-base) var(--ease-pop)" }}
+                  >
                     {value}
                   </text>
                 )}

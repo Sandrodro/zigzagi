@@ -45,8 +45,14 @@ Lean on Georgian cultural, historical, geographical, and common-knowledge refere
 Avoid flat, mechanical, or trivially simple clues — bare dictionary definitions, \
 grammar-category labels, or plain arithmetic — whenever a richer, more interesting \
 angle to the same answer exists. Keep the wording concise and natural, but make the \
-clue teach or delight, not merely define; it must still be fair and gettable. Weak \
-clues and the missed better angle:
+clue teach or delight, not merely define; it must still be fair and gettable.
+
+STRICT — never put the answer inside its own clue: do not use the answer word, its \
+root, or ANY word that contains the answer as a substring. E.g. for the answer არსი, \
+"მოვლენის მთავარი იდეა, შინაარსი" is wrong because შინაარსი contains არსი; the correct \
+clue is "მოვლენის მთავარი იდეა".
+
+Weak clues and the missed better angle:
 - მესამე პირის ნაცვალსახელი → იგი  (weak: a dry grammar label; better: clue ჯემალ \
 ქარჩხაძის ცნობილ რომანს "იგი" — the same answer as a real cultural reference)
 - ათჯერ ათი → ასი  (weak: bare arithmetic; prefer a fresher, culturally grounded angle)

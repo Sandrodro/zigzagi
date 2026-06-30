@@ -212,7 +212,9 @@ export function PlayView({ id, date }: { id?: string; date?: string } = {}) {
         </div>
       </div>
 
-      {/* Single off-screen input: summons the native keyboard on mobile, captures physical keys on desktop. */}
+      {/* Single hidden input: summons the native keyboard on mobile, captures physical keys on desktop.
+          position:fixed (not absolute off-screen at page bottom) keeps the caret in the viewport, so
+          typing never scrolls the page to reveal it. */}
       <input
         ref={inputRef}
         aria-label="cell input"
@@ -222,7 +224,7 @@ export function PlayView({ id, date }: { id?: string; date?: string } = {}) {
         autoCorrect="off"
         onInput={onInput}
         onKeyDown={onKeyDown}
-        style={{ position: "absolute", left: -9999, width: 1, height: 1, opacity: 0 }}
+        style={{ position: "fixed", top: 0, left: 0, width: 1, height: 1, opacity: 0 }}
       />
     </div>
   );

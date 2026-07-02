@@ -78,8 +78,10 @@ Editorial revision examples — wordy/awkward ORIGINAL → tighter, more natural
 „... და მშვიდობა“ (ლევ ტოლსტოის ცნობილი ნაწარმოები) → ".. და მშვიდობა"
 
 Good clue examples — CLUE → ANSWER (Georgian; emulate this level of craft, natural \
-phrasing, and fair specificity):
-მიამიტი, გამოუცდელი ადამიანი (ჯარგონით) → არიფი"""
+phrasing, and fair specificity). Lean into this playful nickname/epithet style — a witty \
+public persona's moniker doubling as the answer — whenever an answer fairly supports it:
+მიამიტი, გამოუცდელი ადამიანი (ჯარგონით) → არიფი
+კილიან მბაპეს მეტსახელი → დიქტატორი"""
 
 
 _CLUE_PROMPT = """\

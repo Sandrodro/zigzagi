@@ -2,7 +2,7 @@ import { useEffect, useReducer, useRef, useState } from "react";
 
 import { useCheckCells, useRevealCells, usePuzzle } from "../api/play";
 import { CrosswordEngine } from "../engine/crossword";
-import type { Scope } from "../engine/types";
+import type { Direction, Scope } from "../engine/types";
 import { PlayToolbar } from "../components/PlayToolbar";
 import { loadProgress, saveProgress } from "../progress/local";
 import { useTimer } from "../hooks/useTimer";
@@ -143,6 +143,9 @@ export function PlayView({ id, date }: { id?: string; date?: string } = {}) {
   };
 
   const cur = engine.currentClue();
+  const crossingDirection: Direction = engine.direction === "across" ? "down" : "across";
+  const crossingClue = engine.clueForCell(engine.active.row, engine.active.col, crossingDirection);
+  const crossing = crossingClue ? { number: crossingClue.number, direction: crossingDirection } : null;
   const gridWidth = engine.size.cols * U;
   const gridHeight = engine.size.rows * U;
 
@@ -153,6 +156,11 @@ export function PlayView({ id, date }: { id?: string; date?: string } = {}) {
   const gridMax = isMobile
     ? Math.max(160, Math.min(vp.w - 16, (vp.h - 190) * aspect))
     : gridWidth;
+
+  // Clues whose answer is fully filled in — dimmed in the columns list.
+  const filledClues = new Set<string>();
+  for (const c of puzzle.clues.across) if (engine.isClueComplete(c, "across")) filledClues.add(`across-${c.number}`);
+  for (const c of puzzle.clues.down) if (engine.isClueComplete(c, "down")) filledClues.add(`down-${c.number}`);
 
   const clueNav = {
     clue: cur,
@@ -175,10 +183,10 @@ export function PlayView({ id, date }: { id?: string; date?: string } = {}) {
           <div className="mx-auto w-full" style={{ maxWidth: gridMax }}>
             {/* One clue bar: fixed above the keyboard on mobile, static above the grid on desktop. */}
             <div
-              className="fixed inset-x-0 z-20 px-2 md:static md:mb-4 md:px-0"
+              className="fixed inset-x-0 z-20 md:static md:mb-4"
               style={{ bottom: vp.kbInset }}
             >
-              <ClueBar {...clueNav} />
+              <ClueBar {...clueNav} className="rounded-none md:rounded" />
             </div>
 
             <Grid
@@ -201,6 +209,8 @@ export function PlayView({ id, date }: { id?: string; date?: string } = {}) {
             activeNumber={cur?.number ?? null}
             activeDirection={engine.direction}
             columnMaxHeight={gridHeight}
+            filled={filledClues}
+            crossing={crossing}
             onSelect={(number, direction) => {
               if (engine.direction !== direction) engine.toggleDirection();
               const clue = (direction === "across" ? puzzle.clues.across : puzzle.clues.down).find((c) => c.number === number);

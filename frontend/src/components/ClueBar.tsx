@@ -6,6 +6,7 @@ interface ClueBarProps {
   onPrev: () => void;
   onNext: () => void;
   onToggleDirection: () => void;
+  className?: string;
 }
 
 // lucide-style chevrons (no dep — two inline paths in lucide's stroke convention).
@@ -17,9 +18,9 @@ const ChevronRight = () => (
   <svg className={chevron} viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m9 18 6-6-6-6" /></svg>
 );
 
-export function ClueBar({ clue, direction, onPrev, onNext, onToggleDirection }: ClueBarProps) {
+export function ClueBar({ clue, direction, onPrev, onNext, onToggleDirection, className = "rounded" }: ClueBarProps) {
   return (
-    <div role="group" aria-label="clue bar" className="flex h-14 items-stretch rounded bg-teal text-white">
+    <div role="group" aria-label="clue bar" className={`flex h-14 items-stretch bg-teal text-white ${className}`}>
       <button type="button" aria-label="წინა" onClick={onPrev} className="flex items-center px-2">
         <ChevronLeft />
       </button>

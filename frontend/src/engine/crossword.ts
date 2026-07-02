@@ -186,6 +186,19 @@ export class CrosswordEngine {
     return this.clueForCell(this._active.row, this._active.col, this._direction);
   }
 
+  // True when every cell of the clue's word has a value.
+  isClueComplete(clue: ClueRef, dir: Direction): boolean {
+    const stepRow = dir === "down" ? 1 : 0;
+    const stepCol = dir === "across" ? 1 : 0;
+    let [row, col] = clue.cell;
+    while (this.playable(row, col)) {
+      if (!this.getValue(row, col)) return false;
+      row += stepRow;
+      col += stepCol;
+    }
+    return true;
+  }
+
   private orderedClues(): { dir: Direction; clue: ClueRef }[] {
     return [
       ...this.puzzle.clues.across.map((clue) => ({ dir: "across" as Direction, clue })),

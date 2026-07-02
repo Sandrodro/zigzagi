@@ -22,7 +22,7 @@ def get_today(db: Session = Depends(get_db)):
 @router.get("/puzzles")
 def list_puzzles(db: Session = Depends(get_db)):
     return [
-        {"id": str(p.id), "date": p.live_date.isoformat(), "status": p.status}
+        {"id": str(p.id), "date": p.live_date.isoformat(), "status": p.status, "created_at": p.created_at.isoformat()}
         for p in svc.list_published(db)
     ]
 

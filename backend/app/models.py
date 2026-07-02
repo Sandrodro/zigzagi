@@ -13,6 +13,7 @@ class Puzzle(Base):
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     live_date: Mapped[dt.date] = mapped_column()
+    created_at: Mapped[dt.datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     grid_template: Mapped[dict] = mapped_column(JSONB)
     status: Mapped[str] = mapped_column(default="draft")
     seed: Mapped[int | None] = mapped_column(nullable=True)

@@ -56,6 +56,9 @@ Weak clues and the missed better angle:
 - მესამე პირის ნაცვალსახელი → იგი  (weak: a dry grammar label; better: clue ჯემალ \
 ქარჩხაძის ცნობილ რომანს "იგი" — the same answer as a real cultural reference)
 - ათჯერ ათი → ასი  (weak: bare arithmetic; prefer a fresher, culturally grounded angle)
+- წყლის ძლიერი, მიმართული ნაკადი → ამით აქციებს არბევენ  (weak: flat physical description; \
+better: a vivid, idiomatic phrase for the same answer წყალი — think creatively for a livelier \
+angle instead of settling for the literal description)
 
 Editorial revision examples — wordy/awkward ORIGINAL → tighter, more natural IMPROVED \
 (Georgian; imitate the move toward concision and natural phrasing):
@@ -65,7 +68,13 @@ Editorial revision examples — wordy/awkward ORIGINAL → tighter, more natural
 საბრალო, საცოდავი ადამიანის სინონიმი → საბრალო ადამიანი
 ხალისიანი განწყობის ხმოვანი გამოხატულება, რომელსაც ტირილი უპირისპირდება → ტირილის საპირისპირო
 მეტყველების ორგანოს აღმნიშვნელი სახელის ვითარებითი ბრუნვა → მეტყველების ორგანო (ვითარებითი ბრუნვა -დ)
-ელექტრული მუხტის მქონე ნაწილაკი ფიზიკაში → ელექტრონული მუხტის მქონე ნაწილაკი"""
+ელექტრული მუხტის მქონე ნაწილაკი ფიზიკაში → ელექტრონული მუხტის მქონე ნაწილაკი
+თეატრალური წარმოდგენის ნაწილი, იგივე მოქმედება → თეატრალური მოქმედება
+„... და მშვიდობა“ (ლევ ტოლსტოის ცნობილი ნაწარმოები) → ".. და მშვიდობა"
+
+Good clue examples — CLUE → ANSWER (Georgian; emulate this level of craft, natural \
+phrasing, and fair specificity):
+მიამიტი, გამოუცდელი ადამიანი (ჯარგონით) → არიფი"""
 
 
 _CLUE_PROMPT = """\

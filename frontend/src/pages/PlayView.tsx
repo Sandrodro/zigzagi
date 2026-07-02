@@ -127,9 +127,12 @@ export function PlayView({ id, date }: { id?: string; date?: string } = {}) {
   };
 
   const handleCheck = async (scope: Scope) => {
+    // Empty cells have nothing to check — skip them so they don't come back marked incorrect.
     const cells = engine
       .cellsForScope(scope)
-      .map((c) => ({ row: c.row, col: c.col, value: engine.getValue(c.row, c.col) }));
+      .map((c) => ({ row: c.row, col: c.col, value: engine.getValue(c.row, c.col) }))
+      .filter((c) => c.value);
+    if (cells.length === 0) return;
     const { results } = await checkMutation.mutateAsync(cells);
     engine.applyCheck(results);
     rerender();
@@ -212,9 +215,9 @@ export function PlayView({ id, date }: { id?: string; date?: string } = {}) {
             filled={filledClues}
             crossing={crossing}
             onSelect={(number, direction) => {
-              if (engine.direction !== direction) engine.toggleDirection();
               const clue = (direction === "across" ? puzzle.clues.across : puzzle.clues.down).find((c) => c.number === number);
               if (clue) engine.setActive(clue.cell[0], clue.cell[1]);
+              if (engine.direction !== direction) engine.toggleDirection();
               focusInput();
               rerender();
             }}

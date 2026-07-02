@@ -19,6 +19,28 @@ const PUZZLE: PuzzleData = {
   },
 };
 
+// 1A runs (0,0)-(0,2); 2D crosses it at (0,1) and continues down to (1,1). (0,0) — the
+// initial active cell — has no down clue of its own, and (0,1) — 2D's start — is also
+// part of 1A. Reproduces the crossing-cell direction bug: selecting 2D from the list must
+// switch to "down", not silently stay "across" because (0,1) still resolves an across clue.
+const CROSSING_PUZZLE: PuzzleData = {
+  id: "p2",
+  date: "2026-06-19",
+  size: { rows: 2, cols: 3 },
+  blocks: [
+    [1, 0],
+    [1, 2],
+  ],
+  cells: [
+    { row: 0, col: 0, number: 1 },
+    { row: 0, col: 1, number: 2 },
+  ],
+  clues: {
+    across: [{ number: 1, cell: [0, 0], length: 3, text: "1A" }],
+    down: [{ number: 2, cell: [0, 1], length: 2, text: "2D" }],
+  },
+};
+
 const json = (body: unknown) =>
   Promise.resolve({ ok: true, status: 200, json: () => Promise.resolve(body) } as Response);
 
@@ -74,6 +96,40 @@ describe("PlayView", () => {
     await waitFor(() => screen.getByTestId("cell-0-0"));
     await userEvent.click(screen.getByRole("button", { name: "1 1A" })); // clue-list item (number + text)
     expect(screen.getByTestId("cell-0-0")).toHaveAttribute("data-active", "true");
+  });
+
+  it("selecting a down clue from the list highlights the down word, not the crossing across word", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn((url: string) => {
+        if (url.endsWith("/today")) return json(CROSSING_PUZZLE);
+        return json({ cells: [] });
+      }),
+    );
+    renderPlayView();
+    await waitFor(() => screen.getByTestId("cell-0-0")); // starts active on 1A (across)
+    await userEvent.click(screen.getByRole("button", { name: "2 2D" })); // clue-list item for the down clue
+    expect(screen.getByTestId("cell-0-1")).toHaveAttribute("data-active", "true");
+    expect(screen.getByTestId("cell-1-1")).toHaveAttribute("data-inword", "true"); // down word
+    expect(screen.getByTestId("cell-0-2")).toHaveAttribute("data-inword", "false"); // not the across word
+  });
+
+  it("checking an empty square leaves it empty instead of marking it incorrect", async () => {
+    const fetchMock = vi.fn((url: string) => {
+      if (url.endsWith("/today")) return json(PUZZLE);
+      if (url.endsWith("/check")) return json({ results: [{ row: 0, col: 0, correct: true }] });
+      return json({ cells: [] });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    renderPlayView();
+    await waitFor(() => screen.getByTestId("cell-0-0"));
+    await userEvent.click(screen.getByTestId("cell-0-0")); // active, still empty
+    // jsdom doesn't evaluate the md: breakpoint, so both the desktop dropdown and the
+    // mobile icon-modal render; [0] is the desktop text menu (rendered first in the DOM).
+    await userEvent.click(screen.getAllByRole("button", { name: "შემოწმება" })[0]);
+    await userEvent.click(screen.getAllByRole("button", { name: "უჯრის შემოწმება" })[0]);
+    expect(screen.getByTestId("cell-0-0")).toHaveAttribute("data-status", "empty");
+    expect(fetchMock).not.toHaveBeenCalledWith(expect.stringContaining("/check"));
   });
 
   it("shows the congrats modal on all-correct completion", async () => {

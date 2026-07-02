@@ -17,7 +17,7 @@ const RECT =
 // Correct → blue letter; incorrect → letter stays black (a red cross is drawn over the cell).
 const VAL =
   "font-sans font-semibold text-[30px] fill-black [fill:#121212] " +
-  "group-data-[status=correct]:fill-blue-600 group-data-[status=revealed]:fill-ochre";
+  "group-data-[status=correct]:fill-blue-600 group-data-[status=revealed]:fill-blue-600";
 
 export function Grid({ engine, onCellClick }: GridProps) {
   const { rows, cols } = engine.size;

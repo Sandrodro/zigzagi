@@ -5,15 +5,17 @@ import { PageTitle, Muted } from "../components/ui/Typography";
 
 export function PuzzleList() {
   const { data: puzzles, isLoading, isError } = usePuzzleList();
+  // Newest-created first — created_at has second-level precision, unlike live_date (day only).
+  const sorted = puzzles && [...puzzles].sort((a, b) => b.created_at.localeCompare(a.created_at));
 
   return (
     <div className="mx-auto max-w-[560px] px-5 pt-8 pb-16">
       <PageTitle className="mb-4">ჯვარედინები</PageTitle>
       {isLoading && <Muted>იტვირთება…</Muted>}
       {isError && <Muted>ვერ ჩაიტვირთა.</Muted>}
-      {puzzles && puzzles.length === 0 && <Muted>გამოქვეყნებული ჯვარედინი არ არის.</Muted>}
+      {sorted && sorted.length === 0 && <Muted>გამოქვეყნებული ჯვარედინი არ არის.</Muted>}
       <ul className="m-0 flex list-none flex-col gap-2 p-0">
-        {puzzles?.map((p) => (
+        {sorted?.map((p) => (
           <li key={p.id}>
             <Link
               to="/play"

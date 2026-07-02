@@ -129,7 +129,7 @@ def run_fill_job(
         template, seeds, wordlist,
         seed_value=job.params["seed_value"], min_seeds=job.params["min_seeds"],
         prefilled=job.params.get("prefilled") or {},
-        deadline_s=30.0,
+        deadline_s=10.0,
     )
     if isinstance(outcome, FillFailure):
         job.status = "failed"

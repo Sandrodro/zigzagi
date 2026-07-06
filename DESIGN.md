@@ -260,7 +260,7 @@ Notes:
 - `Entry.provenance` ∈ `sourced | general-fill`; `clue_status` ∈
   `pending | generated | accepted | edited | rejected`.
 - `grid_template` stores the immutable black-square pattern + numbering; `Entry` rows
-  carry answers and clues. Answers are **never** included in Play responses.
+  carry answers and clues. Answers are **never** included in Play responses. **One sanctioned exception:** `GET /api/play/puzzles/by-id/{id}/bundle` returns the solution too, so the iOS app (`ios/`) can solve offline.
 
 ### 4.6 Algorithmic Solver (no AI)
 

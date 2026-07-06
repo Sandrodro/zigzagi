@@ -103,7 +103,7 @@ cd frontend && npm run build     # tsc + vite build
 
 ## Architecture invariants
 
-- **Answers never leave the server.** The Play API returns grid structure + clues only. Check/reveal are server-side endpoints.
+- **Answers never leave the server** for the web Play API — grid structure + clues only; check/reveal are server-side. **One sanctioned exception:** `GET /api/play/puzzles/by-id/{id}/bundle` returns the solution too; it exists so the iOS app (`ios/`) can solve offline.
 - **Solver is pure.** `app/solver/` has zero FastAPI or SQLAlchemy imports — it's a pure function `fill(template, seeds, wordlist, seed_value) -> FillResult | FillFailure`.
 - **Fill runs async.** Solver fill is enqueued as a `Job` row and processed by the worker; HTTP only enqueues and polls.
 - **Deterministic.** Identical `(template_id, seeds, wordlist, seed_value)` must produce byte-identical output. All ordering is total.

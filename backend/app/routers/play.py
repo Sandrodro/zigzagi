@@ -66,6 +66,19 @@ def reveal(puzzle_id: str, payload: RevealRequest, db: Session = Depends(get_db)
     return {"cells": cells}
 
 
+@router.get("/puzzles/by-id/{puzzle_id}/bundle")
+def bundle(puzzle_id: str, db: Session = Depends(get_db)):
+    """Play DTO + solution. Offline-solve payload for the iOS app —
+    the sanctioned exception to 'answers never leave the server'."""
+    puzzle = _require_by_id(db, puzzle_id)
+    dto = svc.to_play_dto(puzzle)
+    amap = svc.build_answer_map(puzzle)
+    dto["solution"] = [
+        {"row": r, "col": c, "value": v} for (r, c), v in sorted(amap.items())
+    ]
+    return dto
+
+
 @router.get("/puzzles/{date}")
 def get_by_date(date: str, db: Session = Depends(get_db)):
     try:

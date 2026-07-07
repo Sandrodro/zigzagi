@@ -29,6 +29,9 @@ struct GridView: View {
         .padding(1)
         .background(Color.black)
         .aspectRatio(CGFloat(engine.size.cols) / CGFloat(engine.size.rows), contentMode: .fit)
+        // ForEach(0..<n) caches its children; .id forces the cell tree to rebuild
+        // when the engine mutates in place. ponytail: 121 cells, rebuild is cheap.
+        .id(model.revision)
     }
 }
 

@@ -13,9 +13,9 @@ struct PlayView: View {
 
     var body: some View {
         VStack(spacing: 8) {
+            Spacer(minLength: 0)
             GridView(model: model)
             ClueBarView(model: model)
-            Spacer(minLength: 0)
             KeyboardView(model: model)
         }
         .padding(.horizontal, 6)

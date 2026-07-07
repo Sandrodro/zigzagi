@@ -8,34 +8,46 @@ struct GridView: View {
         let engine = model.engine
         let _ = model.revision  // observe: re-render on engine mutations
         let word = Set(engine.currentWordCells())
-        VStack(spacing: 1) {
-            ForEach(0..<engine.size.rows, id: \.self) { r in
-                HStack(spacing: 1) {
-                    ForEach(0..<engine.size.cols, id: \.self) { c in
-                        CellView(
-                            value: engine.getValue(r, c),
-                            status: engine.getStatus(r, c),
-                            number: model.numbers[Cell(row: r, col: c)],
-                            isBlock: engine.isBlock(r, c),
-                            isAbsent: engine.isAbsent(r, c),
-                            isActive: engine.active == Cell(row: r, col: c),
-                            inWord: word.contains(Cell(row: r, col: c))
-                        )
-                        .onTapGesture { model.tap(r, c) }
+        let cols = engine.size.cols
+        let rows = engine.size.rows
+        // Measure once and size cells explicitly — a per-cell GeometryReader has
+        // no intrinsic size, which let the grid frame drift off-square.
+        GeometryReader { geo in
+            let spacing: CGFloat = 1
+            let cell = ((geo.size.width - spacing * CGFloat(cols - 1)) / CGFloat(cols))
+                .rounded(.down)
+            let side = cell * CGFloat(cols) + spacing * CGFloat(cols - 1)
+            VStack(spacing: spacing) {
+                ForEach(0..<rows, id: \.self) { r in
+                    HStack(spacing: spacing) {
+                        ForEach(0..<cols, id: \.self) { c in
+                            CellView(
+                                size: cell,
+                                value: engine.getValue(r, c),
+                                status: engine.getStatus(r, c),
+                                number: model.numbers[Cell(row: r, col: c)],
+                                isBlock: engine.isBlock(r, c),
+                                isAbsent: engine.isAbsent(r, c),
+                                isActive: engine.active == Cell(row: r, col: c),
+                                inWord: word.contains(Cell(row: r, col: c))
+                            )
+                            .onTapGesture { model.tap(r, c) }
+                        }
                     }
                 }
             }
+            .frame(width: side, height: side)
+            .padding(spacing)
+            .background(Color.black)
+            .frame(maxWidth: .infinity)  // center the square horizontally
         }
-        .padding(1)
-        .background(Color.black)
-        .aspectRatio(CGFloat(engine.size.cols) / CGFloat(engine.size.rows), contentMode: .fit)
-        // ForEach(0..<n) caches its children; .id forces the cell tree to rebuild
-        // when the engine mutates in place. ponytail: 121 cells, rebuild is cheap.
+        .aspectRatio(CGFloat(cols) / CGFloat(rows), contentMode: .fit)
         .id(model.revision)
     }
 }
 
 private struct CellView: View {
+    let size: CGFloat
     let value: String
     let status: CellStatus
     let number: Int?
@@ -45,23 +57,21 @@ private struct CellView: View {
     let inWord: Bool
 
     var body: some View {
-        GeometryReader { geo in
-            ZStack(alignment: .topLeading) {
-                Rectangle().fill(background)
-                if !isBlock && !isAbsent {
-                    if let number {
-                        Text("\(number)")
-                            .font(.system(size: max(geo.size.height * 0.22, 6)))
-                            .padding(1)
-                    }
-                    Text(value)
-                        .font(.system(size: geo.size.height * 0.55, weight: .medium))
-                        .foregroundStyle(letterColor)
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        ZStack(alignment: .topLeading) {
+            Rectangle().fill(background)
+            if !isBlock && !isAbsent {
+                if let number {
+                    Text("\(number)")
+                        .font(.system(size: max(size * 0.22, 6)))
+                        .padding(1)
                 }
+                Text(value)
+                    .font(.system(size: size * 0.55, weight: .medium))
+                    .foregroundStyle(letterColor)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
         }
-        .aspectRatio(1, contentMode: .fit)
+        .frame(width: size, height: size)
     }
 
     private var background: Color {

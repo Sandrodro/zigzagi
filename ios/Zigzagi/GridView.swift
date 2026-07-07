@@ -10,16 +10,15 @@ struct GridView: View {
         let word = Set(engine.currentWordCells())
         let cols = engine.size.cols
         let rows = engine.size.rows
-        // Measure once and size cells explicitly — a per-cell GeometryReader has
-        // no intrinsic size, which let the grid frame drift off-square.
         GeometryReader { geo in
-            let spacing: CGFloat = 1
-            let cell = ((geo.size.width - spacing * CGFloat(cols - 1)) / CGFloat(cols))
-                .rounded(.down)
-            let side = cell * CGFloat(cols) + spacing * CGFloat(cols - 1)
-            VStack(spacing: spacing) {
+            // Square cells sized to fill the width; grid is a rows×cols rectangle
+            // (not forced square) so wide/irregular grids don't get a black band.
+            let cell = (geo.size.width / CGFloat(cols)).rounded(.down)
+            let w = cell * CGFloat(cols)
+            let h = cell * CGFloat(rows)
+            VStack(spacing: 0) {
                 ForEach(0..<rows, id: \.self) { r in
-                    HStack(spacing: spacing) {
+                    HStack(spacing: 0) {
                         ForEach(0..<cols, id: \.self) { c in
                             CellView(
                                 size: cell,
@@ -36,11 +35,11 @@ struct GridView: View {
                     }
                 }
             }
-            .frame(width: side, height: side)
-            .padding(spacing)
-            .background(Color.black)
-            .frame(maxWidth: .infinity)  // center the square horizontally
+            .frame(width: w, height: h)
+            .overlay(Rectangle().stroke(Color.black, lineWidth: 1.5))
+            .frame(maxWidth: .infinity)  // center the grid horizontally
         }
+        // Fit the true rows:cols shape into the available space.
         .aspectRatio(CGFloat(cols) / CGFloat(rows), contentMode: .fit)
         .id(model.revision)
     }
@@ -58,24 +57,30 @@ private struct CellView: View {
 
     var body: some View {
         ZStack(alignment: .topLeading) {
-            Rectangle().fill(background)
-            if !isBlock && !isAbsent {
-                if let number {
-                    Text("\(number)")
-                        .font(.system(size: max(size * 0.22, 6)))
-                        .padding(1)
+            if isAbsent {
+                // Not part of the puzzle — render nothing so the grid's outline
+                // stays irregular instead of a filled rectangle.
+                Color.clear
+            } else {
+                Rectangle().fill(background)
+                    .overlay(Rectangle().stroke(Color(.systemGray3), lineWidth: 0.5))
+                if !isBlock {
+                    if let number {
+                        Text("\(number)")
+                            .font(.system(size: max(size * 0.22, 6)))
+                            .padding(1)
+                    }
+                    Text(value)
+                        .font(.system(size: size * 0.55, weight: .medium))
+                        .foregroundStyle(letterColor)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
-                Text(value)
-                    .font(.system(size: size * 0.55, weight: .medium))
-                    .foregroundStyle(letterColor)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
         }
         .frame(width: size, height: size)
     }
 
     private var background: Color {
-        if isAbsent { return Color(.systemBackground) }
         if isBlock { return .black }
         if isActive { return Color(red: 1.0, green: 0.85, blue: 0.4) }
         if inWord { return Color(red: 0.80, green: 0.90, blue: 1.0) }
